@@ -8,7 +8,7 @@
     "test": "mocha --check-leaks",
     "debug": "DEBUG=party:* node ./bin/www",
     "start": "pm2 start ./bin/www --name 'party' --watch",
-    "stop": "pm2 stop --watch url"
+    "stop": "pm2 stop --watch party"
   },
   "repository": {
     "type": "git",
