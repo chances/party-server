@@ -1,3 +1,5 @@
+var spotify = require('../lib/spotify');
+
 var express = require('express');
 var router = express.Router();
 
@@ -18,7 +20,22 @@ router.get('/queue', function (req, res, next) {
 });
 
 router.get('/search', function (req, res, next) {
-  res.send('respond with a resource');
+  var query = req.params.q || null;
+  // var page = req.params.page || 0;
+  if (query == null) {
+    res.statusCode = 400;
+    return res.json({message: 'Error 400: Malformed search, missing query'});
+  }
+  spotify.searchTracks({
+    query: query
+  }, function (err, data) {
+    if (err) {
+      res.statusCode = 500;
+      return res.json({message: 'Error 500: ' + err.message});
+    }
+
+    res.json(data.tracks);
+  });
 });
 
 module.exports = router;
