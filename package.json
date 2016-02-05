@@ -7,8 +7,8 @@
     "lint": "semistandard --verbose | snazzy",
     "test": "mocha --check-leaks",
     "debug": "DEBUG=party:* node ./bin/www",
-    "start": "pm2 start ./bin/www --name 'party' --watch",
-    "stop": "pm2 stop --watch party"
+    "start": "pm2 start ./bin/www --name 'party'",
+    "stop": "pm2 stop party"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
     "dotenv": "^2.0.0",
     "ejs": "~2.3.3",
     "express": "~4.13.1",
-    "morgan": "~1.6.1"
+    "morgan": "~1.6.1",
+    "sequelize": "^3.19.1"
   },
   "devDependencies": {
     "semistandard": "^7.0.5",
