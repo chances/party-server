@@ -12,7 +12,8 @@ router.get('/history', function (req, res, next) {
 });
 
 router.get('/queue', function (req, res, next) {
-  // Get playback future
+  // Get playback future (current track first?)
+  // TODO: Maybe use streaming stuffs for current track/queue and history => Research
   res.send('respond with a resource');
 });
 
