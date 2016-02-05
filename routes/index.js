@@ -20,7 +20,7 @@ router.get('/queue', function (req, res, next) {
 });
 
 router.get('/search', function (req, res, next) {
-  var query = req.params.q || req.params.query || null;
+  var query = req.query.q || req.query.query || null;
   // var page = req.params.page || 0;
   if (query == null) {
     res.statusCode = 400;
