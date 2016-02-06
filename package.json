@@ -27,7 +27,10 @@
     "dotenv": "^2.0.0",
     "ejs": "~2.3.3",
     "express": "~4.13.1",
+    "express-session": "^1.13.0",
     "morgan": "~1.6.1",
+    "passport": "^0.3.2",
+    "passport-spotify": "^0.3.0",
     "sequelize": "^3.19.1"
   },
   "devDependencies": {
