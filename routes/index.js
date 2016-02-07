@@ -5,7 +5,24 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function (req, res) {
-  res.render('index', { user: req.user });
+  if (req.user !== undefined && process.env.SPOTIFY_ACCESS_TOKEN) {
+    req.user.currentPlaylist = null;
+    spotify.playlists({
+      id: req.user.id,
+      token: process.env.SPOTIFY_ACCESS_TOKEN
+    }, function (err, data) {
+      if (err) {
+        res.render('index', {user: req.user, playlists: undefined, error: err});
+      } else if (data.hasOwnProperty('error')) {
+        res.render('index', {user: req.user, playlists: undefined, error: data});
+      } else {
+        //console.log(data.items);
+        res.render('index', { user: req.user, playlists: data.items, error: undefined });
+      }
+    });
+  } else {
+    res.render('index', {user: req.user, playlists: undefined, error: undefined});
+  }
 });
 
 router.get('/history', function (req, res, next) {
