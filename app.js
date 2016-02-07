@@ -27,8 +27,9 @@ app.use(cors);
 
 auth.init(app);
 
+app.use(express.static(__dirname + '/public'));
+
 app.use('/', routes);
-app.use('/auth', auth.router);
 app.use('/users', users);
 
 // catch 404 and forward to error handler

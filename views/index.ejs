@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chance's Party - Admin</title>
+  <style>
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#avatar {
+  margin-right: 1em;
+  float: left;
+}
+  </style>
+</head>
+<body>
+<% if (!user) { %>
+<p>
+  <a href="/auth">Login with Spotify</a>
+</p>
+<% } else { %>
+<p>
+  <a href="/auth/logout">Log Out</a>
+</p>
+<h1>Logged in as <%= user.displayName %></h1>
+<img id="avatar" width="200" src="<%= user.photos[0] %>" />
+<p>ID: <%= user.id %></p>
+<p>Profile: <a href=" <%= user.profileUrl %>"><%= user.profileUrl %></a></p>
+<p>Followers: <%= user.followers %></p>
+<p>Country: <%= user.country %></p>
+<p>Product: <%= user.product %></p>
+<div style="clear: both;"></div>
+<h2>Pick a playlist for the party</h2>
+<ul>
+
+</ul>
+<% } %>
+</body>
+</html>
