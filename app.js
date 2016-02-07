@@ -48,6 +48,7 @@ if (app.get('env') === 'development') {
     res.status(err.status || 500);
     res.json({
       message: err.message,
+      stackTrace: err.stack,
       error: err
     });
   });
