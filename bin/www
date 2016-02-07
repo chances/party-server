@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
+require('dotenv').config();
+
 var app = require('../app');
 var debug = require('debug')('party:server');
 var http = require('http');
-
-require('dotenv').config();
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
