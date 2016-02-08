@@ -5,6 +5,12 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function (req, res) {
+  var pageData = {
+    base: process.env.BASE_URL || '',
+    user: req.user,
+    playlists: undefined,
+    error: undefined
+  };
   if (req.user !== undefined && process.env.SPOTIFY_ACCESS_TOKEN) {
     req.user.currentPlaylist = null;
     spotify.playlists({
@@ -12,16 +18,18 @@ router.get('/', function (req, res) {
       token: process.env.SPOTIFY_ACCESS_TOKEN
     }, function (err, data) {
       if (err) {
-        res.render('index', {user: req.user, playlists: undefined, error: err});
+        pageData.error = err;
+        res.render('index', pageData);
       } else if (data.hasOwnProperty('error')) {
-        res.render('index', {user: req.user, playlists: undefined, error: data});
+        pageData.error = data;
+        res.render('index', pageData);
       } else {
-        //console.log(data.items);
-        res.render('index', { user: req.user, playlists: data.items, error: undefined });
+        pageData.playlists = data.items;
+        res.render('index', pageData);
       }
     });
   } else {
-    res.render('index', {user: req.user, playlists: undefined, error: undefined});
+    res.render('index', pageData);
   }
 });
 
