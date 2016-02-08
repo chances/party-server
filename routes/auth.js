@@ -4,6 +4,8 @@ var SpotifyStrategy = require('passport-spotify').Strategy;
 
 var router = express.Router();
 
+var base = process.env.BASE_URL || '';
+
 function initialize(app) {
 
   var appKey = process.env.SPOTIFY_APP_KEY;
@@ -92,12 +94,12 @@ function initialize(app) {
   router.get('/callback',
     passport.authenticate('spotify', { failureRedirect: '/' }),
     function(req, res) {
-      res.redirect('/');
+      res.redirect(base + '/');
     });
 
   router.get('/logout', function(req, res){
     req.logout();
-    res.redirect('/');
+    res.redirect(base + '/');
   });
 }
 
