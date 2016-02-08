@@ -29,8 +29,11 @@ auth.init(app);
 
 app.use(express.static(__dirname + '/public'));
 
-app.use('/', routes);
-app.use('/users', users);
+var base = process.env.BASE_URL || '';
+
+app.use(base + '/', routes);
+app.use(base + '/auth', auth.routes);
+app.use(base + '/users', users);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -2,6 +2,8 @@ var express = require('express');
 var passport = require('passport');
 var SpotifyStrategy = require('passport-spotify').Strategy;
 
+var router = express.Router();
+
 function initialize(app) {
 
   var appKey = process.env.SPOTIFY_APP_KEY;
@@ -75,7 +77,7 @@ function initialize(app) {
   //   request. The first step in spotify authentication will involve redirecting
   //   the user to spotify.com. After authorization, spotify will redirect the user
   //   back to this application at /auth/spotify/callback
-  app.get('/auth',
+  router.get('/',
     passport.authenticate('spotify', {scope: requiredScopes, showDialog: false}),
     function(req, res){
       // The request will be redirected to spotify for authentication, so this
@@ -87,18 +89,19 @@ function initialize(app) {
   //   request. If authentication fails, the user will be redirected back to the
   //   login page. Otherwise, the primary route function function will be called,
   //   which, in this example, will redirect the user to the home page.
-  app.get('/auth/callback',
+  router.get('/callback',
     passport.authenticate('spotify', { failureRedirect: '/' }),
     function(req, res) {
       res.redirect('/');
     });
 
-  app.get('/auth/logout', function(req, res){
+  router.get('/logout', function(req, res){
     req.logout();
     res.redirect('/');
   });
 }
 
 module.exports = {
-  init: initialize
+  init: initialize,
+  routes: router
 };
