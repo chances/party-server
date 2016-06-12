@@ -6,8 +6,7 @@ var router = express.Router();
 
 var base = process.env.BASE_URL || '';
 
-function initialize(app) {
-
+function initialize (app) {
   var appKey = process.env.SPOTIFY_APP_KEY;
   var appSecret = process.env.SPOTIFY_APP_SECRET;
   var appCallback = process.env.SPOTIFY_CALLBACK;
@@ -27,11 +26,11 @@ function initialize(app) {
   //   the user by ID when deserializing. However, since this example does not
   //   have a database of user records, the complete spotify profile is serialized
   //   and deserialized.
-  passport.serializeUser(function(user, done) {
+  passport.serializeUser(function (user, done) {
     done(null, user);
   });
 
-  passport.deserializeUser(function(obj, done) {
+  passport.deserializeUser(function (obj, done) {
     done(null, obj);
   });
 
@@ -44,8 +43,7 @@ function initialize(app) {
     clientSecret: appSecret,
     callbackURL: appCallback
   },
-  function(accessToken, refreshToken, profile, done) {
-
+  function (accessToken, refreshToken, profile, done) {
     process.env.SPOTIFY_ACCESS_TOKEN = accessToken;
     // asynchronous verification, for effect...
     process.nextTick(function () {
@@ -81,7 +79,7 @@ function initialize(app) {
   //   back to this application at /auth/spotify/callback
   router.get('/',
     passport.authenticate('spotify', {scope: requiredScopes, showDialog: false}),
-    function(req, res){
+    function (req, res) {
       // The request will be redirected to spotify for authentication, so this
       // function will not be called.
     });
@@ -93,11 +91,11 @@ function initialize(app) {
   //   which, in this example, will redirect the user to the home page.
   router.get('/callback',
     passport.authenticate('spotify', { failureRedirect: '/' }),
-    function(req, res) {
+    function (req, res) {
       res.redirect(base + '/');
     });
 
-  router.get('/logout', function(req, res){
+  router.get('/logout', function (req, res) {
     req.logout();
     res.redirect(base + '/');
   });
