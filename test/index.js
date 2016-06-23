@@ -1,4 +1,3 @@
-var sinon = require('sinon');
 var expect = require('chai').expect;
 
 describe('Placeholder test', function () {
