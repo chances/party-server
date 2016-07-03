@@ -27,3 +27,6 @@ npm-debug.log
 .idea/
 
 /.env
+
+# Session store db
+sessions.db
