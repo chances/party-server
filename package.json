@@ -5,7 +5,7 @@
   "description": "A party web app for Chance Snow's parties",
   "scripts": {
     "lint": "semistandard --verbose | snazzy",
-    "test": "mocha --check-leaks",
+    "test": "semistandard | snazzy && mocha --check-leaks --recursive",
     "debug": "DEBUG=party:* node ./bin/www",
     "start": "node ./bin/www"
   },
