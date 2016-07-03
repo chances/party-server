@@ -13,6 +13,9 @@
     "type": "git",
     "url": "git+https://github.com/chances/chances-party.git"
   },
+  "engines": {
+    "node": "6.2.2"
+  },
   "author": "Chance Snow <git@chancesnow.me>",
   "license": "MIT",
   "bugs": {
