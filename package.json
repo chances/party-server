@@ -7,8 +7,7 @@
     "lint": "semistandard --verbose | snazzy",
     "test": "mocha --check-leaks",
     "debug": "DEBUG=party:* node ./bin/www",
-    "start": "pm2 start ./bin/www --name 'party'",
-    "stop": "pm2 stop party"
+    "start": "node ./bin/www"
   },
   "repository": {
     "type": "git",
