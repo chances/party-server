@@ -1,22 +1,20 @@
-var express = require('express');
-var passport = require('passport');
-var SpotifyStrategy = require('passport-spotify').Strategy;
+import express from 'express';
+import passport from 'passport';
+import passportSpotify from 'passport-spotify';
 
-var router = express.Router();
+export default function initialize (app) {
+  let base = process.env.BASE_URL || '';
+  let appKey = process.env.SPOTIFY_APP_KEY;
+  let appSecret = process.env.SPOTIFY_APP_SECRET;
+  let appCallback = process.env.SPOTIFY_CALLBACK;
 
-var base = process.env.BASE_URL || '';
+  let router = express.Router();
+  let SpotifyStrategy = passportSpotify.Strategy;
 
-function initialize (app) {
-  var appKey = process.env.SPOTIFY_APP_KEY;
-  var appSecret = process.env.SPOTIFY_APP_SECRET;
-  var appCallback = process.env.SPOTIFY_CALLBACK;
-
-  var requiredScopes = [
+  let requiredScopes = [
     'user-read-email',
     'user-read-private',
-    'playlist-read-private',
-    'playlist-modify-public',
-    'playlist-modify-private'
+    'playlist-read-private'
   ];
 
   // Passport session setup.
@@ -99,9 +97,6 @@ function initialize (app) {
     req.logout();
     res.redirect(base + '/');
   });
-}
 
-module.exports = {
-  init: initialize,
-  routes: router
-};
+  return router;
+}

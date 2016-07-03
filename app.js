@@ -1,20 +1,22 @@
-var express = require('express');
-var path = require('path');
-var logger = require('morgan');
-var session = require('express-session');
-var SQLiteStore = require('connect-sqlite3')(session);
-var bodyParser = require('body-parser');
+import express from 'express';
+import * as path from 'path';
+import logger from 'morgan';
+import session from 'express-session';
+import connectSqlite from 'connect-sqlite3';
+import bodyParser from 'body-parser';
 
-var cors = require('./lib/cors');
+import cors from './lib/cors';
 
-var routes = require('./routes/index');
-var auth = require('./routes/auth');
-var users = require('./routes/users');
+import routes from './routes/index';
+import auth from './routes/auth';
+import users from './routes/users';
 
-var app = express();
+let app = express();
+
+let SQLiteStore = connectSqlite(session);
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
@@ -30,19 +32,17 @@ app.use(session({
 
 app.use(cors);
 
-auth.init(app);
-
 app.use(express.static(__dirname + '/public'));
 
-var base = process.env.BASE_URL || '';
+let base = process.env.BASE_URL || '';
 
 app.use(base + '/', routes);
-app.use(base + '/auth', auth.routes);
+app.use(base + '/auth', auth(app));
 app.use(base + '/users', users);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  var err = new Error('Not Found');
+  let err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
@@ -72,4 +72,4 @@ app.use(function (err, req, res, next) {
   });
 });
 
-module.exports = app;
+export default app;

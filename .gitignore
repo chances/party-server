@@ -28,5 +28,8 @@ npm-debug.log
 
 /.env
 
+# Built source
+/build
+
 # Session store db
 sessions.db

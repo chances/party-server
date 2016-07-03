@@ -1,11 +1,12 @@
-var spotify = require('../lib/spotify');
+import express from 'express';
 
-var express = require('express');
-var router = express.Router();
+import {playlists, searchTracks} from '../lib/spotify';
+
+let router = express.Router();
 
 /* GET home page. */
 router.get('/', function (req, res) {
-  var pageData = {
+  let pageData = {
     base: process.env.BASE_URL || '',
     user: req.user,
     playlists: undefined,
@@ -13,7 +14,7 @@ router.get('/', function (req, res) {
   };
   if (req.user !== undefined && process.env.SPOTIFY_ACCESS_TOKEN) {
     req.user.currentPlaylist = null;
-    spotify.playlists({
+    playlists({
       id: req.user.id,
       token: process.env.SPOTIFY_ACCESS_TOKEN
     }, function (err, data) {
@@ -45,13 +46,13 @@ router.get('/queue', function (req, res, next) {
 });
 
 router.get('/search', function (req, res, next) {
-  var query = req.query.q || req.query.query || null;
-  // var page = req.params.page || 0;
+  let query = req.query.q || req.query.query || null;
+  // let page = req.params.page || 0;
   if (query == null) {
     res.statusCode = 400;
     return res.json({message: 'Error 400: Malformed search, missing query'});
   }
-  spotify.searchTracks({
+  searchTracks({
     query: query
   }, function (err, data) {
     if (err) {
@@ -63,4 +64,4 @@ router.get('/search', function (req, res, next) {
   });
 });
 
-module.exports = router;
+export default router;
