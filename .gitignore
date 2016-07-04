@@ -33,3 +33,6 @@ npm-debug.log
 
 # Session store db
 sessions.db
+
+# Application debug db
+party.db

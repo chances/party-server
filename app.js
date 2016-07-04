@@ -6,6 +6,7 @@ import connectSqlite from 'connect-sqlite3';
 import bodyParser from 'body-parser';
 
 import cors from './lib/cors';
+import sequelize from './lib/db';
 
 import routes from './routes/index';
 import {default as authInit} from './routes/auth';
@@ -14,6 +15,15 @@ import users from './routes/users';
 let app = express();
 
 let SQLiteStore = connectSqlite(session);
+
+sequelize
+  .authenticate()
+  .then(function(err) {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(function (err) {
+    console.log('Unable to connect to the database:', err);
+  });
 
 // view engine setup
 app.set('views', path.join(__dirname, '../views'));
