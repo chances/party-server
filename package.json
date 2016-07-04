@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "postinstall": "bash deploy.sh",
+    "migrate": "npm run build && node ./build/migrations/index.js",
     "debug": "NODE_ENV=development DEBUG=party:* node --debug ./bin/www",
     "clean": "rm -rf ./build && mkdir ./build",
     "build": "npm run clean && npm run build:js",
