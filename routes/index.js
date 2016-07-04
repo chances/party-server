@@ -1,6 +1,6 @@
 import express from 'express';
 
-import {playlists, searchTracks} from '../lib/spotify';
+import {playlists, playlist, searchTracks} from '../lib/spotify';
 
 let router = express.Router();
 
@@ -26,12 +26,33 @@ router.get('/', function (req, res) {
         res.render('index', pageData);
       } else {
         pageData.playlists = data.items;
+        pageData.user.currentPlaylist = req.session.currentPlaylist;
         res.render('index', pageData);
       }
     });
   } else {
     res.render('index', pageData);
   }
+});
+
+router.get('/playlist', (req, res) => {
+  if (req.query.id && req.user && req.user.meta && req.user.meta.accessToken) {
+    playlist({
+      userId: req.user.id,
+      playlistId: req.query.id,
+      token: req.user.meta.accessToken
+    }, (err, data) => {
+      if (!err) {
+        req.session.currentPlaylist = data;
+      }
+
+      // TODO: Handle errors
+
+      res.redirect('/');
+    });
+  }
+
+  // TODO: Handle malformed/nonexistent query
 });
 
 router.get('/history', function (req, res, next) {
