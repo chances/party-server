@@ -6,6 +6,7 @@ import connectSqlite from 'connect-sqlite3';
 import bodyParser from 'body-parser';
 
 import cors from './lib/cors';
+import acceptsJson from './lib/json';
 import db from './lib/db';
 
 import routes from './routes/index';
@@ -41,6 +42,7 @@ app.use(session({
 }));
 
 app.use(cors);
+app.use(acceptsJson);
 
 app.use(express.static(__dirname + '/public'));
 

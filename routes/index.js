@@ -44,16 +44,34 @@ router.get('/playlist', (req, res) => {
     }, (err, data) => {
       if (!err) {
         req.session.currentPlaylist = data;
+
+        if (req.acceptsJson) {
+          res.json(data);
+        } else {
+          res.redirect('/');
+        }
+      } else {
+        // TODO: Handle errors
+
+        if (req.acceptsJson) {
+          res.json(404, { error: 'Could not get playlist' });
+        } else {
+          res.redirect('/');
+        }
       }
-
-      // TODO: Handle errors
-
-      res.redirect('/');
     });
   } else {
-    // TODO: Handle malformed/nonexistent query
+    if (req.acceptsJson) {
+      if (!req.user) {
+        res.json(401, { error: 'Unauthenticated' });
+      } else {
+        res.json(400, { error: 'Malformed request' });
+      }
+    } else {
+      // TODO: Handle malformed/nonexistent query
 
-    res.redirect('/');
+      res.redirect('/');
+    }
   }
 });
 
