@@ -11,11 +11,11 @@ router.get('/', function (req, res) {
     playlists: undefined,
     error: undefined
   };
-  if (req.user && req.user.meta && req.user.meta.accessToken) {
+  if (req.user && req.user.spotifyUser && req.user.accessToken) {
     req.user.currentPlaylist = null;
     playlists({
-      id: req.user.id,
-      token: req.user.meta.accessToken
+      id: req.user.spotifyUser.id,
+      token: req.user.accessToken
     }, function (err, data) {
       if (err) {
         pageData.error = err;
@@ -24,6 +24,7 @@ router.get('/', function (req, res) {
         pageData.error = data;
         res.render('index', pageData);
       } else {
+        pageData.user = pageData.user.spotifyUser;
         pageData.playlists = data.items;
         pageData.user.currentPlaylist = req.session.currentPlaylist;
         res.render('index', pageData);
@@ -35,11 +36,11 @@ router.get('/', function (req, res) {
 });
 
 router.get('/playlist', (req, res) => {
-  if (req.query.id && req.user && req.user.meta && req.user.meta.accessToken) {
+  if (req.query.id && req.user && req.user.spotifyUser && req.user.accessToken) {
     playlist({
-      userId: req.user.id,
+      userId: req.user.spotifyUser.id,
       playlistId: req.query.id,
-      token: req.user.meta.accessToken
+      token: req.user.accessToken
     }, (err, data) => {
       if (!err) {
         req.session.currentPlaylist = data;
@@ -49,9 +50,11 @@ router.get('/playlist', (req, res) => {
 
       res.redirect('/');
     });
+  } else {
+    // TODO: Handle malformed/nonexistent query
+    
+    res.redirect('/');
   }
-
-  // TODO: Handle malformed/nonexistent query
 });
 
 router.get('/history', function (req, res, next) {

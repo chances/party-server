@@ -6,7 +6,7 @@ import connectSqlite from 'connect-sqlite3';
 import bodyParser from 'body-parser';
 
 import cors from './lib/cors';
-import sequelize from './lib/db';
+import db from './lib/db';
 
 import routes from './routes/index';
 import {default as authInit} from './routes/auth';
@@ -16,9 +16,9 @@ let app = express();
 
 let SQLiteStore = connectSqlite(session);
 
-sequelize
+db.sequelize
   .authenticate()
-  .then(function(err) {
+  .then(function () {
     console.log('Connection has been established successfully.');
   })
   .catch(function (err) {

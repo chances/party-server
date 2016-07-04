@@ -2,6 +2,10 @@ import express from 'express';
 import passport from 'passport';
 import passportSpotify from 'passport-spotify';
 
+import models from '../models';
+
+let User = models.User;
+
 export default function initialize (app) {
   let appKey = process.env.SPOTIFY_APP_KEY;
   let appSecret = process.env.SPOTIFY_APP_SECRET;
@@ -24,11 +28,14 @@ export default function initialize (app) {
   //   have a database of user records, the complete spotify profile is serialized
   //   and deserialized.
   passport.serializeUser(function (user, done) {
-    done(null, user);
+    done(null, user.id);
   });
 
-  passport.deserializeUser(function (obj, done) {
-    done(null, obj);
+  passport.deserializeUser(function (id, done) {
+    User.findById(id).then((user) => {
+      user.spotifyUser = JSON.parse(user.spotifyUser);
+      done(null, user);
+    });
   });
 
   // Use the SpotifyStrategy within Passport.
@@ -41,29 +48,37 @@ export default function initialize (app) {
     callbackURL: appCallback
   },
   function (accessToken, refreshToken, profile, done) {
-    // asynchronous verification, for effect...
-    process.nextTick(function () {
-      // To keep the example simple, the user's spotify profile is returned to
-      // represent the logged-in user. In a typical application, you would want
-      // to associate the spotify account with a user record in your database,
-      // and return that user instead.
-      // TODO: User persistence (also with passport user above?)
-      /*
-       provider: 'spotify',
-       id: 'enigmaticeffigy',
-       username: 'enigmaticeffigy',
-       displayName: 'Chance Snow',
-       profileUrl: 'https://open.spotify.com/user/enigmaticeffigy',
-       photos: [ 'url' ],
-       country: 'US',
-       followers: 9,
-       product: 'premium',
-       */
-      profile.meta = {
-        accessToken: accessToken,
-        refreshToken: refreshToken
-      };
-      return done(null, profile);
+    // To keep the example simple, the user's spotify profile is returned to
+    // represent the logged-in user. In a typical application, you would want
+    // to associate the spotify account with a user record in your database,
+    // and return that user instead.
+
+    /*
+     provider: 'spotify',
+     id: 'enigmaticeffigy',
+     username: 'enigmaticeffigy',
+     displayName: 'Chance Snow',
+     profileUrl: 'https://open.spotify.com/user/enigmaticeffigy',
+     photos: [ 'url' ],
+     country: 'US',
+     followers: 9,
+     product: 'premium',
+     */
+
+    User.findOrInitialize({
+      where: { username: profile.username }
+    }).spread((user) => {
+      user.spotifyUser = JSON.stringify(profile);
+      user.accessToken = accessToken;
+      user.refreshToken = refreshToken;
+
+      return user.validate().then((err) => {
+        if (!err) {
+          return user.save();
+        }
+      }).then(() => {
+        done(null, user);
+      });
     });
   }));
 
