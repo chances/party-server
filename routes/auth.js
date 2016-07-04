@@ -42,7 +42,6 @@ export default function initialize (app) {
     callbackURL: appCallback
   },
   function (accessToken, refreshToken, profile, done) {
-    process.env.SPOTIFY_ACCESS_TOKEN = accessToken;
     // asynchronous verification, for effect...
     process.nextTick(function () {
       // To keep the example simple, the user's spotify profile is returned to
@@ -61,6 +60,10 @@ export default function initialize (app) {
        followers: 9,
        product: 'premium',
        */
+      profile.meta = {
+        accessToken: accessToken,
+        refreshToken: refreshToken
+      };
       return done(null, profile);
     });
   }));

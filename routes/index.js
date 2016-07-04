@@ -12,11 +12,11 @@ router.get('/', function (req, res) {
     playlists: undefined,
     error: undefined
   };
-  if (req.user !== undefined && process.env.SPOTIFY_ACCESS_TOKEN) {
+  if (req.user && req.user.meta && req.user.meta.accessToken) {
     req.user.currentPlaylist = null;
     playlists({
       id: req.user.id,
-      token: process.env.SPOTIFY_ACCESS_TOKEN
+      token: req.user.meta.accessToken
     }, function (err, data) {
       if (err) {
         pageData.error = err;
