@@ -30,11 +30,11 @@ a.link-back {
 <body>
 <% if (!user) { %>
 <p>
-  <a href="<%= base %>/auth">Login with Spotify</a>
+  <a href="/auth">Login with Spotify</a>
 </p>
 <% } else { %>
 <p>
-  <a href="<%= base %>/auth/logout">Log Out</a>
+  <a href="/auth/logout">Log Out</a>
 </p>
 <h1>Logged in as <%= user.displayName %></h1>
 <img id="avatar" width="200" src="<%= user.photos[0] %>" />
@@ -52,7 +52,7 @@ a.link-back {
 <ul><% for (var i = 0; i < playlists.length; i += 1) { %>
   <% if (playlists[i].owner.id === user.id) { %>
   <li>
-    <a href="<%= base %>/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
+    <a href="/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
     <a href="<%= playlists[i].href %>" class="link-back">On Spotify</a></li>
   <% } %>
 <% } %></ul>

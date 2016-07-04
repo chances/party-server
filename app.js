@@ -34,13 +34,11 @@ app.use(cors);
 
 app.use(express.static(__dirname + '/public'));
 
-let base = process.env.BASE_URL || '';
-
 let auth = authInit(app);
 
-app.use(base + '/', routes);
-app.use(base + '/auth', auth);
-app.use(base + '/users', users);
+app.use('/', routes);
+app.use('/auth', auth);
+app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

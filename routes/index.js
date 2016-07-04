@@ -7,7 +7,6 @@ let router = express.Router();
 /* GET home page. */
 router.get('/', function (req, res) {
   let pageData = {
-    base: process.env.BASE_URL || '',
     user: req.user,
     playlists: undefined,
     error: undefined

@@ -3,7 +3,6 @@ import passport from 'passport';
 import passportSpotify from 'passport-spotify';
 
 export default function initialize (app) {
-  let base = process.env.BASE_URL || '';
   let appKey = process.env.SPOTIFY_APP_KEY;
   let appSecret = process.env.SPOTIFY_APP_SECRET;
   let appCallback = process.env.SPOTIFY_CALLBACK;
@@ -93,12 +92,12 @@ export default function initialize (app) {
   router.get('/callback',
     passport.authenticate('spotify', { failureRedirect: '/' }),
     function (req, res) {
-      res.redirect(base + '/');
+      res.redirect('/');
     });
 
   router.get('/logout', function (req, res) {
     req.logout();
-    res.redirect(base + '/');
+    res.redirect('/');
   });
 
   return router;
