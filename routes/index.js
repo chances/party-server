@@ -52,7 +52,7 @@ router.get('/playlist', (req, res) => {
     });
   } else {
     // TODO: Handle malformed/nonexistent query
-    
+
     res.redirect('/');
   }
 });
