@@ -8,7 +8,7 @@ import bodyParser from 'body-parser';
 import cors from './lib/cors';
 
 import routes from './routes/index';
-import auth from './routes/auth';
+import {default as authInit} from './routes/auth';
 import users from './routes/users';
 
 let app = express();
@@ -36,8 +36,10 @@ app.use(express.static(__dirname + '/public'));
 
 let base = process.env.BASE_URL || '';
 
+let auth = authInit(app);
+
 app.use(base + '/', routes);
-app.use(base + '/auth', auth(app));
+app.use(base + '/auth', auth);
 app.use(base + '/users', users);
 
 // catch 404 and forward to error handler
