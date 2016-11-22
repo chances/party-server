@@ -1,9 +1,9 @@
 module Main where
 
-import App
+import App (run)
 
-import System.Environment
-import System.IO
+import System.Environment (getEnvironment)
+import System.IO (hSetBuffering, IO(..), BufferMode(LineBuffering), stdout)
 
 main :: IO ()
 main = do

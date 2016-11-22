@@ -9,7 +9,20 @@ import Data.List
 import Data.Time.Calendar (fromGregorian)
 
 import Servant
+  ( (:>)
+  , FromHttpApiData
+  , Get
+  , Handler
+  , JSON
+  , parseQueryParam
+  , parseUrlPiece
+  , Proxy(..)
+  , QueryParam
+  , serve
+  , Server
+  )
 import Web.HttpApiData (parseBoundedTextData)
+import Network.Wai (Application)
 import qualified Network.Wai.Handler.Warp as Warp
 
 type UserAPI = "users" :> QueryParam "sortby" SortBy :> Get '[JSON] [User]
