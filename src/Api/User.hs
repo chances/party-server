@@ -25,6 +25,9 @@ type UserAPI =
     :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Entity User)
     :<|> "user" :> ReqBody '[JSON] User :> Post '[JSON] Int64
 
+badRequest ::String -> ServantErr
+badRequest message = err400 { errBody = strToLazyBS message }
+
 notFound :: String -> ServantErr
 notFound message = err404 { errBody = strToLazyBS message }
 
@@ -51,7 +54,7 @@ createUser p = do
     let insertUser = insertUnique user :: SqlPersistT IO (Maybe (Key User))
     maybeNewUserKey <- runDb insertUser
     case maybeNewUserKey of
-        Nothing -> throwError err400
+        Nothing -> throwError $ badRequest "User was not created, ensure username is unique"
         Just newUserKey ->
             return $ fromSqlKey newUserKey
 
