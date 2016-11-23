@@ -8,9 +8,6 @@ module Api.User
     ) where
 
 import           Control.Monad.Reader        (liftIO)
-import qualified Data.ByteString.Lazy        as BS
-import           Data.ByteString.Lazy.Char8  (ByteString)
-import qualified Data.ByteString.Lazy.Char8  as C8
 import           Data.Int                    (Int64)
 import           Data.List                   (sortOn)
 import           Data.Time.Clock             (getCurrentTime)
@@ -23,17 +20,15 @@ import           Servant
 
 import           Config                      (App (..))
 import           Models
+import           Utils                       (strToLazyBS)
 
 type UserAPI =
          "users" :> Get '[JSON] [Entity User]
     :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Entity User)
     :<|> "user" :> ReqBody '[JSON] User :> Post '[JSON] Int64
 
-strToBS :: String -> ByteString
-strToBS = C8.pack
-
 notFound :: String -> ServantErr
-notFound message = err404 { errBody = strToBS message }
+notFound message = err404 { errBody = strToLazyBS message }
 
 allUsers :: App [Entity User]
 allUsers = runDb (selectList [] [])
