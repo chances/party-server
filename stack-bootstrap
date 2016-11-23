@@ -1,1 +1,1 @@
-persistent persistent-postgresql persistent-template servant-server wai wai-extra warp
+persistent persistent-postgresql persistent-template servant-server wai wai-cors wai-extra warp

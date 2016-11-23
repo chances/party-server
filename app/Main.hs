@@ -29,7 +29,9 @@ main = do
     -- Setup app configuration
     env <- lookupSetting "ENV" Development
     port <- lookupSetting "PORT" 8080
+    corsOrigin <- lookupSetting "CORS_ORIGIN" "http://chancesnow.me"
     pool <- makePool env
-    let cfg = defaultConfig { getPool = pool, getPort = port, getEnv = env }
+    let cfg = defaultConfig { getPool = pool, getPort = port, getEnv = env
+        , getCorsOrigin = corsOrigin }
 
     run cfg

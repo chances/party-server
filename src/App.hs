@@ -12,7 +12,8 @@ import           Servant                  ((:<|>) (..), (:~>) (Nat), Proxy (..),
                                            serve, serveDirectory)
 
 import           Api.User                 (UserAPI, userServer)
-import           Config                   (App (..), Config (..), setLogger)
+import           Config                   (App (..), Config (..),
+                                           envSetCorsOrigin, setLogger)
 import           Database.Party           (runSqlPool)
 import           Models
 
@@ -42,10 +43,15 @@ app cfg = serve appAPI (appToServer cfg :<|> files)
 
 run :: Config -> IO ()
 run cfg = do
-    let logger = setLogger (getEnv cfg) :: Middleware
-
-    -- Start Postgres pool and run the app
     let pool = getPool cfg
         port = getPort cfg
+        -- Setup middleware
+        env = getEnv cfg
+        logger = setLogger env :: Middleware
+        corsPolicy = envSetCorsOrigin env (getCorsOrigin cfg) :: Middleware
+
+        application = logger $ corsPolicy $ app cfg
+
+    -- Start Postgres pool and run the app
     runSqlPool doMigrations pool
-    Warp.run port $ logger $ app cfg
+    Warp.run port application

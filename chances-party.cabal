@@ -19,6 +19,7 @@ library
                      , Config
                      , Database.Party
   other-modules:       Api.User
+                     , Middleware.Cors
                      , Models
                      , Utils
   build-depends:       base >= 4.7 && < 5
