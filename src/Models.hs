@@ -33,8 +33,8 @@ User json
     accessToken String Maybe
     refreshToken String Maybe
 
-    createdAt UTCTime default="(now() at time zone 'utc')"
-    updatedAt UTCTime default="(now() at time zone 'utc')"
+    createdAt UTCTime Maybe default="(now() at time zone 'utc')"
+    updatedAt UTCTime Maybe default="(now() at time zone 'utc')"
 
     UniqueUsername username
     deriving Eq

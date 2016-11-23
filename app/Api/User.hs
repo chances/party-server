@@ -50,7 +50,7 @@ singleUser key = do
 newUser :: String -> String -> App User
 newUser username spotifyUser = do
     currentTime <- liftIO getCurrentTime
-    return (User username spotifyUser Nothing Nothing currentTime currentTime)
+    return (User username spotifyUser Nothing Nothing (Just currentTime) (Just currentTime))
 
 createUser :: User -> App Int64
 createUser p = do
