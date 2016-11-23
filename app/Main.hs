@@ -1,13 +1,28 @@
 module Main where
 
-import App (run)
+import           Network.Wai.Handler.Warp (run)
+import           System.IO                (BufferMode (LineBuffering), IO (..),
+                                           hSetBuffering, stdout)
 
-import System.Environment (getEnvironment)
-import System.IO (hSetBuffering, IO(..), BufferMode(LineBuffering), stdout)
+import           App                      (app)
+import           Config                   (Config (..),
+                                           Environment (Development),
+                                           defaultConfig, envPool,
+                                           lookupSetting, setLogger)
+import           Database.Party           (makePool, runSqlPool)
+import           Models                   (doMigrations)
 
 main :: IO ()
 main = do
     hSetBuffering stdout LineBuffering
-    env <- getEnvironment
-    let port = maybe 8080 read $ lookup "PORT" env
-    run port
+
+    -- Setup app configuration
+    env <- lookupSetting "ENV" Development
+    port <- lookupSetting "PORT" 8080
+    pool <- makePool env
+    let cfg = defaultConfig { getPool = pool, getPort = port, getEnv = env }
+        logger = setLogger env
+
+    -- Start Postgres pool and run the app
+    runSqlPool doMigrations pool
+    run port $ logger $ app cfg

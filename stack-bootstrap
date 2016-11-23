@@ -1,1 +1,1 @@
-persistent persistent-postgresql persistent-template servant-server wai warp
+persistent persistent-postgresql persistent-template servant-server wai wai-extra warp
