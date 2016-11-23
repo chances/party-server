@@ -1,18 +1,14 @@
 module Main where
 
-import qualified Configuration.Dotenv     as Dotenv
-import           Network.Wai.Handler.Warp (run)
-import           System.Directory         (doesFileExist)
-import           System.IO                (BufferMode (LineBuffering), IO (..),
-                                           hSetBuffering, stdout)
+import qualified Configuration.Dotenv as Dotenv
+import           System.Directory     (doesFileExist)
+import           System.IO            (BufferMode (LineBuffering), IO (..),
+                                       hSetBuffering, stdout)
 
-import           App                      (app)
-import           Config                   (Config (..),
-                                           Environment (Development),
-                                           defaultConfig, envPool,
-                                           lookupSetting, setLogger)
-import           Database.Party           (makePool, runSqlPool)
-import           Models                   (doMigrations)
+import           App                  (run)
+import           Config               (Config (..), Environment (Development),
+                                       defaultConfig, envPool, lookupSetting)
+import           Database.Party       (makePool)
 
 main :: IO ()
 main = do
@@ -35,8 +31,5 @@ main = do
     port <- lookupSetting "PORT" 8080
     pool <- makePool env
     let cfg = defaultConfig { getPool = pool, getPort = port, getEnv = env }
-        logger = setLogger env
 
-    -- Start Postgres pool and run the app
-    runSqlPool doMigrations pool
-    run port $ logger $ app cfg
+    run cfg
