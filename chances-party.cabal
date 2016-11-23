@@ -33,6 +33,8 @@ library
                      , persistent-postgresql
                      , persistent-template
                      , servant-server
+                     , serversession
+                     , serversession-backend-persistent
                      , string-conversions
                      , time
                      , text

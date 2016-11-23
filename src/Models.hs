@@ -13,20 +13,17 @@
 
 module Models where
 
-import           Database.Persist.Postgresql (SqlPersistT, runMigration,
-                                              runSqlPool)
-import           Database.Persist.TH         (mkMigrate, mkPersist,
-                                              persistLowerCase, share,
-                                              sqlSettings)
 import           Control.Monad.Reader (liftIO)
 import           Data.Aeson           (FromJSON, ToJSON)
 import           Data.Time            (UTCTime (..))
 import           Data.Time.Clock      (getCurrentTime)
+import           Database.Persist.TH  (mkPersist, mkSave, persistLowerCase,
+                                       share, sqlSettings)
 import           GHC.Generics         (Generic)
 
 import           Config               (App (..))
 
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
 User json
     username String
     spotifyUser String
@@ -42,13 +39,6 @@ User json
     deriving Generic
 |]
 
-doMigrations :: SqlPersistT IO ()
-doMigrations = runMigration migrateAll
-
-runDb :: (MonadReader Config m, MonadIO m) => SqlPersistT IO b -> m b
-runDb query = do
-    pool <- asks getPool
-    liftIO $ runSqlPool query pool
 data NewUser = NewUser
     { username     :: String
     , spotifyUser  :: String
