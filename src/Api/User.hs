@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeOperators     #-}
 
 module Api.User
-    ( UserAPI(..)
+    ( UserAPI
     , userServer
     ) where
 
@@ -11,9 +11,7 @@ import           Control.Monad.Reader        (liftIO)
 import           Data.Int                    (Int64)
 import           Data.List                   (sortOn)
 import           Data.Time.Clock             (getCurrentTime)
-import           Database.Persist.Class      (liftPersist)
-import           Database.Persist.Postgresql (Entity (..), Key,
-                                              PersistEntityBackend, SqlPersistT,
+import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))
 import           Servant
