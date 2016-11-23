@@ -36,7 +36,7 @@ appAPI :: Proxy AppAPI
 appAPI = Proxy
 
 files :: Application
-files = serveDirectory "assets"
+files = serveDirectory "public"
 
 app :: Config -> Application
 app cfg = serve appAPI (appToServer cfg :<|> files)
