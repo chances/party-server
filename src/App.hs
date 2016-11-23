@@ -4,28 +4,19 @@
 module App (app, run) where
 
 import           Control.Monad.Except
-import           Control.Monad.Reader       (MonadIO, MonadReader, ReaderT,
-                                             runReaderT)
-import           Control.Monad.Reader.Class
-import           Control.Monad.Trans.Either (EitherT)
-import           Network.Wai                (Application, Middleware)
-import qualified Network.Wai.Handler.Warp   as Warp
-import           Servant                    ((:<|>) (..), (:>), (:~>) (Nat),
-                                             Proxy (..), Raw, ServantErr,
-                                             Server, enter, serve,
-                                             serveDirectory)
+import           Control.Monad.Reader     (runReaderT)
+import           Network.Wai              (Application, Middleware)
+import qualified Network.Wai.Handler.Warp as Warp
+import           Servant                  ((:<|>) (..), (:~>) (Nat), Proxy (..),
+                                           Raw, ServantErr, Server, enter,
+                                           serve, serveDirectory)
 
-import           Api.User                   (UserAPI, userServer)
-import           Config                     (App (..), Config (..), setLogger)
-import           Database.Party             (runSqlPool)
+import           Api.User                 (UserAPI, userServer)
+import           Config                   (App (..), Config (..), setLogger)
+import           Database.Party           (runSqlPool)
 import           Models
 
-type AppM = ReaderT Config (EitherT ServantErr IO)
-
 type AppAPI = UserAPI :<|> Raw
-
-userApp :: Config -> Application
-userApp cfg = serve (Proxy :: Proxy UserAPI) (appToServer cfg)
 
 -- | This functions tells Servant how to run the 'App' monad with our
 -- 'server' function.
