@@ -17,13 +17,14 @@ import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
 import           Servant
 
 import           Config                      (App (..))
+import           Database.Party              (runDb)
 import           Models
 import           Utils                       (strToLazyBS)
 
 type UserAPI =
          "users" :> Get '[JSON] [Entity User]
     :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Entity User)
-    :<|> "user" :> ReqBody '[JSON] User :> Post '[JSON] Int64
+    :<|> "user" :> ReqBody '[JSON] NewUser :> Post '[JSON] Int64
 
 badRequest ::String -> ServantErr
 badRequest message = err400 { errBody = strToLazyBS message }
@@ -43,14 +44,9 @@ singleUser key = do
          Just person ->
             return person
 
-newUser :: String -> String -> App User
-newUser username spotifyUser = do
-    currentTime <- liftIO getCurrentTime
-    return (User username spotifyUser Nothing Nothing (Just currentTime) (Just currentTime))
-
-createUser :: User -> App Int64
+createUser :: NewUser -> App Int64
 createUser p = do
-    user <- newUser (userUsername p) (userSpotifyUser p)
+    user <- toUser p
     let insertUser = insertUnique user :: SqlPersistT IO (Maybe (Key User))
     maybeNewUserKey <- runDb insertUser
     case maybeNewUserKey of
