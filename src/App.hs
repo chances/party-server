@@ -1,21 +1,31 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module App (app, run) where
 
 import           Control.Monad.Except
-import           Control.Monad.Reader     (runReaderT)
-import           Network.Wai              (Application, Middleware)
-import qualified Network.Wai.Handler.Warp as Warp
-import           Servant                  ((:<|>) (..), (:~>) (Nat), Proxy (..),
-                                           Raw, ServantErr, Server, enter,
-                                           serve, serveDirectory)
+import           Control.Monad.Reader                 (runReaderT)
+import           Network.Wai                          (Application, Middleware)
+import qualified Network.Wai.Handler.Warp             as Warp
+import           Servant                              ((:<|>) (..), (:~>) (Nat),
+                                                       Proxy (..), Raw,
+                                                       ServantErr, Server,
+                                                       enter, serve,
+                                                       serveDirectory)
+import           Web.ServerSession.Backend.Persistent (SqlStorage (..))
+import           Web.ServerSession.Frontend.Wai       (setAuthKey,
+                                                       setCookieName,
+                                                       withServerSession)
 
-import           Api.User                 (UserAPI, userServer)
-import           Config                   (App (..), Config (..),
-                                           envSetCorsOrigin, setLogger)
-import           Database.Party           (runSqlPool)
-import           Models
+import           Api.User                             (UserAPI, userServer)
+import           Config                               (App (..), Config (..),
+                                                       envSetCorsOrigin,
+                                                       setLogger)
+import           Database.Party                       (doMigrations, runSqlPool)
 
 type AppAPI = UserAPI :<|> Raw
 
@@ -41,16 +51,28 @@ files = serveDirectory "public"
 app :: Config -> Application
 app cfg = serve appAPI (appToServer cfg :<|> files)
 
+-- type PartySession = Session IO Text ByteString
+
+sessionMiddleware :: Config -> IO Middleware
+sessionMiddleware cfg = do
+    sessionKey <- getVaultKey cfg -- :: IO (Vault.Key PartySession)
+    let sessionStorage = SqlStorage { connPool = getPool cfg }
+        sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
+    withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
+
 run :: Config -> IO ()
 run cfg = do
-    let pool = getPool cfg
-        port = getPort cfg
+    let port = getPort cfg
+        pool = getPool cfg
         -- Setup middleware
         env = getEnv cfg
         logger = setLogger env :: Middleware
         corsPolicy = envSetCorsOrigin env (getCorsOrigin cfg) :: Middleware
 
-        application = logger $ corsPolicy $ app cfg
+    session <- sessionMiddleware cfg
+
+    let middleware = logger . corsPolicy . session
+        application = middleware $ app cfg
 
     -- Start Postgres pool and run the app
     runSqlPool doMigrations pool

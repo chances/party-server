@@ -35,12 +35,15 @@ library
                      , servant-server
                      , serversession
                      , serversession-backend-persistent
+                     , serversession-frontend-wai
                      , string-conversions
                      , time
                      , text
+                     , vault
                      , wai
                      , wai-cors
                      , wai-extra
+                     , wai-session
                      , warp
   ghc-options:         -Wall
   default-language:    Haskell2010

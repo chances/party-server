@@ -15,11 +15,15 @@ module Config
 import           Control.Monad.Except                 (ExceptT, MonadError)
 import           Control.Monad.Reader                 (MonadIO, MonadReader,
                                                        ReaderT)
+import           Data.ByteString                      (ByteString)
+import           Data.Text                            (Text)
+import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (ConnectionPool)
 import           Network.Wai                          (Middleware)
 import           Network.Wai.Handler.Warp             (Port)
 import qualified Network.Wai.Middleware.Cors          as Cors
 import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
+import           Network.Wai.Session                  (Session)
 import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
 
@@ -40,6 +44,7 @@ data Config = Config
     , getPort       :: Port
     , getEnv        :: Environment
     , getCorsOrigin :: String
+    , getVaultKey   :: IO (Vault.Key (Session IO Text ByteString))
     }
 
 data Environment =
@@ -60,6 +65,7 @@ defaultConfig = Config
     , getPort = 8080
     , getEnv = Development
     , getCorsOrigin = "http://chancesnow.me"
+    , getVaultKey = Vault.newKey
     }
 
 setLogger :: Environment -> Middleware
