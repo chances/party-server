@@ -17,8 +17,8 @@ import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
 import           Servant
 
 import           Config                      (App (..))
+import           Database.Models
 import           Database.Party              (runDb)
-import           Models
 import           Utils                       (strToLazyBS)
 
 type UserAPI =

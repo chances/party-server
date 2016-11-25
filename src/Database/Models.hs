@@ -11,7 +11,7 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 
-module Models where
+module Database.Models where
 
 import           Control.Monad.Reader (liftIO)
 import           Data.Aeson           (FromJSON, ToJSON)

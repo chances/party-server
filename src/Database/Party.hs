@@ -24,7 +24,7 @@ import qualified Web.ServerSession.Backend.Persistent as SS
 import qualified Web.ServerSession.Core               as SS
 
 import           Config                      (Config (..), Environment (..), envPool, getPool)
-import Models (entityDefs)
+import Database.Models (entityDefs)
 
 makePool :: Environment -> IO ConnectionPool
 makePool Test = do
