@@ -51,11 +51,9 @@ files = serveDirectory "public"
 app :: Config -> Application
 app cfg = serve appAPI (appToServer cfg :<|> files)
 
--- type PartySession = Session IO Text ByteString
-
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
-    sessionKey <- getVaultKey cfg -- :: IO (Vault.Key PartySession)
+    sessionKey <- getVaultKey cfg
     let sessionStorage = SqlStorage { connPool = getPool cfg }
         sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
     withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
@@ -71,6 +69,7 @@ run cfg = do
 
     session <- sessionMiddleware cfg
 
+    -- Compose middleware pipeline
     let middleware = logger . corsPolicy . session
         application = middleware $ app cfg
 
