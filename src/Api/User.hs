@@ -10,7 +10,6 @@ module Api.User
 import           Control.Monad.Reader        (liftIO)
 import           Data.Int                    (Int64)
 import           Data.List                   (sortOn)
-import           Data.Time.Clock             (getCurrentTime)
 import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))

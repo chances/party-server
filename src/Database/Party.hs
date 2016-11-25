@@ -1,6 +1,6 @@
-{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Database.Party
     ( doMigrations
@@ -9,22 +9,28 @@ module Database.Party
     , runDb
     ) where
 
-import           Control.Exception           (throwIO)
-import           Control.Monad.Logger        (runNoLoggingT, runStdoutLoggingT)
-import           Control.Monad.Reader        (MonadIO, MonadReader, asks,
-                                              liftIO)
-import qualified Data.Proxy          as P
-import           Data.ByteString.Char8       (pack)
-import           Database.Persist.Postgresql (ConnectionPool, ConnectionString, SqlPersistT,
-                                              createPostgresqlPool, runMigration, runSqlPool)
-import qualified Database.Persist.Postgresql as Postgres
-import Database.Persist.TH (mkMigrate)
-import           System.Environment          (lookupEnv)
+import           Control.Exception                    (throwIO)
+import           Control.Monad.Logger                 (runNoLoggingT,
+                                                       runStdoutLoggingT)
+import           Control.Monad.Reader                 (MonadIO, MonadReader,
+                                                       asks, liftIO)
+import qualified Data.Proxy                           as P
+import           Data.ByteString.Char8                (pack)
+import           Database.Persist.Postgresql          (ConnectionPool,
+                                                       ConnectionString,
+                                                       SqlPersistT,
+                                                       createPostgresqlPool,
+                                                       runMigration, runSqlPool)
+import qualified Database.Persist.Postgresql          as Postgres
+import           Database.Persist.TH                  (mkMigrate)
+import           System.Environment                   (lookupEnv)
 import qualified Web.ServerSession.Backend.Persistent as SS
 import qualified Web.ServerSession.Core               as SS
 
-import           Config                      (Config (..), Environment (..), envPool, getPool)
-import Database.Models (entityDefs)
+import           Config                               (Config (..),
+                                                       Environment (..),
+                                                       envPool, getPool)
+import           Database.Models                      (entityDefs)
 
 makePool :: Environment -> IO ConnectionPool
 makePool Test = do
