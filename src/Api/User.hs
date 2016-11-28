@@ -21,7 +21,8 @@ import           Database.Models
 import           Database.Party              (runDb)
 import           Middleware.Session          (SessionState (..),
                                               invalidateSession, startSession)
-import           Utils                       (badRequest, notFound, serverError)
+import           Utils                       (badRequest, noSessionError,
+                                              notFound, serverError)
 
 type UsersGetAPI = "users"
     :> Get '[JSON] (Envelope [Entity User])
@@ -39,9 +40,6 @@ type LogoutAPI   = "logout"
 type UserAPI =
          UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
     :<|> LogoutAPI
-
-noSessionError :: ServantErr
-noSessionError = serverError "No session"
 
 allUsers :: App (Envelope [Entity User])
 allUsers = do

@@ -1,5 +1,6 @@
 module Utils
     ( badRequest
+    , noSessionError
     , notFound
     , serverError
     , jsonContentType
@@ -14,6 +15,9 @@ import           Servant
 
 jsonContentType :: HTTP.Header
 jsonContentType = (HTTP.hContentType, strToBS "application/json")
+
+noSessionError :: ServantErr
+noSessionError = serverError "No session"
 
 badRequest :: String -> ServantErr
 badRequest message = err400 { errBody = strToLazyBS message }
