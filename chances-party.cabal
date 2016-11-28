@@ -21,6 +21,7 @@ library
   other-modules:       Api.User
                      , Database.Models
                      , Middleware.Cors
+                     , Middleware.Session
                      , Utils
   build-depends:       base >= 4.7 && < 5
                      , aeson

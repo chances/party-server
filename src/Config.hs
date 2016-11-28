@@ -5,6 +5,7 @@ module Config
     ( App(..)
     , Config(..)
     , Environment(..)
+    , PartySession
     , defaultConfig
     , envPool
     , envSetCorsOrigin
@@ -23,11 +24,20 @@ import           Network.Wai                          (Middleware)
 import           Network.Wai.Handler.Warp             (Port)
 import qualified Network.Wai.Middleware.Cors          as Cors
 import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
-import           Network.Wai.Session                  (Session)
+import qualified Network.Wai.Session                  as WS
 import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
+import           System.IO.Unsafe                     (unsafePerformIO)
 
 import           Middleware.Cors                      (getCorsPolicy)
+
+type PartySession = WS.Session IO Text ByteString
+-- type PartySession = Session SessionMap
+-- type PartySession = Session IO Text ByteString
+-- Session is a (sessionLookup, sessionInsert) pair
+-- (key -> m (Maybe value), key -> value -> m ())
+-- (lookup                       , insert)
+-- (Text -> IO (Maybe ByteString), Text -> ByteString -> IO ())
 
 newtype App a = App
     { runApp :: ReaderT Config (ExceptT ServantErr IO) a } deriving
@@ -44,7 +54,7 @@ data Config = Config
     , getPort       :: Port
     , getEnv        :: Environment
     , getCorsOrigin :: String
-    , getVaultKey   :: IO (Vault.Key (Session IO Text ByteString))
+    , getVaultKey   :: Vault.Key PartySession
     }
 
 data Environment =
@@ -65,7 +75,7 @@ defaultConfig = Config
     , getPort = 8080
     , getEnv = Development
     , getCorsOrigin = "http://chancesnow.me"
-    , getVaultKey = Vault.newKey
+    , getVaultKey = setVaultKey
     }
 
 setLogger :: Environment -> Middleware
@@ -82,3 +92,6 @@ envSetCorsOrigin :: Environment -> String -> Middleware
 envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOrigin)
 envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
 envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
+
+setVaultKey :: Vault.Key PartySession
+setVaultKey = unsafePerformIO $ Vault.newKey

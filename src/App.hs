@@ -8,24 +8,19 @@
 module App (app, run) where
 
 import           Control.Monad.Except
-import           Control.Monad.Reader                 (runReaderT)
-import           Network.Wai                          (Application, Middleware)
-import qualified Network.Wai.Handler.Warp             as Warp
-import           Servant                              ((:<|>) (..), (:~>) (Nat),
-                                                       Proxy (..), Raw,
-                                                       ServantErr, Server,
-                                                       enter, serve,
-                                                       serveDirectory)
-import           Web.ServerSession.Backend.Persistent (SqlStorage (..))
-import           Web.ServerSession.Frontend.Wai       (setAuthKey,
-                                                       setCookieName,
-                                                       withServerSession)
+import           Control.Monad.Reader     (runReaderT)
+import           Data.Text                (unpack)
+import           Network.Wai              (Application, Middleware)
+import qualified Network.Wai.Handler.Warp as Warp
+import           Servant                  ((:<|>) (..), (:~>) (Nat), Proxy (..),
+                                           Raw, ServantErr, Server, enter,
+                                           layout, serve, serveDirectory)
 
-import           Api.User                             (UserAPI, userServer)
-import           Config                               (App (..), Config (..),
-                                                       envSetCorsOrigin,
-                                                       setLogger)
-import           Database.Party                       (doMigrations, runSqlPool)
+import           Api.User                 (UserAPI, userServer)
+import           Config                   (App (runApp), Config (..),
+                                           envSetCorsOrigin, setLogger)
+import           Database.Party           (doMigrations, runSqlPool)
+import           Middleware.Session       (sessionMiddleware)
 
 type AppAPI = UserAPI :<|> Raw
 
@@ -50,13 +45,6 @@ files = serveDirectory "public"
 
 app :: Config -> Application
 app cfg = serve appAPI (appToServer cfg :<|> files)
-
-sessionMiddleware :: Config -> IO Middleware
-sessionMiddleware cfg = do
-    sessionKey <- getVaultKey cfg
-    let sessionStorage = SqlStorage { connPool = getPool cfg }
-        sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
-    withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
 
 run :: Config -> IO ()
 run cfg = do
