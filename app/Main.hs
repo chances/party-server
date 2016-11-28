@@ -7,7 +7,7 @@ import           System.IO            (BufferMode (LineBuffering),
 
 import           App                  (run)
 import           Config               (Config (..), Environment (Development),
-                                       defaultConfig, envPool, lookupSetting)
+                                       defaultConfig, lookupSetting)
 import           Database.Party       (makePool)
 
 main :: IO ()

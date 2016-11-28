@@ -12,7 +12,6 @@ import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))
 import           Servant
-import           Servant.Utils.Links         (safeLink)
 
 import           Api.Envelope                (Envelope, fromServantError,
                                               success)
@@ -22,7 +21,7 @@ import           Database.Party              (runDb)
 import           Middleware.Session          (SessionState (..),
                                               invalidateSession, startSession)
 import           Utils                       (badRequest, noSessionError,
-                                              notFound, serverError)
+                                              notFound)
 
 type UsersGetAPI = "users"
     :> Get '[JSON] (Envelope [Entity User])
