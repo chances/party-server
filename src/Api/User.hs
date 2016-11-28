@@ -24,10 +24,18 @@ import           Middleware.Session          (SessionState (..),
                                               invalidateSession, startSession)
 import           Utils                       (badRequest, notFound, serverError)
 
-type UsersGetAPI = "users" :> Get '[JSON] (Envelope [Entity User])
-type UserGetAPI  = "user" :> Capture "id" UserId :> Get '[JSON] (Envelope (Entity User))
-type UserPostAPI = "user" :> Vault :> ReqBody '[JSON] NewUser :> PostCreated '[JSON] (Headers '[Header "Location" String] (Envelope Int64))
-type LogoutAPI   = "logout" :> Vault :> Get '[JSON] (Envelope String)
+type UsersGetAPI = "users"
+    :> Get '[JSON] (Envelope [Entity User])
+type UserGetAPI  = "user"
+    :> Capture "id" UserId
+    :> Get '[JSON] (Envelope (Entity User))
+type UserPostAPI = "user"
+    :> Vault :> ReqBody '[JSON] NewUser
+    :> PostCreated '[JSON] (Headers '[Header "Location" String] (Envelope Int64))
+
+type LogoutAPI   = "logout"
+    :> Vault
+    :> Get '[JSON] (Envelope String)
 
 type UserAPI =
          UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
