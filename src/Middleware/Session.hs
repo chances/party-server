@@ -5,6 +5,7 @@ module Middleware.Session
     , sessionMiddleware
     , startSession
     , getSession
+    , getSessionOrDie
     , invalidateSession
     ) where
 
@@ -12,6 +13,7 @@ import           Control.Monad.Reader                 (ask, liftIO)
 import           Data.Int                             (Int64)
 import qualified Data.Vault.Lazy                      as Vault
 import           Network.Wai                          (Middleware)
+import           Servant                              (throwError)
 import           Web.ServerSession.Backend.Persistent (SqlStorage (..))
 import           Web.ServerSession.Frontend.Wai       (ForceInvalidate (AllSessionIdsOfLoggedUser),
                                                        forceInvalidate,
@@ -19,9 +21,10 @@ import           Web.ServerSession.Frontend.Wai       (ForceInvalidate (AllSessi
                                                        setCookieName,
                                                        withServerSession)
 
+import           Api.Envelope                         (fromServantError)
 import           Config                               (App (..), Config (..),
                                                        PartySession)
-import           Utils                                (strToBS)
+import           Utils                                (noSessionError, strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
@@ -37,6 +40,13 @@ getSession vault = do
     case maybeSession of
         Nothing      -> return SessionDoesNotExist
         Just session -> return $ SessionAvailable session
+
+getSessionOrDie :: Vault.Vault -> App PartySession
+getSessionOrDie vault = do
+    sessionState <- getSession vault
+    case sessionState of
+        SessionAvailable session -> return session
+        _ -> throwError $ fromServantError noSessionError
 
 data SessionState =
     SessionStarted PartySession
