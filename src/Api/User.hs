@@ -8,7 +8,6 @@ module Api.User
     ) where
 
 import           Data.Int                    (Int64)
-import           Data.List                   (sortOn)
 import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))

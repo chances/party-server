@@ -2,7 +2,7 @@ module Main where
 
 import qualified Configuration.Dotenv as Dotenv
 import           System.Directory     (doesFileExist)
-import           System.IO            (BufferMode (LineBuffering), IO (..),
+import           System.IO            (BufferMode (LineBuffering),
                                        hSetBuffering, stdout)
 
 import           App                  (run)
