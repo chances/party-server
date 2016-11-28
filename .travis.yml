@@ -28,9 +28,6 @@ matrix:
   include:
   # We grab the appropriate GHC and cabal-install versions from hvr's PPA. See:
   # https://github.com/hvr/multi-ghc-travis
-  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18
-    compiler: ": #GHC 7.8.4"
-    addons: {apt: {packages: [cabal-install-1.18,ghc-7.8.4], sources: [hvr-ghc]}}
   - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22
     compiler: ": #GHC 7.10.3"
     addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
@@ -55,14 +52,6 @@ matrix:
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly"
     addons: {apt: {packages: [libgmp-dev]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-6.3"
-    compiler: ": #stack 8.0.1 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly osx"
-    os: osx
 
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head
