@@ -24,7 +24,6 @@ cache:
 # If you need to have different apt packages for each combination in the
 # matrix, you can use a line such as:
 #     addons: {apt: {packages: [libfcgi-dev,libgmp-dev]}}
-os: linux
 matrix:
   include:
   # We grab the appropriate GHC and cabal-install versions from hvr's PPA. See:
@@ -32,6 +31,7 @@ matrix:
   - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22
     compiler: ": #GHC 7.10.3"
     addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
+    os: linux
 
   # servant-server fails to build because of a linking error with Text.o ???
   # - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
@@ -43,12 +43,14 @@ matrix:
   - env: BUILD=cabal GHCVER=head  CABALVER=head
     compiler: ": #GHC HEAD"
     addons: {apt: {packages: [cabal-install-head,ghc-head], sources: [hvr-ghc]}}
+    os: linux
 
   # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
   # variable, such as using --stack-yaml to point to a different file.
   - env: BUILD=stack ARGS="--resolver lts-6.3"
     compiler: ": #stack 8.0.1"
     addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
+    os: linux
 
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head
