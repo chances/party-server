@@ -57,6 +57,9 @@ run cfg = do
 
     session <- sessionMiddleware cfg
 
+    -- Print API layout
+    putStrLn $ unpack $ layout appAPI
+
     -- Compose middleware pipeline
     let middleware = logger . corsPolicy . session
         application = middleware $ app cfg
