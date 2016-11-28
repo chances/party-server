@@ -33,9 +33,10 @@ matrix:
     compiler: ": #GHC 7.10.3"
     addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.3], sources: [hvr-ghc]}}
 
-  - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
-    compiler: ": #GHC 8.0.1"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
+  # servant-server fails to build because of a linking error with Text.o ???
+  # - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
+  #   compiler: ": #GHC 8.0.1"
+  #   addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
 
   # Build with the newest GHC and cabal-install. This is an accepted failure,
   # see below.
@@ -49,13 +50,7 @@ matrix:
     compiler: ": #stack 8.0.1"
     addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
 
-  # Nightly builds are allowed to fail
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly"
-    addons: {apt: {packages: [libgmp-dev]}}
-
   allow_failures:
-  - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
   - env: BUILD=cabal GHCVER=head  CABALVER=head
   - env: BUILD=stack ARGS="--resolver nightly"
 
