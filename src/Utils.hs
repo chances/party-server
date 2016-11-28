@@ -1,5 +1,6 @@
 module Utils
     ( badRequest
+    , bsToStr
     , noSessionError
     , notFound
     , serverError
@@ -30,6 +31,9 @@ serverError message = err500 { errBody = strToLazyBS message }
 
 strToBS :: String -> C8.ByteString
 strToBS = C8.pack
+
+bsToStr :: C8.ByteString -> String
+bsToStr = C8.unpack
 
 strToLazyBS :: String -> LazyC8.ByteString
 strToLazyBS = LazyC8.pack
