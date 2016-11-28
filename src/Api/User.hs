@@ -14,62 +14,57 @@ import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               selectFirst, selectList, (==.))
 import           Servant
 
+import           Api.Envelope                (Envelope, fromServantError,
+                                              success)
 import           Config                      (App (..))
 import           Database.Models
 import           Database.Party              (runDb)
 import           Middleware.Session          (SessionState (..),
                                               invalidateSession, startSession)
-import           Utils                       (strToLazyBS)
+import           Utils                       (badRequest, notFound, serverError)
 
 type UserAPI =
-         "users" :> Get '[JSON] [Entity User]
-    :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Entity User)
-    :<|> "user" :> Vault :> ReqBody '[JSON] NewUser :> Post '[JSON] Int64
-    :<|> "logout" :> Vault :> Get '[PlainText] String
-
-badRequest ::String -> ServantErr
-badRequest message = err400 { errBody = strToLazyBS message }
-
-notFound :: String -> ServantErr
-notFound message = err404 { errBody = strToLazyBS message }
-
-serverError :: String -> ServantErr
-serverError message = err500 { errBody = strToLazyBS message }
+         "users" :> Get '[JSON] (Envelope [Entity User])
+    :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Envelope (Entity User))
+    :<|> "user" :> Vault :> ReqBody '[JSON] NewUser :> Post '[JSON] (Envelope Int64)
+    :<|> "logout" :> Vault :> Get '[JSON] (Envelope String)
 
 noSessionError :: ServantErr
 noSessionError = serverError "No session"
 
-allUsers :: App [Entity User]
-allUsers = runDb (selectList [] [])
+allUsers :: App (Envelope [Entity User])
+allUsers = do
+    users <- runDb (selectList [] [])
+    return $ success users
 
-singleUser :: UserId -> App (Entity User)
+singleUser :: UserId -> App (Envelope (Entity User))
 singleUser key = do
     maybeUser <- runDb (selectFirst [UserId ==. key] [])
     case maybeUser of
          Nothing ->
-            throwError $ notFound ("User with Id " ++ show (fromSqlKey key) ++ " does not exist")
+            throwError $ fromServantError $ notFound ("User with Id " ++ show (fromSqlKey key) ++ " does not exist")
          Just person ->
-            return person
+            return $ success person
 
-createUser :: Vault -> NewUser -> App Int64
+createUser :: Vault -> NewUser -> App (Envelope Int64)
 createUser vault p = do
     user <- toUser p
     let insertUser = insertUnique user :: SqlPersistT IO (Maybe (Key User))
     maybeNewUserKey <- runDb insertUser
     case maybeNewUserKey of
-        Nothing -> throwError $ badRequest "User was not created, ensure username is unique"
+        Nothing -> throwError $ fromServantError $ badRequest "User was not created, ensure username is unique"
         Just newUserKey -> do
             sessionState <- startSession vault (fromSqlKey newUserKey)
             case sessionState of
-                SessionStarted _ -> return $ fromSqlKey newUserKey
-                _                -> throwError noSessionError
+                SessionStarted _ -> return $ success $ fromSqlKey newUserKey
+                _                -> throwError $ fromServantError noSessionError
 
-logout :: Vault -> App String
+logout :: Vault -> App (Envelope String)
 logout vault = do
     sessionState <- invalidateSession vault
     case sessionState of
-        SessionInvalidated -> return "Logout"
-        _                  -> throwError noSessionError
+        SessionInvalidated -> return $ success "Logout"
+        _                  -> throwError $ fromServantError noSessionError
 
 userServer :: ServerT UserAPI App
 userServer = allUsers :<|> singleUser :<|> createUser :<|> logout

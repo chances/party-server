@@ -18,7 +18,8 @@ library
   exposed-modules:     App
                      , Config
                      , Database.Party
-  other-modules:       Api.User
+  other-modules:       Api.Envelope
+                     , Api.User
                      , Database.Models
                      , Middleware.Cors
                      , Middleware.Session
@@ -27,7 +28,9 @@ library
                      , aeson
                      , bytestring
                      , either
+                     , envelope
                      , http-api-data
+                     , http-types
                      , monad-logger
                      , mtl
                      , persistent
