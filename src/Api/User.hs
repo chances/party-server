@@ -13,6 +13,7 @@ import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))
 import           Servant
+import           Servant.Utils.Links         (safeLink)
 
 import           Api.Envelope                (Envelope, fromServantError,
                                               success)
@@ -23,11 +24,14 @@ import           Middleware.Session          (SessionState (..),
                                               invalidateSession, startSession)
 import           Utils                       (badRequest, notFound, serverError)
 
+type UsersGetAPI = "users" :> Get '[JSON] (Envelope [Entity User])
+type UserGetAPI  = "user" :> Capture "id" UserId :> Get '[JSON] (Envelope (Entity User))
+type UserPostAPI = "user" :> Vault :> ReqBody '[JSON] NewUser :> PostCreated '[JSON] (Headers '[Header "Location" String] (Envelope Int64))
+type LogoutAPI   = "logout" :> Vault :> Get '[JSON] (Envelope String)
+
 type UserAPI =
-         "users" :> Get '[JSON] (Envelope [Entity User])
-    :<|> "user" :> Capture "id" UserId :> Get '[JSON] (Envelope (Entity User))
-    :<|> "user" :> Vault :> ReqBody '[JSON] NewUser :> Post '[JSON] (Envelope Int64)
-    :<|> "logout" :> Vault :> Get '[JSON] (Envelope String)
+         UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
+    :<|> LogoutAPI
 
 noSessionError :: ServantErr
 noSessionError = serverError "No session"
@@ -46,7 +50,7 @@ singleUser key = do
          Just person ->
             return $ success person
 
-createUser :: Vault -> NewUser -> App (Envelope Int64)
+createUser :: Vault -> NewUser -> App (Headers '[Header "Location" String] (Envelope Int64))
 createUser vault p = do
     user <- toUser p
     let insertUser = insertUnique user :: SqlPersistT IO (Maybe (Key User))
@@ -54,9 +58,14 @@ createUser vault p = do
     case maybeNewUserKey of
         Nothing -> throwError $ fromServantError $ badRequest "User was not created, ensure username is unique"
         Just newUserKey -> do
-            sessionState <- startSession vault (fromSqlKey newUserKey)
+            let key = fromSqlKey newUserKey
+            sessionState <- startSession vault key
             case sessionState of
-                SessionStarted _ -> return $ success $ fromSqlKey newUserKey
+                SessionStarted _ -> do
+                    let newUserLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UserGetAPI)
+                        resource = success key
+                        response = addHeader (show $ newUserLink newUserKey) resource
+                    return response
                 _                -> throwError $ fromServantError noSessionError
 
 logout :: Vault -> App (Envelope String)

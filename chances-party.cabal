@@ -36,6 +36,7 @@ library
                      , persistent
                      , persistent-postgresql
                      , persistent-template
+                     , servant
                      , servant-server
                      , serversession
                      , serversession-backend-persistent
