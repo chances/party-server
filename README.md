@@ -1,5 +1,7 @@
 # [Chance's Party App](http://chancesnow.me/party)
 
+[![Build Status](https://travis-ci.org/chances/chances-party.svg)](https://travis-ci.org/chances/chances-party)
+
 A party web app for Chance Snow's parties.
 
 ## License
