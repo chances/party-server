@@ -4,6 +4,7 @@ to the Spec tests
 - [ ] Find/implement OAuth2 solution for Spotify authentication
 - [ ] Figure out if the weird session recreation because of existing authID in
 packed session (serversession Core shit) is a problem
+- [ ] Add encompasing middleware that checks the Origin req header __TODO__ [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
 - [ ] Foobar
 
 ## Resource Links
