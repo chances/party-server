@@ -30,32 +30,36 @@ sessionMiddleware cfg = do
         sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
     withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
 
-getSession :: Vault.Vault -> App (Maybe PartySession)
+getSession :: Vault.Vault -> App SessionState
 getSession vault = do
     cfg <- ask :: App Config
-    return $ Vault.lookup (getVaultKey cfg) vault
+    let maybeSession = Vault.lookup (getVaultKey cfg) vault
+    case maybeSession of
+        Nothing      -> return SessionDoesNotExist
+        Just session -> return $ SessionAvailable session
 
 data SessionState =
     SessionStarted PartySession
+  | SessionAvailable PartySession
   | SessionInvalidated
   | SessionDoesNotExist
 
 invalidateSession :: Vault.Vault -> App SessionState
 invalidateSession vault = do
-    maybeSession <- getSession vault
-    case maybeSession of
-        Nothing      -> return SessionDoesNotExist
-        Just session -> liftIO $ do
+    sessionState <- getSession vault
+    case sessionState of
+        SessionAvailable session -> liftIO $ do
             forceInvalidate session AllSessionIdsOfLoggedUser
             return SessionInvalidated
+        _ -> return sessionState
 
 startSession :: Vault.Vault -> Int64 -> App SessionState
 startSession vault authId = do
-    maybeSession <- getSession vault
-    case maybeSession of
-        Nothing -> return SessionDoesNotExist
-        Just session -> liftIO $ do
+    sessionState <- getSession vault
+    case sessionState of
+        SessionAvailable session -> liftIO $ do
             let (_, sessionInsert) = session
                 key = strToBS $ show authId
             sessionInsert "ID" key
             return $ SessionStarted session
+        _ -> return sessionState
