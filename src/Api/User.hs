@@ -7,7 +7,6 @@ module Api.User
     , userServer
     ) where
 
-import           Control.Monad.Reader        (liftIO)
 import           Data.Int                    (Int64)
 import           Data.List                   (sortOn)
 import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
