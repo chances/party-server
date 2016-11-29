@@ -20,6 +20,7 @@ import           Api.User                 (UserAPI, userServer)
 import           Config                   (App (runApp), Config (..),
                                            envSetCorsOrigin, setLogger)
 import           Database.Party           (doMigrations, runSqlPool)
+import           Middleware.Flash         (flashMiddleware)
 import           Middleware.Session       (sessionMiddleware)
 
 type AppAPI = UserAPI :<|> Raw
@@ -54,6 +55,7 @@ run cfg = do
         env = getEnv cfg
         logger = setLogger env :: Middleware
         corsPolicy = envSetCorsOrigin env (getCorsOrigin cfg) :: Middleware
+        flash = flashMiddleware cfg :: Middleware
 
     session <- sessionMiddleware cfg
 
@@ -61,7 +63,7 @@ run cfg = do
     putStrLn $ unpack $ layout appAPI
 
     -- Compose middleware pipeline
-    let middleware = logger . corsPolicy . session
+    let middleware = logger . corsPolicy . session . flash
         application = middleware $ app cfg
 
     -- Start Postgres pool and run the app
