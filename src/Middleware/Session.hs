@@ -33,6 +33,12 @@ sessionMiddleware cfg = do
         sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
     withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
 
+data SessionState =
+    SessionStarted PartySession
+  | SessionAvailable PartySession
+  | SessionInvalidated
+  | SessionDoesNotExist
+
 getSession :: Vault.Vault -> App SessionState
 getSession vault = do
     cfg <- ask :: App Config
@@ -47,12 +53,6 @@ getSessionOrDie vault = do
     case sessionState of
         SessionAvailable session -> return session
         _ -> throwError $ fromServantError noSessionError
-
-data SessionState =
-    SessionStarted PartySession
-  | SessionAvailable PartySession
-  | SessionInvalidated
-  | SessionDoesNotExist
 
 invalidateSession :: Vault.Vault -> App SessionState
 invalidateSession vault = do
