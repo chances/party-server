@@ -8,7 +8,7 @@ module Api.Envelope
     , fromServantError
     ) where
 
-import           Data.Aeson              (ToJSON, encode)
+import           Data.Aeson              (encode)
 import           Data.Text               (Text, pack, replace, toUpper)
 import           Data.Text.Lazy          (toStrict)
 import           Data.Text.Lazy.Encoding (decodeUtf8)
@@ -20,11 +20,11 @@ import           Utils                   (jsonContentType)
 
 type Envelope a = E.Envelope Text a
 
-success :: ToJSON a => a -> Envelope a
+success :: a -> Envelope a
 success = toSuccessEnvelope
 
 -- errorCode, message
-error' :: ToJSON a => Text -> Text -> Envelope a
+error' :: Text -> Text -> Envelope a
 error' = toErrEnvelope
 
 fromServantError :: ServantErr -> ServantErr
