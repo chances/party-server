@@ -5,6 +5,7 @@ module Middleware.Session
     , sessionMiddleware
     , startSession
     , getSession
+    , getSession'
     , getSessionOrDie
     , invalidateSession
     ) where
@@ -43,6 +44,13 @@ getSession :: Vault.Vault -> App SessionState
 getSession vault = do
     cfg <- ask :: App Config
     let maybeSession = Vault.lookup (getVaultKey cfg) vault
+    case maybeSession of
+        Nothing      -> return SessionDoesNotExist
+        Just session -> return $ SessionAvailable session
+
+getSession' :: Vault.Key PartySession -> Vault.Vault -> IO SessionState
+getSession' vaultKey vault = do
+    let maybeSession = Vault.lookup vaultKey vault
     case maybeSession of
         Nothing      -> return SessionDoesNotExist
         Just session -> return $ SessionAvailable session
