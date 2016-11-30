@@ -13,6 +13,7 @@ cache:
   - $HOME/.ghc
   - $HOME/.cabal
   - $HOME/.stack
+  - .stack-work/install/**/lib
 
 # The different configurations we want to test. We have BUILD=cabal which uses
 # cabal-install, and BUILD=stack which uses Stack. More documentation on each
@@ -34,9 +35,9 @@ matrix:
     os: linux
 
   # servant-server fails to build because of a linking error with Text.o ???
-  # - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
-  #   compiler: ": #GHC 8.0.1"
-  #   addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
+    compiler: ": #GHC 8.0.1"
+    addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
 
   # Build with the newest GHC and cabal-install. This is an accepted failure,
   # see below.
@@ -52,9 +53,15 @@ matrix:
     addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
     os: linux
 
+  - env: BUILD=stack ARGS=""
+    compiler: ": #stack 8.0.1"
+    addons: {apt: {packages: [ghc-8.0.1], sources: [hvr-ghc]}}
+    os: linux
+
   allow_failures:
+  - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24
   - env: BUILD=cabal GHCVER=head  CABALVER=head
-  - env: BUILD=stack ARGS="--resolver nightly"
+  - env: BUILD=stack ARGS="--resolver lts-6.3"
 
 before_install:
 # Using compiler above sets CC to an invalid value, so unset it
