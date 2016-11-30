@@ -12,10 +12,12 @@ import           Control.Monad.Reader     (runReaderT)
 import           Data.Text                (unpack)
 import           Network.Wai              (Application, Middleware)
 import qualified Network.Wai.Handler.Warp as Warp
-import           Servant                  ((:<|>) (..), (:~>) (Nat), Proxy (..),
-                                           Raw, ServantErr, Server, enter,
-                                           layout, serve, serveDirectory)
+import           Servant                  ((:<|>) (..), (:>), (:~>) (Nat),
+                                           Proxy (..), Raw, ServantErr, Server,
+                                           ServerT, enter, layout, serve,
+                                           serveDirectory)
 
+import           Api.Auth                 (AuthAPI, authServer)
 import           Api.User                 (UserAPI, userServer)
 import           Config                   (App (runApp), Config (..),
                                            envSetCorsOrigin, setLogger)
@@ -23,12 +25,17 @@ import           Database.Party           (doMigrations, runSqlPool)
 import           Middleware.Flash         (flashMiddleware)
 import           Middleware.Session       (sessionMiddleware)
 
-type AppAPI = UserAPI :<|> Raw
+type AppAPI = ("auth" :> AuthAPI) :<|> UserAPI
+
+type AppWithFiles = AppAPI :<|> Raw
+
+appServer :: ServerT AppAPI App
+appServer = authServer :<|> userServer
 
 -- | This functions tells Servant how to run the 'App' monad with our
 -- 'server' function.
-appToServer :: Config -> Server UserAPI
-appToServer cfg = enter (convertApp cfg) userServer
+appToServer :: Config -> Server AppAPI
+appToServer cfg = enter (convertApp cfg) appServer
 
 -- | This function converts our 'App' monad into the @ExceptT ServantErr
 -- IO@ monad that Servant's 'enter' function needs in order to run the
@@ -38,7 +45,7 @@ appToServer cfg = enter (convertApp cfg) userServer
 convertApp :: Config -> App :~> ExceptT ServantErr IO
 convertApp cfg = Nat (flip runReaderT cfg . runApp)
 
-appAPI :: Proxy AppAPI
+appAPI :: Proxy AppWithFiles
 appAPI = Proxy
 
 files :: Application
