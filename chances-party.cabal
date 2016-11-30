@@ -52,7 +52,7 @@ library
                      , wai-extra
                      , wai-session
                      , warp
-  ghc-options:         -Wall -fno-warn-unused-binds -Werror
+  ghc-options:         -Wall -fno-warn-unused-binds -fno-warn-orphans -Werror
   default-language:    Haskell2010
 
 executable chances-party-exe
