@@ -83,6 +83,9 @@ setLogger Test        = id
 setLogger Development = logStdoutDev
 setLogger Production  = logStdout
 
+setVaultKey :: Vault.Key PartySession
+setVaultKey = unsafePerformIO $ Vault.newKey
+
 envPool :: Environment -> Int
 envPool Test        = 1
 envPool Development = 1
@@ -93,5 +96,3 @@ envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOri
 envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
 envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
 
-setVaultKey :: Vault.Key PartySession
-setVaultKey = unsafePerformIO $ Vault.newKey
