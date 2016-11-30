@@ -9,6 +9,7 @@ module Config
     , defaultConfig
     , envPool
     , envSetCorsOrigin
+    , envManager
     , lookupSetting
     , setLogger
     ) where
@@ -20,6 +21,9 @@ import           Data.ByteString                      (ByteString)
 import           Data.Text                            (Text)
 import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (ConnectionPool)
+import           Network.HTTP.Client                  (Manager, ManagerSettings (managerConnCount, managerResponseTimeout),
+                                                       newManager)
+import           Network.HTTP.Client.TLS              (tlsManagerSettings)
 import           Network.Wai                          (Middleware)
 import           Network.Wai.Handler.Warp             (Port)
 import qualified Network.Wai.Middleware.Cors          as Cors
@@ -55,6 +59,7 @@ data Config = Config
     , getEnv        :: Environment
     , getCorsOrigin :: String
     , getVaultKey   :: Vault.Key PartySession
+    , getManager    :: Manager
     }
 
 data Environment =
@@ -76,6 +81,7 @@ defaultConfig = Config
     , getEnv = Development
     , getCorsOrigin = "http://chancesnow.me"
     , getVaultKey = setVaultKey
+    , getManager = undefined
     }
 
 setLogger :: Environment -> Middleware
@@ -96,3 +102,19 @@ envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOri
 envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
 envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
 
+envManager :: Environment -> IO Manager
+envManager env = newManager $ envManagerSettings env
+
+envManagerSettings :: Environment -> ManagerSettings
+envManagerSettings Test        = tlsManagerSettings
+    { managerConnCount = 10
+    , managerResponseTimeout = Just (2 * 1250000) -- 2.5 seconds in microseconds
+    }
+envManagerSettings Development = tlsManagerSettings
+    { managerConnCount = 10
+    , managerResponseTimeout = Just (3 * 1000000) -- 3 seconds in microseconds
+    }
+envManagerSettings Production  = tlsManagerSettings
+    { managerConnCount = 10
+    , managerResponseTimeout = Just (5 * 1000000) -- 5 seconds in microseconds
+    }
