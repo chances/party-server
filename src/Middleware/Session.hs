@@ -2,16 +2,18 @@
 
 module Middleware.Session
     ( SessionState(..)
-    , sessionMiddleware
-    , startSession
     , getSession
     , getSession'
     , getSessionOrDie
     , invalidateSession
+    , popOffSession
+    , sessionMiddleware
+    , startSession
     ) where
 
 import           Control.Monad.Reader                 (ask, liftIO)
 import           Data.Int                             (Int64)
+import           Data.Text                            (pack)
 import qualified Data.Vault.Lazy                      as Vault
 import           Network.Wai                          (Middleware)
 import           Servant                              (throwError)
@@ -25,7 +27,8 @@ import           Web.ServerSession.Frontend.Wai       (ForceInvalidate (AllSessi
 import           Api.Envelope                         (fromServantError)
 import           Config                               (App (..), Config (..),
                                                        PartySession)
-import           Utils                                (noSessionError, strToBS)
+import           Utils                                (bsToStr, noSessionError,
+                                                       strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
@@ -81,3 +84,18 @@ startSession vault authId = do
             sessionInsert "ID" key
             return $ SessionStarted session
         _ -> return sessionState
+
+popOffSession :: PartySession -> String -> String -> IO String
+popOffSession session key defaultValue = do
+    let (sessionLookup, sessionInsert) = session
+    maybeReturnTo <- sessionLookup (pack key)
+    case maybeReturnTo of
+        Just returnToBs -> do
+            let returnTo = bsToStr returnToBs
+            -- If the value is empty return defaultValue, otherwise pop the key
+            case returnTo of
+                "" -> return defaultValue
+                _ -> do
+                    sessionInsert (pack key) (strToBS "")
+                    return returnTo
+        _ -> return defaultValue

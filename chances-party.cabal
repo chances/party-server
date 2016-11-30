@@ -18,7 +18,8 @@ library
   exposed-modules:     App
                      , Config
                      , Database.Party
-  other-modules:       Api.Envelope
+  other-modules:       Api.Auth
+                     , Api.Envelope
                      , Api.User
                      , Database.Models
                      , Middleware.Cors

@@ -1,5 +1,6 @@
 module Utils
     ( badRequest
+    , baseUrl
     , bsToStr
     , noSessionError
     , notFound
@@ -13,6 +14,17 @@ import qualified Data.ByteString.Char8      as C8
 import qualified Data.ByteString.Lazy.Char8 as LazyC8
 import           Network.HTTP.Types         as HTTP
 import           Servant
+import           Servant.Client             (BaseUrl (..), Scheme (Http))
+
+-- TODO: Make this configurable via environment (move to Config?)
+
+baseUrl :: BaseUrl
+baseUrl = BaseUrl
+    { baseUrlScheme = Http
+    , baseUrlHost = "localhost"
+    , baseUrlPort = 3000
+    , baseUrlPath = ""
+    }
 
 jsonContentType :: HTTP.Header
 jsonContentType = (HTTP.hContentType, strToBS "application/json")

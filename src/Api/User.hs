@@ -18,8 +18,7 @@ import           Api.Envelope                (Envelope, fromServantError,
 import           Config                      (App (..))
 import           Database.Models
 import           Database.Party              (runDb)
-import           Middleware.Session          (SessionState (..),
-                                              invalidateSession, startSession)
+import           Middleware.Session          (SessionState (..), startSession)
 import           Utils                       (badRequest, noSessionError,
                                               notFound)
 
@@ -32,13 +31,9 @@ type UserPostAPI = "user"
     :> Vault :> ReqBody '[JSON] NewUser
     :> PostCreated '[JSON] (Headers '[Header "Location" String] (Envelope Int64))
 
-type LogoutAPI   = "logout"
-    :> Vault
-    :> Get '[JSON] (Envelope String)
 
 type UserAPI =
-         UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
-    :<|> LogoutAPI
+        UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
 
 allUsers :: App (Envelope [Entity User])
 allUsers = do
@@ -72,12 +67,5 @@ createUser vault p = do
                     return response
                 _                -> throwError $ fromServantError noSessionError
 
-logout :: Vault -> App (Envelope String)
-logout vault = do
-    sessionState <- invalidateSession vault
-    case sessionState of
-        SessionInvalidated -> return $ success "Logout"
-        _                  -> throwError $ fromServantError noSessionError
-
 userServer :: ServerT UserAPI App
-userServer = allUsers :<|> singleUser :<|> createUser :<|> logout
+userServer = allUsers :<|> singleUser :<|> createUser
