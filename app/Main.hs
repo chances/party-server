@@ -7,7 +7,7 @@ import           System.IO            (BufferMode (LineBuffering),
 
 import           App                  (run)
 import           Config               (Config (..), Environment (Development),
-                                       defaultConfig, lookupSetting)
+                                       defaultConfig, envManager, lookupSetting)
 import           Database.Party       (makePool)
 
 main :: IO ()
@@ -31,7 +31,14 @@ main = do
     port <- lookupSetting "PORT" 8080
     corsOrigin <- lookupSetting "CORS_ORIGIN" "http://chancesnow.me"
     pool <- makePool env
-    let cfg = defaultConfig { getPool = pool, getPort = port, getEnv = env
-        , getCorsOrigin = corsOrigin }
+    manager <- envManager env
+
+    let cfg = defaultConfig {
+          getPool = pool
+        , getPort = port
+        , getEnv = env
+        , getCorsOrigin = corsOrigin
+        , getManager = manager
+        }
 
     run cfg
