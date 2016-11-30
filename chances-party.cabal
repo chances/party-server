@@ -24,9 +24,14 @@ library
                      , Middleware.Cors
                      , Middleware.Flash
                      , Middleware.Session
+                     , Spotify.Api.Auth
+                     , Spotify.Api.Types
+                     , Spotify.Api.Types.Scope
+                     , Spotify.Client
                      , Utils
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , base64-bytestring
                      , bytestring
                      , containers
                      , either
@@ -40,7 +45,9 @@ library
                      , persistent
                      , persistent-postgresql
                      , persistent-template
+                     , random-strings
                      , servant
+                     , servant-client
                      , servant-server
                      , serversession
                      , serversession-backend-persistent
@@ -49,6 +56,7 @@ library
                      , time
                      , text
                      , vault
+                     , vector
                      , wai
                      , wai-cors
                      , wai-extra
