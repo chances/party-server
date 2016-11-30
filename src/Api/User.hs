@@ -1,9 +1,13 @@
 {-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators     #-}
 
 module Api.User
     ( UserAPI
+    , getUserLink
+    , getUsersLink
+    , postUserLink
     , userServer
     ) where
 
@@ -31,6 +35,14 @@ type UserPostAPI = "user"
     :> Vault :> ReqBody '[JSON] NewUser
     :> PostCreated '[JSON] (Headers '[Header "Location" String] (Envelope Int64))
 
+getUsersLink :: (IsElem UsersGetAPI UserAPI, HasLink UsersGetAPI) => MkLink UsersGetAPI
+getUsersLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UsersGetAPI)
+
+getUserLink :: (IsElem UserGetAPI UserAPI, HasLink UserGetAPI) => MkLink UserGetAPI
+getUserLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UserGetAPI)
+
+postUserLink :: (IsElem UserPostAPI UserAPI, HasLink UserPostAPI) => MkLink UserPostAPI
+postUserLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UserPostAPI)
 
 type UserAPI =
         UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
@@ -61,9 +73,8 @@ createUser vault p = do
             sessionState <- startSession vault key
             case sessionState of
                 SessionStarted _ -> do
-                    let newUserLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UserGetAPI)
-                        resource = success key
-                        response = addHeader (show $ newUserLink newUserKey) resource
+                    let resource = success key
+                        response = addHeader (show $ getUserLink newUserKey) resource
                     return response
                 _                -> throwError $ fromServantError noSessionError
 
