@@ -91,7 +91,7 @@ setLogger Development = logStdoutDev
 setLogger Production  = logStdout
 
 setVaultKey :: Vault.Key PartySession
-setVaultKey = unsafePerformIO $ Vault.newKey
+setVaultKey = unsafePerformIO Vault.newKey
 
 envPool :: Environment -> Int
 envPool Test        = 1
