@@ -40,6 +40,8 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
+- http-client-0.5.4
+- http-client-tls-0.3.3
 - persistent-2.2.4.1
 - persistent-postgresql-2.2.2
 - persistent-template-2.1.8.1
