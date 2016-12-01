@@ -2,7 +2,7 @@ name:                chances-party
 version:             0.1.0.0
 synopsis:            Guest interaction at parties
 description:         Please see README.md
-homepage:            https://github.com/chances/servant#readme
+homepage:            https://github.com/chances/chances-party#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Chance Snow
@@ -87,4 +87,4 @@ test-suite chances-party-test
 
 source-repository head
   type:     git
-  location: https://github.com/chances/servant
+  location: https://github.com/chances/chances-party
