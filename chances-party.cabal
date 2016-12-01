@@ -25,10 +25,6 @@ library
                      , Middleware.Cors
                      , Middleware.Flash
                      , Middleware.Session
-                     , Spotify.Api.Auth
-                     , Spotify.Api.Types
-                     , Spotify.Api.Types.Scope
-                     , Spotify.Client
                      , Utils
   build-depends:       base >= 4.7 && < 5
                      , aeson
@@ -37,7 +33,6 @@ library
                      , containers
                      , either
                      , envelope
-                     , http-api-data
                      , http-client >= 0.5 && < 0.6
                      , http-client-tls
                      , http-types
@@ -50,6 +45,7 @@ library
                      , servant
                      , servant-client
                      , servant-server
+                     , servant-spotify
                      , serversession
                      , serversession-backend-persistent
                      , serversession-frontend-wai
@@ -57,7 +53,6 @@ library
                      , time
                      , text
                      , vault
-                     , vector
                      , wai
                      , wai-cors
                      , wai-extra

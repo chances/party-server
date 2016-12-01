@@ -27,9 +27,9 @@ import           Middleware.Flash       (flash)
 import           Middleware.Session     (SessionState (SessionInvalidated),
                                          getSessionOrDie, invalidateSession,
                                          popOffSession)
-import qualified Spotify.Api.Types      as Spotify
-import           Spotify.Client         (authorizeLink, spotifyAccountsBaseUrl,
+import           Network.Spotify        (authorizeLink, spotifyAccountsBaseUrl,
                                          tokenRequest)
+import qualified Network.Spotify        as Spotify
 import           Utils                  (badRequest, baseUrl, bsToStr,
                                          noSessionError, serverError, strToBS)
 
