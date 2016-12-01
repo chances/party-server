@@ -41,7 +41,6 @@ library
                      , persistent
                      , persistent-postgresql
                      , persistent-template
-                     , random-strings
                      , servant
                      , servant-client
                      , servant-server
