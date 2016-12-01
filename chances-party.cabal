@@ -28,10 +28,8 @@ library
                      , Utils
   build-depends:       base >= 4.7 && < 5
                      , aeson
-                     , base64-bytestring
                      , bytestring
                      , containers
-                     , either
                      , envelope
                      , http-client >= 0.5 && < 0.6
                      , http-client-tls
