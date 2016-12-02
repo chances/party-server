@@ -19,11 +19,11 @@ main = do
     if dotenvExists
         then Dotenv.loadFile False ".env"
         else do
-            putStrLn "Warning: .env configuration file does not exist"
+            putStrLn "Warning: '.env' configuration file does not exist!\n"
             putStrLn
-                (
-                   "\tEnsure proper configuration exists in the environment"
-                ++ "(See .env.example)"
+                (  "\tApplication may not function as intended.\n"
+                ++ "\tEnsure proper configuration exists in the environment.\n\n"
+                ++ "\t(See .env.example)"
                 )
 
     -- Setup app configuration
