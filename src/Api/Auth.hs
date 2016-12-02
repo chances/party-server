@@ -16,12 +16,12 @@ import           Control.Monad.Except   (runExceptT)
 import           Control.Monad.Reader   (ask, liftIO)
 import           Data.ByteString        (ByteString)
 import           Data.Map               as M
-import           Data.Text              (Text, pack)
+import           Data.Text              (Text, pack, unpack)
 import           Servant
 import           Servant.Common.BaseUrl (showBaseUrl)
 
 import           Api.Envelope           (fromServantError)
-import           Config                 (App (..), Config (getManager),
+import           Config                 (App (..), Config (getManager, getSpotifyAuthorization),
                                          PartySession)
 import           Middleware.Flash       (flash)
 import           Middleware.Session     (SessionState (SessionInvalidated),
@@ -80,6 +80,7 @@ login :: Vault -> Maybe String
     -> App (Headers '[Header "Location" String] NoContent)
 login vault maybeReturnTo = do
     (_, sessionInsert) <- getSessionOrDie vault
+    cfg <- ask :: App Config
     state <- liftIO $ do
         let returnTo = case maybeReturnTo of
                 Just r -> r
@@ -89,7 +90,8 @@ login vault maybeReturnTo = do
         sessionInsert "SPOTIFY_AUTH_STATE" (strToBS $ show state)
         return state
     let base = showBaseUrl spotifyAccountsBaseUrl
-        clientId = Just "foobar" :: Maybe String -- TODO: Use clientId from Config
+        clientId = Just $
+            unpack $ Spotify.clientId $ getSpotifyAuthorization cfg
         redirectUri = callbackLink
         scope = Spotify.scopeFromList $ Prelude.map pack
             ["user-read-email", "user-read-private", "playlist-read-private"]
@@ -115,6 +117,8 @@ callback vault maybeAuthCode maybeError maybeState =
             -- Check for matching auth state keys
             let (sessionLookup, sessionInsert) = session
             checkStatesOrDie authState sessionLookup
+            -- Done with auth state, pop it off the session
+            _ <- liftIO $ popOffSession session "SPOTIFY_AUTH_STATE" ""
 
             case maybeAuthCode of
                 Just authCode -> do
@@ -128,15 +132,15 @@ callback vault maybeAuthCode maybeError maybeState =
 
                     runTokenResponse <- liftIO $ runExceptT $ tokenRequest
                         authTokenRequest
-                        (Spotify.Authorization "" "") -- TODO: Populate the authorization keys...
+                        (getSpotifyAuthorization cfg)
                         (getManager cfg)
 
                     case runTokenResponse of
                         Left e   -> throwError $ fromServantError $
                             serverError ("Could not retreive auth tokens: " ++ show e)
                         Right tokenResponse   -> do
-                            let accessToken = Spotify.accessToken tokenResponse
-                                refreshToken = Spotify.newRefreshToken tokenResponse
+                            let accessToken = Spotify.access_token tokenResponse
+                                refreshToken = Spotify.refresh_token tokenResponse
 
                             returnTo <- liftIO $ popAuthReturnOffSession session
                             return $ addHeader returnTo NoContent
