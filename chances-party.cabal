@@ -16,13 +16,13 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     App
-                     , Config
-                     , Database.Party
-  other-modules:       Api.Auth
+                     , Api.Auth
                      , Api.Envelope
                      , Api.User
+                     , Config
+                     , Database.Party
                      , Database.Models
-                     , Middleware.Cors
+  other-modules:       Middleware.Cors
                      , Middleware.Flash
                      , Middleware.Session
                      , Utils
