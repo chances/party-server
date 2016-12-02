@@ -1,5 +1,8 @@
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeSynonymInstances       #-}
 
 module Config
     ( App(..)
@@ -18,7 +21,8 @@ import           Control.Monad.Except                 (ExceptT, MonadError)
 import           Control.Monad.Reader                 (MonadIO, MonadReader,
                                                        ReaderT)
 import           Data.ByteString                      (ByteString)
-import           Data.Text                            (Text)
+import           Data.Maybe                           (fromJust, isNothing)
+import           Data.Text                            (Text, pack)
 import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (ConnectionPool)
 import           Network.HTTP.Client                  (Manager, ManagerSettings (managerConnCount, managerResponseTimeout),
@@ -32,9 +36,11 @@ import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import qualified Network.Wai.Session                  as WS
 import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
+import           System.Exit                          (die)
 import           System.IO.Unsafe                     (unsafePerformIO)
 
 import           Middleware.Cors                      (getCorsPolicy)
+import           Network.Spotify                      as Spotify
 
 type PartySession = WS.Session IO Text ByteString
 -- type PartySession = Session SessionMap
@@ -55,13 +61,19 @@ newtype App a = App
         )
 
 data Config = Config
-    { getPool       :: ConnectionPool
-    , getPort       :: Port
-    , getEnv        :: Environment
-    , getCorsOrigin :: String
-    , getVaultKey   :: Vault.Key PartySession
-    , getManager    :: Manager
-    }
+    { getPool                 :: ConnectionPool
+    , getPort                 :: Port
+    , getEnv                  :: Environment
+    , getCorsOrigin           :: String
+    , getVaultKey             :: Vault.Key PartySession
+    , getManager              :: Manager
+    , getSpotifyAuthorization :: Spotify.Authorization
+    } deriving (Show)
+
+instance Show (Vault.Key PartySession) where
+    show _ = "Vault.Key PartySession"
+instance Show Manager where
+    show _ = "HTTP.Client Manager"
 
 data Environment =
       Development
@@ -83,6 +95,7 @@ defaultConfig = Config
     , getCorsOrigin = "http://chancesnow.me"
     , getVaultKey = setVaultKey
     , getManager = undefined
+    , getSpotifyAuthorization = setSpotifyAuthorization
     }
 
 setLogger :: Environment -> Middleware
@@ -92,6 +105,26 @@ setLogger Production  = logStdout
 
 setVaultKey :: Vault.Key PartySession
 setVaultKey = unsafePerformIO Vault.newKey
+
+setSpotifyAuthorization :: Spotify.Authorization
+setSpotifyAuthorization = authorization where
+    authorization = unsafePerformIO $ do
+        spotifyClientId <- lookupEnv "SPOTIFY_APP_KEY"
+        spotifySecretKey <- lookupEnv "SPOTIFY_APP_SECRET"
+        -- If either key doesn't exist, die
+        if authKeysExist spotifyClientId spotifySecretKey
+            then return Spotify.Authorization
+                { clientId = pack $ fromJust spotifyClientId
+                , clientSecretKey = pack $ fromJust spotifySecretKey
+                }
+            else die (
+                "One or both required Spotify Web API keys are non-existent\n"
+                ++ "\tEnsure proper configuration exists in the environment.\n\n"
+                ++ "\t(See .env.example)")
+
+authKeysExist :: Maybe String -> Maybe String -> Bool
+authKeysExist spotifyClientId spotifySecretKey =
+    not (isNothing spotifyClientId || isNothing spotifySecretKey)
 
 envPool :: Environment -> Int
 envPool Test        = 1
