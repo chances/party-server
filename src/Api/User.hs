@@ -5,6 +5,9 @@
 
 module Api.User
     ( UserAPI
+    , UserGetAPI
+    , UserPostAPI
+    , UsersGetAPI
     , getUserLink
     , getUsersLink
     , postUserLink
