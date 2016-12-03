@@ -1,14 +1,18 @@
 module Main where
 
-import qualified Configuration.Dotenv as Dotenv
-import           System.Directory     (doesFileExist)
-import           System.IO            (BufferMode (LineBuffering),
-                                       hSetBuffering, stdout)
+import qualified Configuration.Dotenv       as Dotenv
+import           Control.Exception.Enclosed (catchAnyDeep)
+import           System.Directory           (doesFileExist)
+import           System.Exit                (ExitCode (..), exitWith)
+import           System.IO                  (BufferMode (LineBuffering),
+                                             hSetBuffering, stdout)
 
-import           App                  (run)
-import           Config               (Config (..), Environment (Development),
-                                       defaultConfig, envManager, lookupSetting)
-import           Database.Party       (makePool)
+import           App                        (run)
+import           Config                     (Config (..),
+                                             Environment (Development),
+                                             defaultConfig, envManager,
+                                             lookupSetting)
+import           Database.Party             (makePool)
 
 main :: IO ()
 main = do
@@ -41,4 +45,14 @@ main = do
         , getManager = manager
         }
 
-    run cfg
+    let errorHandler e = (do
+            putStrLn $ "Uncaught exception: " ++ show e
+            return $ ExitFailure (-1)) :: IO ExitCode
+        runApp = do
+            run cfg
+            return ExitSuccess
+
+    -- Run the app
+    retCode <- catchAnyDeep runApp errorHandler
+
+    exitWith retCode

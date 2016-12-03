@@ -66,6 +66,7 @@ executable chances-party-exe
                      , chances-party
                      , directory
                      , dotenv
+                     , enclosed-exceptions
   default-language:    Haskell2010
 
 test-suite chances-party-test
