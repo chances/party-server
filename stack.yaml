@@ -39,7 +39,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/chances/servant-spotify.git
-    commit: 125b44fc
+    commit: b1bf5f77
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
