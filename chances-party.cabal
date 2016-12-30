@@ -69,6 +69,23 @@ executable chances-party-exe
                      , enclosed-exceptions
   default-language:    Haskell2010
 
+executable chances-party-swagger
+  hs-source-dirs:      swagger
+  main-is:             Main.hs
+  build-depends:       base
+                     , aeson
+                     , bytestring
+                     , chances-party
+                     , envelope
+                     , lens
+                     , persistent
+                     , servant-server
+                     , servant-swagger
+                     , swagger2
+                     , text
+  ghc-options:         -Wall -fno-warn-orphans -Werror
+  default-language:    Haskell2010
+
 test-suite chances-party-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
