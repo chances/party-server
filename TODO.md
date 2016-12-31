@@ -1,10 +1,10 @@
 - [x] Implement custom server session frontend
-- [ ] Add [QuickCheck](https://hackage.haskell.org/package/servant-quickcheck-0.0.2.2/docs/Servant-QuickCheck.html)
-to the Spec tests (Which ones?)
 - [x] Find/implement OAuth2 solution for Spotify authentication
 - [x] Investigate [HTML datatype](https://github.com/haskell-servant/servant-lucid/blob/master/src/Servant/HTML/Lucid.hs)
 - [x] Figure out if the weird session recreation because of existing authID in
 packed session (serversession Core shit) is a problem **(It's not)**
+- [ ] Add [QuickCheck](https://hackage.haskell.org/package/servant-quickcheck-0.0.2.2/docs/Servant-QuickCheck.html)
+to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 
 ## Inline TODOs
