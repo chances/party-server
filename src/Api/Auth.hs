@@ -117,6 +117,7 @@ login vault maybeReturnTo = do
         location = base ++ "/" ++ show authLink
     return $ addHeader location NoContent
 
+-- TODO: Refactor this auth callback monstrosity...
 callback :: Vault -> Maybe Spotify.AuthorizationCode -> Maybe String -> Maybe Spotify.State
     -> App RedirectHeaders
 callback vault maybeAuthCode maybeError maybeState =
@@ -165,8 +166,6 @@ callback vault maybeAuthCode maybeError maybeState =
                                 Left e -> throwError $ fromServantError $
                                     serverError ("Could not retreive user: " ++ show e)
                                 Right user -> do
-                                    -- TODO: Setup current user session, etc.
-                                    -- TODO: Do insert or update instead
                                     let userId = unpack $ Spotify.User.id user
                                         newUserAccessToken = Just $ unpack newAccessToken
                                         newUserRefreshToken = case newRefreshToken of

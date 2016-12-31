@@ -49,7 +49,7 @@ flash' (_, sessionInsert) dataToFlash =
 flashMiddleware :: Config -> Middleware
 flashMiddleware cfg = removeFlashMiddleware $ getSession' (getVaultKey cfg)
 
--- TODO: Simplify this removeFlashMiddleware monstrosity...
+-- TODO: Refactor this removeFlashMiddleware monstrosity...
 removeFlashMiddleware :: (Vault.Vault -> IO SessionState) -> Middleware
 removeFlashMiddleware getSessionState app req sendResponse =
     app req $ \res -> do
