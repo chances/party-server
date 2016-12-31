@@ -8,7 +8,7 @@ to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 
 ## Inline TODOs
-- [ ] Use this [] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
+- [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
 - [ ] Refactor this removeFlashMiddleware monstrosity [src/Middleware/Flash.hs](src/Middleware/Flash.hs)
 - [ ] Refactor this auth callback monstrosity [src/Api/Auth.hs](src/Api/Auth.hs)
 - [ ] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
