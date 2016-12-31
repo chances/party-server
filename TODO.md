@@ -14,6 +14,12 @@ to the Spec tests (Which units?)
 - [ ] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
 - [ ] Add encompasing middleware that checks the Origin req header **TODO** [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
 
+## Security
+
+- [ ] Improve CSP support
+- [ ] Add HTTPOnly or SecureOnly support to cookies
+- [ ] Add CSRF token support?
+
 ## Compliance with Spotify Developer Terms of Use
 
 - Section V: Users & Data
