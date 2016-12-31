@@ -126,6 +126,11 @@ to the Spec tests (Which units?)
 
 ## Compliance with Spotify Developer Terms of Use
 
+- [Spotify Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/)
+- [Design Guidelines](https://developer.spotify.com/design/)
+
+### Specific sections
+
 - Section V: Users & Data
   - [ ] Obtain explicit consent for users' email address?
     - "5. You shall not email Spotify users unless you obtain their explicit consent or obtain their email address and permission through means other than Spotify."
