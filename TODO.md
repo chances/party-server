@@ -38,6 +38,91 @@ to the Spec tests (Which units?)
     - [ ] For albums
     - [ ] Expose "See more results in Spotify" href
 
+## New Functionality
+
+- [ ] Add access token delivery endpoint
+  - [ ] With refresh option
+- [ ] Add timestamp utility functions (autonomously update them)
+- [ ] WebSockets streaming data integration
+- [ ] Add Guests model
+  - JSON blob (Array of):
+    - Name
+    - Alias (Future use?)
+      - Only modifiable by a checked in Guest (guest ID/index stored in session)
+    - Check-In Status (_A guest is simply invited by default. A checked in guest is in attendance._)
+- [ ] Add Playlist (TrackList) model
+  - Fields:
+    - JSON blob (Array of):
+      - Spotify Track ID
+      - Name
+      - Artist
+      - Contributor name
+      - Contributor ID (index in Guest array)
+    - Timestamps
+- [ ] Add History model
+  - Fields:
+    - TrackList foreign key
+    - Began playing timestamp
+    - Timestamps
+  - Show duration on frontend?
+- [ ] Playback history (History) endpoint _(As TrackList)_
+  - [ ] With WebSocket support
+- [ ] Add Queue model
+  - TrackList foreign key
+  -
+- [ ] Playback future (Queue) endpoint _(As TrackList)_
+  - [ ] With WebSocket support
+- [ ] Add a Party Model
+  - Fields:
+    - Host name (Location/address, scheduled time too? _Facebook inegration?_)
+    - Room code (NULL when party has ended)
+      - Random four letter combination
+    - Ended flag
+    - Current Track (Now Playing)
+      - NULL or JSON blob:
+        - Spotify Track ID
+        - Name
+        - Artist
+        - Contributor name
+        - Contributor ID (index in Guest array)
+    - Queue foreign key
+    - History foreign key
+    - Guests foreign key
+- [ ] Add Party endpoints
+  - [ ] Create
+  - [ ] End (Stop/Quit?)
+  - [ ] Connect to Facebook event (_Future?_)
+- [ ] Add search suggestions (while typing query)?
+
+### Party Host Features
+
+- [ ] Playback
+  - [ ] Pick a playlist for a party
+  - [ ] Play/pause the party's playlist
+  - [ ] Skip the current track
+  - [ ] Search to add to queue
+  - [ ] State change notifications (WebSockets?)
+
+### Party Guest Features
+
+- [ ] Add Join Party endpoint
+  - With Party foreign key
+  - Should there be a party list? **No**
+  - User facing "room" code for guests to enter (Like Jackbox. _456,976 combinations with 4 letters_)
+  - Facebook integration (_Future_)
+- [ ] Contribution
+  - [ ] Add (suggest) a song
+    - [ ] Limit to a maximum limit per timeframe (hour?)
+  - [ ] Suggest that a song should be skipped
+    - [ ] Require a minimum number of votes (5? fraction of party attendants?)
+- [ ] Join a party (_unauthenticated_)
+- [ ] Check-In to a Party (_authenticated_)
+  - [ ] OAuth2 third-party login schemes
+    - [ ] Facebook
+    - [ ] Google
+    - [ ] Twitter
+    - [ ] GitHub
+    - Others?
 
 ## Compliance with Spotify Developer Terms of Use
 
