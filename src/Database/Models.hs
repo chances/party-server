@@ -13,15 +13,17 @@
 
 module Database.Models where
 
-import           Control.Monad.Reader (liftIO)
-import           Data.Aeson           (FromJSON, ToJSON)
-import           Data.Time            (UTCTime (..))
-import           Data.Time.Clock      (getCurrentTime)
-import           Database.Persist.TH  (mkPersist, mkSave, persistLowerCase,
-                                       share, sqlSettings)
-import           GHC.Generics         (Generic)
+import           Control.Monad.Reader        (liftIO)
+import           Data.Aeson                  (FromJSON, ToJSON)
+import           Data.Time                   (UTCTime (..))
+import           Data.Time.Clock             (getCurrentTime)
+import           Database.Persist.Postgresql as Persist
+import           Database.Persist.TH         (mkPersist, mkSave,
+                                              persistLowerCase, share,
+                                              sqlSettings)
+import           GHC.Generics                (Generic)
 
-import           Config               (App (..))
+import           Config                      (App (..))
 
 share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
 User json
@@ -57,3 +59,10 @@ toUser newUser = do
             (accessToken newUser) (refreshToken newUser)
             currentTime currentTime
         )
+
+touchUser :: Persist.Key User -> SqlPersistT IO ()
+touchUser userKey = do
+    currentTime <- liftIO getCurrentTime
+    Persist.update userKey
+       [ UserUpdatedAt =. currentTime
+       ]
