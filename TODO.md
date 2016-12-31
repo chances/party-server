@@ -6,6 +6,7 @@ packed session (serversession Core shit) is a problem **(It's not)**
 - [ ] Add [QuickCheck](https://hackage.haskell.org/package/servant-quickcheck-0.0.2.2/docs/Servant-QuickCheck.html)
 to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
+- [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
 ## Inline TODOs
 - [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
