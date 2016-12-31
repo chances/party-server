@@ -106,7 +106,11 @@ login vault maybeReturnTo = do
             unpack $ Spotify.clientId $ getSpotifyAuthorization cfg
         redirectUri = callbackLink
         scope = Spotify.scopeFromList $ Prelude.map pack
-            ["user-read-email", "user-read-private", "playlist-read-private"]
+            [ "user-read-email"
+            , "user-read-private"
+            , "playlist-read-private"
+            , "playlist-read-collaborative"
+            ]
         authLink = authorizeLink
             clientId
             (Just Spotify.ResponseType)
