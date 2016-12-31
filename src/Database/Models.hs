@@ -54,6 +54,6 @@ toUser newUser = do
     currentTime <- liftIO getCurrentTime
     return (
         User (username newUser) (spotifyUser newUser)
-            Nothing Nothing
+            (accessToken newUser) (refreshToken newUser)
             currentTime currentTime
         )

@@ -1,37 +1,49 @@
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 module Api.Auth
     ( AuthAPI
     , authServer
     ) where
 
-import           Control.Monad          (unless)
-import           Control.Monad.Except   (runExceptT)
-import           Control.Monad.Reader   (ask, liftIO)
-import           Data.ByteString        (ByteString)
-import           Data.Map               as M
-import           Data.Text              (Text, pack, unpack)
+import           Control.Monad                  (unless)
+import           Control.Monad.Except           (runExceptT)
+import           Control.Monad.Reader           (ask, liftIO)
+import           Data.Aeson                     (encode)
+import           Data.ByteString                (ByteString)
+import           Data.Map                       as M
+import           Data.Text                      (Text, pack, unpack)
+import           Data.Time.Clock                (getCurrentTime)
+import           Database.Persist.Postgresql    (Entity (..), Key, SqlPersistT,
+                                                 getBy, insertUnique, (=.))
+import           Database.Persist.Postgresql    as Persist
 import           Servant
-import           Servant.Common.BaseUrl (showBaseUrl)
+import           Servant.Common.BaseUrl         (showBaseUrl)
 
-import           Api.Envelope           (fromServantError)
-import           Config                 (App (..), Config (getManager, getSpotifyAuthorization),
-                                         PartySession)
-import           Middleware.Flash       (flash)
-import           Middleware.Session     (SessionState (SessionInvalidated),
-                                         getSessionOrDie, invalidateSession,
-                                         popOffSession)
-import           Network.Spotify        (authorizeLink, spotifyAccountsBaseUrl,
-                                         tokenRequest)
-import qualified Network.Spotify        as Spotify
-import           Utils                  (badRequest, baseUrl, bsToStr,
-                                         noSessionError, serverError, strToBS)
+import           Api.Envelope                   (fromServantError)
+import           Config                         (App (..), Config (getManager, getSpotifyAuthorization),
+                                                 PartySession)
+import           Database.Models
+import           Database.Party                 (runDb)
+import           Middleware.Flash               (flash)
+import           Middleware.Session             (SessionState (SessionInvalidated),
+                                                 getSessionOrDie,
+                                                 invalidateSession,
+                                                 popOffSession)
+import           Network.Spotify                (authorizeLink, meRequest,
+                                                 spotifyAccountsBaseUrl,
+                                                 tokenRequest)
+import qualified Network.Spotify                as Spotify
+import qualified Network.Spotify.Api.Types.User as Spotify.User
+import           Utils                          (badRequest, baseUrl, bsToStr,
+                                                 lazyBsToStr, noSessionError,
+                                                 serverError, strToBS)
 
 -- HTTP 301 MOVED PERMANENTLY (i.e. redirect)
 type GetMoved contentTypes a = Verb 'GET 301 contentTypes a
@@ -120,6 +132,9 @@ callback vault maybeAuthCode maybeError maybeState =
             -- Done with auth state, pop it off the session
             _ <- liftIO $ popOffSession session "SPOTIFY_AUTH_STATE" ""
 
+            returnTo <- liftIO $ popAuthReturnOffSession session
+            let response = addHeader returnTo NoContent
+
             case maybeAuthCode of
                 Just authCode -> do
                     -- On Spotify auth success, request refresh and access
@@ -139,11 +154,58 @@ callback vault maybeAuthCode maybeError maybeState =
                         Left e   -> throwError $ fromServantError $
                             serverError ("Could not retreive auth tokens: " ++ show e)
                         Right tokenResponse   -> do
-                            let accessToken = Spotify.access_token tokenResponse
-                                refreshToken = Spotify.refresh_token tokenResponse
+                            let newAccessToken = Spotify.access_token tokenResponse
+                                newRefreshToken = Spotify.refresh_token tokenResponse
 
-                            returnTo <- liftIO $ popAuthReturnOffSession session
-                            return $ addHeader returnTo NoContent
+                            runMeResponse <- liftIO $ runExceptT $ meRequest
+                                (Spotify.Authorization newAccessToken)
+                                (getManager cfg)
+
+                            case runMeResponse of
+                                Left e -> throwError $ fromServantError $
+                                    serverError ("Could not retreive user: " ++ show e)
+                                Right user -> do
+                                    -- TODO: Setup current user session, etc.
+                                    -- TODO: Do insert or update instead
+                                    let userId = unpack $ Spotify.User.id user
+                                        newUserAccessToken = Just $ unpack newAccessToken
+                                        newUserRefreshToken = case newRefreshToken of
+                                            Spotify.RefreshToken Nothing -> Nothing
+                                            Spotify.RefreshToken (Just token) -> Just $ unpack token
+                                        newUser = NewUser
+                                            userId
+                                            (lazyBsToStr $ encode user)
+                                            newUserAccessToken
+                                            newUserRefreshToken
+                                        getUserByUsername = getBy $ UniqueUsername userId
+                                            :: SqlPersistT IO (Maybe (Entity User))
+                                    maybeUser <- runDb getUserByUsername
+                                    case maybeUser of
+                                         Nothing -> do
+                                             userToInsert <- toUser newUser
+                                             let insertUser = insertUnique userToInsert :: SqlPersistT IO (Maybe (Key User))
+                                             maybeNewUserKey <- runDb insertUser
+                                             case maybeNewUserKey of
+                                                 Nothing -> throwError $
+                                                     fromServantError $
+                                                     serverError "User was not created at login"
+                                                 Just _ -> do
+                                                    liftIO $ do
+                                                        let sessionId = username newUser
+                                                        sessionInsert "ID" $ strToBS sessionId
+                                                    return response
+
+                                         Just (Entity userKey _) -> do
+                                             currentTime <- liftIO getCurrentTime
+                                             let updateUser = Persist.update userKey
+                                                    [ UserSpotifyUser =. spotifyUser newUser
+                                                    , UserAccessToken =. accessToken newUser
+                                                    , UserRefreshToken =. refreshToken newUser
+                                                    , UserUpdatedAt =. currentTime
+                                                    ]
+                                                    :: SqlPersistT IO ()
+                                             runDb updateUser
+                                             return response
                 _ -> case maybeError of
                     Just spotifyError -> do
                         -- On Spotify auth error, flash the reason authorization
@@ -151,8 +213,7 @@ callback vault maybeAuthCode maybeError maybeState =
                         liftIO $
                             flash session $ M.singleton "error" spotifyError
 
-                        returnTo <- liftIO $ popAuthReturnOffSession session
-                        return $ addHeader returnTo NoContent
+                        return response
                     _ -> throwError $ fromServantError $
                         badRequest "Missing auth code or auth error"
 
@@ -169,9 +230,6 @@ checkStatesOrDie state sessionLookup = do
 
 popAuthReturnOffSession :: PartySession -> IO String
 popAuthReturnOffSession session = popOffSession session "AUTH_RETURN_TO" "/"
-
--- https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
--- https://github.com/spotify/web-api-auth-examples/blob/master/authorization_code/app.js#L58
 
 logout :: Vault -> App RedirectHeaders
 logout vault = do

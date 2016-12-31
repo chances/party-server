@@ -2,6 +2,7 @@ module Utils
     ( badRequest
     , baseUrl
     , bsToStr
+    , lazyBsToStr
     , noSessionError
     , notFound
     , serverError
@@ -46,6 +47,9 @@ strToBS = C8.pack
 
 bsToStr :: C8.ByteString -> String
 bsToStr = C8.unpack
+
+lazyBsToStr :: LazyC8.ByteString -> String
+lazyBsToStr = LazyC8.unpack
 
 strToLazyBS :: String -> LazyC8.ByteString
 strToLazyBS = LazyC8.pack

@@ -67,7 +67,7 @@ data Config = Config
     , getCorsOrigin           :: String
     , getVaultKey             :: Vault.Key PartySession
     , getManager              :: Manager
-    , getSpotifyAuthorization :: Spotify.Authorization
+    , getSpotifyAuthorization :: Spotify.TokenAuthorization
     } deriving (Show)
 
 instance Show (Vault.Key PartySession) where
@@ -103,17 +103,19 @@ setLogger Test        = id
 setLogger Development = logStdoutDev
 setLogger Production  = logStdout
 
+{-# NOINLINE setVaultKey #-}
 setVaultKey :: Vault.Key PartySession
 setVaultKey = unsafePerformIO Vault.newKey
 
-setSpotifyAuthorization :: Spotify.Authorization
+{-# NOINLINE setSpotifyAuthorization #-}
+setSpotifyAuthorization :: Spotify.TokenAuthorization
 setSpotifyAuthorization = authorization where
     authorization = unsafePerformIO $ do
         spotifyClientId <- lookupEnv "SPOTIFY_APP_KEY"
         spotifySecretKey <- lookupEnv "SPOTIFY_APP_SECRET"
         -- If either key doesn't exist, die
         if authKeysExist spotifyClientId spotifySecretKey
-            then return Spotify.Authorization
+            then return Spotify.TokenAuthorization
                 { clientId = pack $ fromJust spotifyClientId
                 , clientSecretKey = pack $ fromJust spotifySecretKey
                 }
