@@ -36,7 +36,7 @@ import           Middleware.Session             (SessionState (SessionInvalidate
                                                  getSessionOrDie,
                                                  invalidateSession,
                                                  popOffSession)
-import           Network.Spotify                (authorizeLink, meRequest,
+import           Network.Spotify                (authorizeLink, getMe,
                                                  spotifyAccountsBaseUrl,
                                                  tokenRequest)
 import qualified Network.Spotify                as Spotify
@@ -162,11 +162,11 @@ callback vault maybeAuthCode maybeError maybeState =
                             let newAccessToken = Spotify.access_token tokenResponse
                                 newRefreshToken = Spotify.refresh_token tokenResponse
 
-                            runMeResponse <- liftIO $ runExceptT $ meRequest
+                            getMeResponse <- liftIO $ runExceptT $ getMe
                                 (Spotify.Authorization newAccessToken)
                                 (getManager cfg)
 
-                            case runMeResponse of
+                            case getMeResponse of
                                 Left e -> throwError $ fromServantError $
                                     serverError ("Could not retreive user: " ++ show e)
                                 Right user -> do

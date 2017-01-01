@@ -39,7 +39,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/chances/servant-spotify.git
-    commit: b75a2215
+    commit: 315459b6
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
@@ -50,6 +50,7 @@ extra-deps:
 - persistent-template-2.1.8.1
 - random-strings-0.1.1.0
 - serversession-backend-persistent-1.0.2
+- servant-spotify-0.2.0.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
