@@ -28,7 +28,7 @@ to the Spec tests (Which units?)
 - [x] Parity with [auth routes](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
 - [ ] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
   - [x] Get user data
-  - [ ] Get user's own playlists
+  - [x] Get user's own playlists
   - [x] Render user data
   - [ ] Render user playlists
 - [ ] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)

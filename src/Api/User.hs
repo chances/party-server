@@ -14,26 +14,34 @@ module Api.User
     , userServer
     ) where
 
-import           Data.Aeson                    (decode)
+import           Control.Monad.Except        (runExceptT)
+import           Control.Monad.Reader        (ask, liftIO)
+import           Data.Aeson                  (decode)
 import           Data.Int                    (Int64)
+import           Data.Text                   (Text, pack)
 import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))
 import           Servant
 import           Servant.HTML.Blaze
-import           Text.Blaze.Html (Html)
-import qualified Network.Spotify.Api.Types.User       as Spotify
+import           Text.Blaze.Html             (Html)
+import qualified Network.Spotify.Api.Types.User as Spotify
 
 import           Api.Envelope                (Envelope, fromServantError,
                                               success)
-import           Config                      (App (..))
+import           Config                      (App (..), Config (getManager))
 import           Database.Models
 import           Database.Party              (runDb)
 import           Middleware.Session          (SessionState (..), startSession, getUserFromSession)
-import           Middleware.Flash          (getFlashedError)
+import           Middleware.Flash            (getFlashedError)
+import           Network.Spotify                (getMePlaylists)
+import qualified Network.Spotify                as Spotify
+import qualified Network.Spotify.Api.Types.User as Spotify.User
+import qualified Network.Spotify.Api.Types.Paging as Spotify.Paging
+import           Network.Spotify.Api.Types.PlaylistSimplified as Playlist
 import           Utils                       (badRequest, noSessionError,
                                               notFound, strToLazyBS)
-import Views.Index (render)
+import           Views.Index                 (render)
 
 type Index = Vault :> Get '[HTML] Html
 
@@ -62,15 +70,55 @@ type UserAPI =
 -- | Index controller
 index :: Vault -> App Html
 index vault = do
+    cfg <- ask :: App Config
+
     maybeError <- getFlashedError vault
-    -- Render the view with `Maybe User` and `Maybe error`
+
+    -- Try to get current user
     eitherUser <- getUserFromSession vault
-    case eitherUser of
-        Left _ -> return $ render Nothing maybeError -- Login page
-        Right sessionUser -> do
-            let user = decode $ strToLazyBS (userSpotifyUser sessionUser)
-                    :: Maybe Spotify.User
-            return $ render user maybeError
+    let (maybeUser, maybeAccessToken, maybeRefreshToken) = case eitherUser of
+            Left _ -> (Nothing, Nothing, Nothing)
+            Right sessionUser ->
+                ( decode $ strToLazyBS (userSpotifyUser sessionUser)
+                , userAccessToken sessionUser
+                , userRefreshToken sessionUser
+                )
+                :: (Maybe Spotify.User, Maybe String, Maybe String)
+
+    -- Try to get current user's playlists
+    eitherPlaylists <- getPlaylists cfg maybeAccessToken
+
+    -- Render the view
+    case eitherPlaylists of
+        Left Nothing    -> return $ render maybeUser Nothing maybeError
+        Left (Just err) -> return $ render
+            maybeUser Nothing
+            (case maybeError of -- Concatenate errors if already exists
+                Nothing -> Just $ show err
+                Just e -> Just (e ++ "\n\n" ++ show err))
+        Right playlists -> return $ render
+            maybeUser
+            (case maybeUser of
+                Just user -> Just $ ownPlaylists (Spotify.User.id user) playlists
+                Nothing -> Nothing)
+            maybeError
+
+getPlaylists :: Config -> Maybe String ->
+    App (Either (Maybe String) [Playlist.PlaylistSimplified])
+getPlaylists cfg maybeAccessToken = case maybeAccessToken of
+        Just token -> do
+            getMePlaylistsResponse <- liftIO $ runExceptT $
+                getMePlaylists
+                    (Spotify.Authorization $ pack token)
+                    (Spotify.Paging.firstPage 50) Nothing
+                    (getManager cfg)
+
+            case getMePlaylistsResponse of
+                Left e -> return $ Left (Just $ show e)
+                Right playlists -> return $ Right
+                    (Spotify.Paging.items playlists
+                        :: [Playlist.PlaylistSimplified])
+        Nothing -> return $ Left Nothing
 
 allUsers :: App (Envelope [Entity User])
 allUsers = do

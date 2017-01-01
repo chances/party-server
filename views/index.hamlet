@@ -19,6 +19,13 @@ $doctype 5
                 <p>Product: #{product}
             <p>Current playlist: N/A
             <div style="clear: both;">
+            $maybe playlists <- maybePlaylists
+                <h2>Pick a playlist for the party
+                <ul>
+                    $forall playlist <- playlists
+                            <li>#{Playlist.name playlist}
+                    $# <a href="/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
+                    $# <a href="<%= playlists[i].href %>" class="link-back">On Spotify</a></li>
         $nothing
             <p>
                 <a href="/auth/login">Login with Spotify
@@ -26,11 +33,3 @@ $doctype 5
         $maybe error <- maybeError
             <p>Error:
             <p>#{show error}
-
-$# <% if (playlists) { %>
-$# <h2>Pick a playlist for the party</h2>
-$# <ul><% for (var i = 0; i < playlists.length; i += 1) { %>
-$#   <% if (playlists[i].owner.id === user.id) { %>
-$#   <li>
-$#     <a href="/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
-$#     <a href="<%= playlists[i].href %>" class="link-back">On Spotify</a></li>
