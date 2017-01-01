@@ -1,0 +1,36 @@
+$doctype 5
+<html>
+    <head>
+        <title>Chance's Party - Admin
+        <link rel=stylesheet href=@{Stylesheet}>
+    <body>
+        $maybe Spotify.User _ country display_name _ url followers _ id images product _ <- maybeUser
+            <p>
+                <a href="/auth/logout">Log Out
+            <h1>Logged in as #{display_name}
+            <img #avatar width="200" src="#{Image.url (head images)}">
+            <div #user>
+                <p>ID: #{id}
+                <p>Profile: #
+                    $with profileUrl <- Spotify.urlValue url
+                        <a href="#{profileUrl}">#{profileUrl}
+                <p>Followers: #{Followers.total followers}
+                <p>Country: #{country}
+                <p>Product: #{product}
+            <p>Current playlist: N/A
+            <div style="clear: both;">
+        $nothing
+            <p>
+                <a href="/auth/login">Login with Spotify
+
+        $maybe error <- maybeError
+            <p>Error:
+            <p>#{show error}
+
+$# <% if (playlists) { %>
+$# <h2>Pick a playlist for the party</h2>
+$# <ul><% for (var i = 0; i < playlists.length; i += 1) { %>
+$#   <% if (playlists[i].owner.id === user.id) { %>
+$#   <li>
+$#     <a href="/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
+$#     <a href="<%= playlists[i].href %>" class="link-back">On Spotify</a></li>

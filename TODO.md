@@ -29,7 +29,8 @@ to the Spec tests (Which units?)
 - [ ] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
   - [x] Get user data
   - [ ] Get user's own playlists
-  - [ ] Render user data and playlists with dynamic template
+  - [x] Render user data
+  - [ ] Render user playlists
 - [ ] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
 - [ ] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
   - [ ] Add search to [servant-spotify]((https://github.com/chances/servant-spotify#readme)

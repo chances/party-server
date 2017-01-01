@@ -14,20 +14,28 @@ module Api.User
     , userServer
     ) where
 
+import           Data.Aeson                    (decode)
 import           Data.Int                    (Int64)
 import           Database.Persist.Postgresql (Entity (..), Key, SqlPersistT,
                                               fromSqlKey, insertUnique,
                                               selectFirst, selectList, (==.))
 import           Servant
+import           Servant.HTML.Blaze
+import           Text.Blaze.Html (Html)
+import qualified Network.Spotify.Api.Types.User       as Spotify
 
 import           Api.Envelope                (Envelope, fromServantError,
                                               success)
 import           Config                      (App (..))
 import           Database.Models
 import           Database.Party              (runDb)
-import           Middleware.Session          (SessionState (..), startSession)
+import           Middleware.Session          (SessionState (..), startSession, getUserFromSession)
+import           Middleware.Flash          (getFlashedError)
 import           Utils                       (badRequest, noSessionError,
-                                              notFound)
+                                              notFound, strToLazyBS)
+import Views.Index (render)
+
+type Index = Vault :> Get '[HTML] Html
 
 type UsersGetAPI = "users"
     :> Get '[JSON] (Envelope [Entity User])
@@ -48,7 +56,21 @@ postUserLink :: (IsElem UserPostAPI UserAPI, HasLink UserPostAPI) => MkLink User
 postUserLink = safeLink (Proxy :: Proxy UserAPI) (Proxy :: Proxy UserPostAPI)
 
 type UserAPI =
+        Index :<|>
         UsersGetAPI :<|> UserGetAPI :<|> UserPostAPI
+
+-- | Index controller
+index :: Vault -> App Html
+index vault = do
+    maybeError <- getFlashedError vault
+    -- Render the view with `Maybe User` and `Maybe error`
+    eitherUser <- getUserFromSession vault
+    case eitherUser of
+        Left _ -> return $ render Nothing maybeError -- Login page
+        Right sessionUser -> do
+            let user = decode $ strToLazyBS (userSpotifyUser sessionUser)
+                    :: Maybe Spotify.User
+            return $ render user maybeError
 
 allUsers :: App (Envelope [Entity User])
 allUsers = do
@@ -82,4 +104,4 @@ createUser vault p = do
                 _                -> throwError $ fromServantError noSessionError
 
 userServer :: ServerT UserAPI App
-userServer = allUsers :<|> singleUser :<|> createUser
+userServer = index :<|> allUsers :<|> singleUser :<|> createUser
