@@ -49,7 +49,6 @@ flash' (_, sessionInsert) dataToFlash =
 flashMiddleware :: Config -> Middleware
 flashMiddleware cfg = removeFlashMiddleware $ getSession' (getVaultKey cfg)
 
--- TODO: Refactor this removeFlashMiddleware monstrosity...
 removeFlashMiddleware :: (Vault.Vault -> IO SessionState) -> Middleware
 removeFlashMiddleware getSessionState app req sendResponse =
     app req $ \res -> do
@@ -57,23 +56,29 @@ removeFlashMiddleware getSessionState app req sendResponse =
         let respond = sendResponse res
         case sessionState of
             SessionAvailable (sessionLookup, sessionInsert) -> do
-                maybeFlashDataBS <- sessionLookup "FLASH"
-                case maybeFlashDataBS of
-                    Just flashDataBS -> do
-                        let maybeFlashData = decode $ fromStrict flashDataBS :: Maybe FlashedData
-                        case maybeFlashData of
-                            Just flashedData -> do
-                                if isFresh flashedData
-                                    then replaceFlash sessionInsert $
-                                        toStrict $ encode FlashedData
-                                            { isFresh = False
-                                            , getData = getData flashedData
-                                            }
-                                    else removeFlash sessionInsert
-                                respond
-                            _ -> respond
+                maybeFlashData <- lookupFlashData sessionLookup
+                case maybeFlashData of
+                    Just flashedData -> do
+                        if isFresh flashedData
+                            then replaceFlash sessionInsert $
+                                toStrict $ encode FlashedData
+                                    { isFresh = False
+                                    , getData = getData flashedData
+                                    }
+                            else removeFlash sessionInsert
+                        respond
                     _ -> respond
             _ -> respond
+
+lookupFlashData :: (Text -> IO (Maybe ByteString)) -> IO (Maybe FlashedData)
+lookupFlashData sessionLookup = do
+    maybeFlashDataBS <- sessionLookup "FLASH"
+    case maybeFlashDataBS of
+        Just flashDataBS -> do
+            let maybeFlashData = decode $ fromStrict flashDataBS
+                    :: Maybe FlashedData
+            return maybeFlashData
+        Nothing -> return Nothing
 
 removeFlash :: (Text -> ByteString -> IO ()) -> IO ()
 removeFlash sessionInsert = replaceFlash sessionInsert (strToBS "")
