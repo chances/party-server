@@ -8,21 +8,25 @@ module Middleware.Flash
     , flashData
     , flashMiddleware
     , fromFlashData
+    , getFlashedData
+    , getFlashedError
     ) where
 
+import           Control.Monad.Reader (liftIO)
 import           Data.Aeson           (FromJSON, ToJSON, decode, encode)
 import           Data.ByteString      (ByteString)
 import           Data.ByteString.Lazy (fromStrict, toStrict)
 import           Data.Map             (Map)
+import           Data.Map             as M
 import           Data.Text            (Text)
 import qualified Data.Vault.Lazy      as Vault
 import           GHC.Generics         (Generic)
 import           Network.Wai          (Middleware)
 import qualified Network.Wai          as W
 
-import           Config               (Config (..), PartySession)
+import           Config               (App (..), Config (..), PartySession)
 import           Middleware.Session   (SessionState (SessionAvailable),
-                                       getSession')
+                                       getSession, getSession')
 import           Utils                (strToBS)
 
 data FlashedData = FlashedData
@@ -45,6 +49,26 @@ flash session mapToFlash = flash' session $ flashData mapToFlash
 flash' :: PartySession -> FlashedData -> IO ()
 flash' (_, sessionInsert) dataToFlash =
     replaceFlash sessionInsert (toStrict $ encode dataToFlash)
+
+getFlashedError :: Vault.Vault -> App (Maybe String)
+getFlashedError vault = do
+    maybeFlashedData <- getFlashedData vault
+    return $ case maybeFlashedData of
+        Just flashedData -> case M.lookup "error" flashedData of
+            Just err -> Just err
+            Nothing  -> Nothing
+        Nothing -> Nothing
+
+getFlashedData :: Vault.Vault -> App (Maybe (Map String String))
+getFlashedData vault = do
+    sessionState <- getSession vault
+    case sessionState of
+        SessionAvailable (sessionLookup, _) -> do
+            maybeFlashData <- liftIO $ lookupFlashData sessionLookup
+            case maybeFlashData of
+                Just flashedData -> return $ Just (getData flashedData)
+                Nothing          -> return Nothing
+        _                                   -> return Nothing
 
 flashMiddleware :: Config -> Middleware
 flashMiddleware cfg = removeFlashMiddleware $ getSession' (getVaultKey cfg)
