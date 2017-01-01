@@ -5,6 +5,7 @@ module Middleware.Session
     , getSession
     , getSession'
     , getSessionOrDie
+    , getUserFromSession
     , invalidateSession
     , popOffSession
     , sessionMiddleware
@@ -15,6 +16,8 @@ import           Control.Monad.Reader                 (ask, liftIO)
 import           Data.Int                             (Int64)
 import           Data.Text                            (pack)
 import qualified Data.Vault.Lazy                      as Vault
+import           Database.Persist.Postgresql          (Entity (..), SqlPersistT,
+                                                       getBy)
 import           Network.Wai                          (Middleware)
 import           Servant                              (throwError)
 import           Web.ServerSession.Backend.Persistent (SqlStorage (..))
@@ -27,8 +30,11 @@ import           Web.ServerSession.Frontend.Wai       (ForceInvalidate (AllSessi
 import           Api.Envelope                         (fromServantError)
 import           Config                               (App (..), Config (..),
                                                        PartySession)
-import           Utils                                (bsToStr, noSessionError,
-                                                       strToBS)
+import           Database.Models
+import           Database.Party                       (runDb)
+import           Utils                                (bsToStr, bsToStr,
+                                                       noSessionError,
+                                                       serverError, strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
@@ -64,6 +70,24 @@ getSessionOrDie vault = do
     case sessionState of
         SessionAvailable session -> return session
         _ -> throwError $ fromServantError noSessionError
+
+getUserFromSession :: Vault.Vault -> App (Either SessionState User)
+getUserFromSession vault = do
+    (sessionLookup, _) <- getSessionOrDie vault
+    maybeSessionId <- liftIO $ sessionLookup "ID"
+    let userId = case maybeSessionId of
+            Just user -> bsToStr user
+            Nothing   -> ""
+        getUserByUsername = getBy $ UniqueUsername userId
+            :: SqlPersistT IO (Maybe (Entity User))
+    case compare userId "" of
+        EQ -> return $ Left SessionInvalidated
+        _ -> do
+            maybeUser <- runDb getUserByUsername
+            case maybeUser of
+                Just (Entity _ user) -> return $ Right user
+                Nothing -> throwError $ fromServantError $
+                    serverError ("Could not get user" ++ userId)
 
 invalidateSession :: Vault.Vault -> App SessionState
 invalidateSession vault = do
