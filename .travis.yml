@@ -8,7 +8,8 @@ language: c
 
 deploy:
   provider: script
-  script: chmod +x bin/deploy.sh && bin/deploy.sh
+  script: ./bin/deploy.sh
+  skip_cleanup: true
   on:
     branch: deploy-prototype-to-heroku
 
