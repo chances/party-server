@@ -6,6 +6,12 @@ sudo: false
 
 language: c
 
+deploy:
+  provider: script
+  script: bin/deploy.sh
+  on:
+    branch: deploy-prototype-to-heroku
+
 cache:
   directories:
   - "$HOME/.ghc"
