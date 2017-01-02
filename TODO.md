@@ -15,6 +15,7 @@ to the Spec tests (Which units?)
 - [ ] Refactor this auth callback monstrosity [src/Api/Auth.hs](src/Api/Auth.hs)
 - [x] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
 - [ ] Add encompasing middleware that checks the Origin req header **TODO** [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
+- [ ] Figure out why this [corsRequireOrigin] doesn't work when deployed [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
 
 ## Security
 
