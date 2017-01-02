@@ -91,8 +91,7 @@ getUserFromSession vault = do
             maybeUser <- runDb getUserByUsername
             case maybeUser of
                 Just (Entity _ user) -> return $ Right user
-                Nothing -> throwError $ fromServantError $
-                    serverError ("Could not get user" ++ authUsername)
+                Nothing              -> return $ Left SessionInvalidated
 
 invalidateSession :: Vault.Vault -> App SessionState
 invalidateSession vault = do
