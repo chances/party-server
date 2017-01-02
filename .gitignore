@@ -8,6 +8,8 @@ pids
 *.seed
 
 .idea/
+chances-party.iml
+/ideaHaskellLib
 
 /.env
 
