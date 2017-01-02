@@ -6,6 +6,7 @@ module Middleware.Session
     , getSession'
     , getSessionOrDie
     , getUserFromSession
+    , getUsernameFromSession
     , invalidateSession
     , popOffSession
     , sessionMiddleware
@@ -13,6 +14,7 @@ module Middleware.Session
     ) where
 
 import           Control.Monad.Reader                 (ask, liftIO)
+import           Data.Maybe                           (fromMaybe)
 import           Data.Text                            (Text, pack)
 import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (Entity (..), SqlPersistT,
@@ -32,8 +34,7 @@ import           Config                               (App (..), Config (..),
 import           Database.Models
 import           Database.Party                       (runDb)
 import           Utils                                (bsToStr, bsToStr,
-                                                       noSessionError,
-                                                       serverError, strToBS)
+                                                       noSessionError, strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
@@ -70,13 +71,18 @@ getSessionOrDie vault = do
         SessionAvailable session -> return session
         _ -> throwError $ fromServantError noSessionError
 
-getUserFromSession :: Vault.Vault -> App (Either SessionState User)
-getUserFromSession vault = do
+getUsernameFromSession :: Vault.Vault -> App (Maybe String)
+getUsernameFromSession vault = do
     (sessionLookup, _) <- getSessionOrDie vault
     maybeAuthUsername <- liftIO $ sessionLookup sessionUserIdKey
-    let authUsername = case maybeAuthUsername of
-            Just user -> bsToStr user
-            Nothing   -> ""
+    return $ case maybeAuthUsername of
+        Just user -> Just $ bsToStr user
+        Nothing   -> Nothing
+
+getUserFromSession :: Vault.Vault -> App (Either SessionState User)
+getUserFromSession vault = do
+    maybeAuthUsername <- getUsernameFromSession vault
+    let authUsername = fromMaybe "" maybeAuthUsername
         getUserByUsername = getBy $ UniqueUsername authUsername
             :: SqlPersistT IO (Maybe (Entity User))
     case compare authUsername "" of
