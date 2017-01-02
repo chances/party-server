@@ -1,9 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Utils
     ( badRequest
     , baseUrl
     , bsToStr
     , lazyBsToStr
     , noSessionError
+    , unauthorized
+    , forbidden
     , notFound
     , serverError
     , jsonContentType
@@ -35,6 +39,17 @@ noSessionError = serverError "No session"
 
 badRequest :: String -> ServantErr
 badRequest message = err400 { errBody = strToLazyBS message }
+
+unauthorized :: String -> ServantErr
+unauthorized message = err401
+    { errHeaders = [("Www-Authenticate", strToBS $
+        "Bearer realm=\"spotify\", error=\"unauthorized\", "
+        ++ "error_description=\"" ++ message ++ "\"")]
+    , errBody = strToLazyBS message
+    }
+
+forbidden :: String -> ServantErr
+forbidden message = err403 { errBody = strToLazyBS message }
 
 notFound :: String -> ServantErr
 notFound message = err404 { errBody = strToLazyBS message }
