@@ -61,7 +61,7 @@ type Redirect =
 
 type LoginAPI = "login"
     :> Vault :> QueryParam "return_to" String
-    :> GetFound '[PlainText] (Headers '[Header "Location" String] NoContent)
+    :> Redirect
 type LoginCallbackAPI = "callback"
     :> Vault
     :> QueryParam "code" Spotify.AuthorizationCode
@@ -89,8 +89,7 @@ getLogoutLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LogoutAPI)
 
 type AuthAPI = LoginAPI :<|> LoginCallbackAPI :<|> LogoutAPI
 
-login :: Vault -> Maybe String
-    -> App (Headers '[Header "Location" String] NoContent)
+login :: Vault -> Maybe String -> App RedirectHeaders
 login vault maybeReturnTo = do
     (_, sessionInsert) <- getSessionOrDie vault
     cfg <- ask :: App Config
