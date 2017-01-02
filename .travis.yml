@@ -9,6 +9,7 @@ language: c
 deploy:
   provider: script
   script: bin/deploy.sh
+  skip_cleanup: true
   on:
     branch: deploy-prototype-to-heroku
 
