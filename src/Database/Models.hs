@@ -29,6 +29,7 @@ share [mkPersist sqlSettings, mkSave "entityDefs"] [persistLowerCase|
 User json
     username String
     spotifyUser String
+    spotifyPlaylistId String Maybe
     accessToken String Maybe
     refreshToken String Maybe
 
@@ -55,7 +56,7 @@ toUser :: NewUser -> App User
 toUser newUser = do
     currentTime <- liftIO getCurrentTime
     return (
-        User (username newUser) (spotifyUser newUser)
+        User (username newUser) (spotifyUser newUser) Nothing
             (accessToken newUser) (refreshToken newUser)
             currentTime currentTime
         )

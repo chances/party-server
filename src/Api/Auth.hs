@@ -9,6 +9,8 @@
 
 module Api.Auth
     ( AuthAPI
+    , Redirect
+    , RedirectHeaders
     , authServer
     ) where
 

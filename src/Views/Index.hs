@@ -6,7 +6,7 @@
 module Views.Index (render) where
 
 import           Data.ISO3166_CountryCodes                    (CountryCode)
-import           Data.Text                                    (Text)
+import           Data.Text                                    (Text, pack)
 import           Text.Blaze                                   (toMarkup)
 import           Text.Blaze.Html
 import           Text.Hamlet
@@ -26,9 +26,17 @@ renderUrl Stylesheet _ = "/main.css"
 
 -- | The main template
 render :: Maybe Spotify.User -> Maybe [Playlist.PlaylistSimplified] ->
-    Maybe String -> Html
-render maybeUser maybePlaylists maybeError =
-    $(hamletFile "views/index.hamlet") renderUrl
+    Maybe String -> Maybe String -> Html
+render maybeUser maybePlaylists maybeCurrentPlaylistId maybeError =
+    $(hamletFile "views/index.hamlet") renderUrl where
+        maybeCurrentPlaylist = case maybePlaylists of
+            Just playlists -> case maybeCurrentPlaylistId of
+                Just playlistId -> Just $
+                    head $ filter
+                        (\p -> Playlist.id p == pack playlistId)
+                        playlists
+                Nothing -> Nothing
+            Nothing -> Nothing
 
 instance ToMarkup (Maybe Text) where
     toMarkup txt = case txt of

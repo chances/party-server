@@ -17,7 +17,11 @@ $doctype 5
                 <p>Followers: #{Followers.total followers}
                 <p>Country: #{country}
                 <p>Product: #{product}
-            <p>Current playlist: N/A
+            <p>Current playlist: #
+                $maybe currentPlaylist <- maybeCurrentPlaylist
+                    #{Playlist.name currentPlaylist}
+                $nothing
+                    N/A
             <div style="clear: both;">
             $maybe playlists <- maybePlaylists
                 <h2>Pick a playlist for the party
