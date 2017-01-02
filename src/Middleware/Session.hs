@@ -13,8 +13,7 @@ module Middleware.Session
     ) where
 
 import           Control.Monad.Reader                 (ask, liftIO)
-import           Data.Int                             (Int64)
-import           Data.Text                            (pack)
+import           Data.Text                            (Text, pack)
 import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (Entity (..), SqlPersistT,
                                                        getBy)
@@ -74,40 +73,46 @@ getSessionOrDie vault = do
 getUserFromSession :: Vault.Vault -> App (Either SessionState User)
 getUserFromSession vault = do
     (sessionLookup, _) <- getSessionOrDie vault
-    maybeSessionId <- liftIO $ sessionLookup "ID"
-    let userId = case maybeSessionId of
+    maybeAuthUsername <- liftIO $ sessionLookup sessionUserIdKey
+    let authUsername = case maybeAuthUsername of
             Just user -> bsToStr user
             Nothing   -> ""
-        getUserByUsername = getBy $ UniqueUsername userId
+        getUserByUsername = getBy $ UniqueUsername authUsername
             :: SqlPersistT IO (Maybe (Entity User))
-    case compare userId "" of
+    case compare authUsername "" of
         EQ -> return $ Left SessionInvalidated
         _ -> do
             maybeUser <- runDb getUserByUsername
             case maybeUser of
                 Just (Entity _ user) -> return $ Right user
                 Nothing -> throwError $ fromServantError $
-                    serverError ("Could not get user" ++ userId)
+                    serverError ("Could not get user" ++ authUsername)
 
 invalidateSession :: Vault.Vault -> App SessionState
 invalidateSession vault = do
     sessionState <- getSession vault
     case sessionState of
         SessionAvailable session -> liftIO $ do
+            let (_, sessionInsert) = session
             forceInvalidate session AllSessionIdsOfLoggedUser
+            sessionInsert sessionUserIdKey ""
             return SessionInvalidated
         _ -> return sessionState
 
-startSession :: Vault.Vault -> Int64 -> App SessionState
-startSession vault authId = do
+startSession :: Vault.Vault -> String -> App SessionState
+startSession vault authUsername = do
     sessionState <- getSession vault
     case sessionState of
         SessionAvailable session -> liftIO $ do
             let (_, sessionInsert) = session
-                key = strToBS $ show authId
+                key = strToBS authUsername
             sessionInsert "ID" key
+            sessionInsert sessionUserIdKey key
             return $ SessionStarted session
         _ -> return sessionState
+
+sessionUserIdKey :: Text
+sessionUserIdKey = "USER"
 
 popOffSession :: PartySession -> String -> String -> IO String
 popOffSession session key defaultValue = do

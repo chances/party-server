@@ -35,7 +35,8 @@ import           Middleware.Flash               (flash)
 import           Middleware.Session             (SessionState (SessionInvalidated),
                                                  getSessionOrDie,
                                                  invalidateSession,
-                                                 popOffSession)
+                                                 popOffSession,
+                                                 startSession)
 import           Network.Spotify                (authorizeLink, getMe,
                                                  spotifyAccountsBaseUrl,
                                                  tokenRequest)
@@ -193,9 +194,7 @@ callback vault maybeAuthCode maybeError maybeState =
                                                      fromServantError $
                                                      serverError "User was not created at login"
                                                  Just _ -> do
-                                                    liftIO $ do
-                                                        let sessionId = username newUser
-                                                        sessionInsert "ID" $ strToBS sessionId
+                                                    _ <- startSession vault userId
                                                     return response
 
                                          Just (Entity userKey _) -> do
@@ -208,6 +207,7 @@ callback vault maybeAuthCode maybeError maybeState =
                                                     ]
                                                     :: SqlPersistT IO ()
                                              runDb updateUser
+                                             _ <- startSession vault userId
                                              return response
                 _ -> case maybeError of
                     Just spotifyError -> do

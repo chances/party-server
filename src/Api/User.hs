@@ -143,7 +143,7 @@ createUser vault p = do
         Nothing -> throwError $ fromServantError $ badRequest "User was not created, ensure username is unique"
         Just newUserKey -> do
             let key = fromSqlKey newUserKey
-            sessionState <- startSession vault key
+            sessionState <- startSession vault (username p)
             case sessionState of
                 SessionStarted _ -> do
                     let resource = success key
