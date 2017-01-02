@@ -1,0 +1,1 @@
+web: ./chances-party-exe
