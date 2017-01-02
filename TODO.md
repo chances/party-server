@@ -33,12 +33,14 @@ to the Spec tests (Which units?)
   - [x] Render user playlists
   - [x] Log Out
 - [x] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
-- [ ] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
-  - [ ] Add search to [servant-spotify](https://github.com/chances/servant-spotify#readme)
-    - [ ] For tracks
-    - [ ] For artists
-    - [ ] For albums
-    - [ ] Expose "See more results in Spotify" href
+- [ ] ~~Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)~~
+  - [ ] ~~Add search to [servant-spotify](https://github.com/chances/servant-spotify#readme)~~
+    - [ ] ~~For tracks~~
+    - [ ] ~~For artists~~
+    - [ ] ~~For albums~~
+    - [ ] ~~Expose "See more results in Spotify" href~~
+
+_Note: Removed search endpoint task in favor of access token delivery to clients for use with the Spotify Web API on the client side. (The Android client app authenticates with Spotify directly.)_
 
 ## New Functionality
 
