@@ -34,7 +34,7 @@ to the Spec tests (Which units?)
   - [x] Log Out
 - [ ] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
 - [ ] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
-  - [ ] Add search to [servant-spotify]((https://github.com/chances/servant-spotify#readme)
+  - [ ] Add search to [servant-spotify](https://github.com/chances/servant-spotify#readme)
     - [ ] For tracks
     - [ ] For artists
     - [ ] For albums
