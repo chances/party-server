@@ -120,6 +120,12 @@ getPlaylists cfg maybeAccessToken = case maybeAccessToken of
                         :: [Playlist.PlaylistSimplified])
         Nothing -> return $ Left Nothing
 
+ownPlaylists :: Text -> [Playlist.PlaylistSimplified] ->
+    [Playlist.PlaylistSimplified]
+ownPlaylists userId = filter (\playlist ->
+        Spotify.User.id (Playlist.owner playlist) == userId
+    )
+
 allUsers :: App (Envelope [Entity User])
 allUsers = do
     users <- runDb (selectList [] [])

@@ -23,9 +23,9 @@ $doctype 5
                 <h2>Pick a playlist for the party
                 <ul>
                     $forall playlist <- playlists
-                            <li>#{Playlist.name playlist}
-                    $# <a href="/playlist?id=<%= playlists[i].id %>"><%= playlists[i].name %></a>
-                    $# <a href="<%= playlists[i].href %>" class="link-back">On Spotify</a></li>
+                        <li>
+                            <a href="/playlist?id=#{Playlist.id playlist}">#{Playlist.name playlist}
+                            <a href="#{Playlist.href playlist}" class="link-back">On Spotify
         $nothing
             <p>
                 <a href="/auth/login">Login with Spotify
