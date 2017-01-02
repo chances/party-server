@@ -7,6 +7,7 @@ packed session (serversession Core shit) is a problem **(It's not)**
 to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
+- [ ] Speed up Travis builds. Went from 1m15s in JS-land to 5m30s in Haskell-land. (Something isn't being cached between builds...)
 
 ## Inline TODOs
 - [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
