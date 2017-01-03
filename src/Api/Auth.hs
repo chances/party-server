@@ -29,7 +29,7 @@ import           Servant
 import           Servant.Common.BaseUrl         (showBaseUrl)
 
 import           Api.Envelope                   (fromServantError)
-import           Config                         (App (..), Config (getManager, getSpotifyAuthorization),
+import           Config                         (App (..), Config (getManager, getSpotifyAuthorization, getSpotifyCallback),
                                                  PartySession)
 import           Database.Models
 import           Database.Party                 (runDb)
@@ -37,14 +37,13 @@ import           Middleware.Flash               (flash)
 import           Middleware.Session             (SessionState (SessionInvalidated),
                                                  getSessionOrDie,
                                                  invalidateSession,
-                                                 popOffSession,
-                                                 startSession)
+                                                 popOffSession, startSession)
 import           Network.Spotify                (authorizeLink, getMe,
                                                  spotifyAccountsBaseUrl,
                                                  tokenRequest)
 import qualified Network.Spotify                as Spotify
 import qualified Network.Spotify.Api.Types.User as Spotify.User
-import           Utils                          (badRequest, baseUrl, bsToStr,
+import           Utils                          (badRequest, bsToStr,
                                                  lazyBsToStr, noSessionError,
                                                  serverError, strToBS)
 
@@ -83,9 +82,6 @@ instance HasLink sub => HasLink (Vault :> sub) where
 getCallbackLink :: HasLink LoginCallbackAPI => MkLink LoginCallbackAPI
 getCallbackLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LoginCallbackAPI)
 
-callbackLink :: String
-callbackLink = showBaseUrl baseUrl ++ "/auth/" ++ show (getCallbackLink Nothing Nothing Nothing)
-
 getLogoutLink :: HasLink LogoutAPI => MkLink LogoutAPI
 getLogoutLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LogoutAPI)
 
@@ -106,7 +102,7 @@ login vault maybeReturnTo = do
     let base = showBaseUrl spotifyAccountsBaseUrl
         clientId = Just $
             unpack $ Spotify.clientId $ getSpotifyAuthorization cfg
-        redirectUri = callbackLink
+        redirectUri = getSpotifyCallback cfg
         scope = Spotify.scopeFromList $ Prelude.map pack
             [ "user-read-email"
             , "user-read-private"
@@ -148,7 +144,7 @@ callback vault maybeAuthCode maybeError maybeState =
                     -- tokens from Spotify
                     cfg <- ask :: App Config
                     let redirectUri = Spotify.RedirectUri
-                            (Just (pack callbackLink))
+                            (Just $ pack (getSpotifyCallback cfg))
                         authTokenRequest = Spotify.makeAuthorizationCodeTokenRequest
                             authCode redirectUri
 

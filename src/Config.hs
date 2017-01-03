@@ -67,6 +67,7 @@ data Config = Config
     , getCorsOrigin           :: String
     , getVaultKey             :: Vault.Key PartySession
     , getManager              :: Manager
+    , getSpotifyCallback      :: String
     , getSpotifyAuthorization :: Spotify.TokenAuthorization
     } deriving (Show)
 
@@ -95,6 +96,7 @@ defaultConfig = Config
     , getCorsOrigin = "http://chancesnow.me"
     , getVaultKey = setVaultKey
     , getManager = undefined
+    , getSpotifyCallback = setSpotifyCallback
     , getSpotifyAuthorization = setSpotifyAuthorization
     }
 
@@ -102,6 +104,16 @@ setLogger :: Environment -> Middleware
 setLogger Test        = id
 setLogger Development = logStdoutDev
 setLogger Production  = logStdout
+
+{-# NOINLINE setSpotifyCallback #-}
+setSpotifyCallback :: String
+setSpotifyCallback = unsafePerformIO $ do
+    maybeSpotifyCallback <- lookupEnv "SPOTIFY_CALLBACK"
+    let spotifyCallback = map Just (fromJust maybeSpotifyCallback)
+    return $ removeTrailingSlash spotifyCallback where
+        removeTrailingSlash str = case last str of
+            Just '/' -> map fromJust (init str)
+            _        -> map fromJust str
 
 {-# NOINLINE setVaultKey #-}
 setVaultKey :: Vault.Key PartySession

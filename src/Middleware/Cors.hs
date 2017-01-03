@@ -16,9 +16,11 @@ policyFromOrigins origins = CorsResourcePolicy
     , corsExposedHeaders = Nothing
     , corsMaxAge = Nothing
     , corsVaryOrigin = False
-    , corsRequireOrigin = case origins of
-        Nothing -> False
-        _       -> True
+    -- , corsRequireOrigin = case origins of
+    --     Nothing -> False
+    --     _       -> True
+    -- TODO: Figure out why this doesn't work when deployed
+    , corsRequireOrigin = False
     , corsIgnoreFailures = False
     }
 

@@ -20,6 +20,7 @@ import           Servant                  ((:<|>) (..), (:>), (:~>) (Nat),
 import           Api.Auth                 (AuthAPI, authServer)
 import           Api.User                 (UserAPI, userServer)
 import           Config                   (App (runApp), Config (..),
+                                           Environment (Development),
                                            envSetCorsOrigin, setLogger)
 import           Database.Party           (doMigrations, runSqlPool)
 import           Middleware.Flash         (flashMiddleware)
@@ -67,7 +68,9 @@ run cfg = do
     session <- sessionMiddleware cfg
 
     -- Print API layout
-    putStrLn $ unpack $ layout appAPI
+    case env of
+        Development -> putStrLn $ unpack $ layout appAPI
+        _           -> putStr ""
 
     -- Compose middleware pipeline
     let middleware = logger . corsPolicy . session . flash

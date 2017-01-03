@@ -22,6 +22,8 @@ sessions.db
 # Application debug db
 party.db
 
+deploy_key
+
 # Haskell Stack
 dist
 dist-*

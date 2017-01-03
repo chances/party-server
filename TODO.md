@@ -3,18 +3,19 @@
 - [x] Investigate [HTML datatype](https://github.com/haskell-servant/servant-lucid/blob/master/src/Servant/HTML/Lucid.hs)
 - [x] Figure out if the weird session recreation because of existing authID in
 packed session (serversession Core shit) is a problem **(It's not)**
+- [x] Speed up Travis builds. Went from 1m15s in JS-land to 5m30s in Haskell-land. (Something isn't being cached between builds...)
 - [ ] Add [QuickCheck](https://hackage.haskell.org/package/servant-quickcheck-0.0.2.2/docs/Servant-QuickCheck.html)
 to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
-- [ ] Speed up Travis builds. Went from 1m15s in JS-land to 5m30s in Haskell-land. (Something isn't being cached between builds...)
 
 ## Inline TODOs
 - [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
 - [x] Refactor this removeFlashMiddleware monstrosity [src/Middleware/Flash.hs](src/Middleware/Flash.hs)
 - [ ] Refactor this auth callback monstrosity [src/Api/Auth.hs](src/Api/Auth.hs)
-- [ ] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
+- [x] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
 - [ ] Add encompasing middleware that checks the Origin req header **TODO** [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
+- [ ] Figure out why this [corsRequireOrigin] doesn't work when deployed [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
 
 ## Security
 
