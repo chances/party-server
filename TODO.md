@@ -154,6 +154,13 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 
 ## Resource Links
 
+### WebSockets
+
+- [socket-io](http://hackage.haskell.org/package/socket-io)
+- [websockets](https://github.com/jaspervdj/websockets)
+- [servant-subscriber](https://github.com/eskimor/servant-subscriber)
+- [ChatQY](https://github.com/realli/chatqy) (servant, websockets, and react.js)
+
 ### Authentication
 
 - ~~[servant-auth](https://github.com/plow-technologies/servant-auth)~~
