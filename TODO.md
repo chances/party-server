@@ -154,6 +154,8 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 
 ## Resource Links
 
+- [spotify-web-api-js](https://github.com/JMPerez/spotify-web-api-js)
+
 ### WebSockets
 
 - [socket-io](http://hackage.haskell.org/package/socket-io)
