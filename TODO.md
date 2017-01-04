@@ -130,6 +130,13 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
     - [ ] GitHub
     - Others?
 
+#### Wishlist
+
+- [ ] Music Quiz modeled after [Spotify iQuiz](https://github.com/JMPerez/spotify-iquiz#spotify-iquiz)
+  - Users can submit songs, albums, and artists for inclusion to the communal quiz game beforehand.
+  - Display a call to action on the TV UI and to guests that they may participate.
+  - Prevent users from selecting songs from singles or hide the album art (Singles are too easy to guess given their album art).
+
 ## Compliance with Spotify Developer Terms of Use
 
 - [Spotify Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/)
