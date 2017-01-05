@@ -9,13 +9,7 @@ to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
-## Inline TODOs
-- [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
-- [x] Refactor this removeFlashMiddleware monstrosity [src/Middleware/Flash.hs](src/Middleware/Flash.hs)
-- [ ] Refactor this auth callback monstrosity [src/Api/Auth.hs](src/Api/Auth.hs)
-- [x] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
-- [ ] Add encompasing middleware that checks the Origin req header **TODO** [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
-- [ ] Figure out why this [corsRequireOrigin] doesn't work when deployed [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
+## Be sure to pay attention to inline TODOs in source files!
 
 ## Security
 
@@ -47,7 +41,11 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 ## New Functionality
 
 - [ ] Add access token delivery endpoint
-  - [ ] With refresh option
+  - [x] Deliver token to authenticated sessions
+  - [ ] Deliver token to guests via the party's host's user
+  - [ ] Automatically refresh token
+- [ ] Remove user[s] endpoints because they're gaping security holes
+- [ ] Change playlist to PUT instead of current GET, also don't redirect
 - [ ] Add timestamp utility functions (autonomously update them)
 - [ ] WebSockets streaming data integration
 - [ ] Add Guests model
@@ -130,6 +128,13 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
     - [ ] GitHub
     - Others?
 
+#### Wishlist
+
+- [ ] Music Quiz modeled after [Spotify iQuiz](https://github.com/JMPerez/spotify-iquiz#spotify-iquiz)
+  - Users can submit songs, albums, and artists for inclusion to the communal quiz game beforehand.
+  - Display a call to action on the TV UI and to guests that they may participate.
+  - Prevent users from selecting songs from singles or hide the album art (Singles are too easy to guess given their album art).
+
 ## Compliance with Spotify Developer Terms of Use
 
 - [Spotify Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/)
@@ -153,6 +158,15 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
     - See subsection 13 about requirements for Privacy Policy
 
 ## Resource Links
+
+- [spotify-web-api-js](https://github.com/JMPerez/spotify-web-api-js)
+
+### WebSockets
+
+- [socket-io](http://hackage.haskell.org/package/socket-io)
+- [websockets](https://github.com/jaspervdj/websockets)
+- [servant-subscriber](https://github.com/eskimor/servant-subscriber)
+- [ChatQY](https://github.com/realli/chatqy) (servant, websockets, and react.js)
 
 ### Authentication
 

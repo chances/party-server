@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE OverloadedStrings     #-}
@@ -17,14 +18,17 @@ module Api.Auth
 import           Control.Monad                  (unless)
 import           Control.Monad.Except           (runExceptT)
 import           Control.Monad.Reader           (ask, liftIO)
-import           Data.Aeson                     (encode)
+import           Data.Aeson                     (FromJSON, ToJSON, encode)
 import           Data.ByteString                (ByteString)
 import           Data.Map                       as M
+import           Data.Maybe                     (fromJust)
 import           Data.Text                      (Text, pack, unpack)
-import           Data.Time.Clock                (getCurrentTime)
+import           Data.Time.Clock                (UTCTime, addUTCTime,
+                                                 getCurrentTime)
 import           Database.Persist.Postgresql    (Entity (..), Key, SqlPersistT,
                                                  getBy, insertUnique, (=.))
 import           Database.Persist.Postgresql    as Persist
+import           GHC.Generics                   (Generic)
 import           Servant
 import           Servant.Common.BaseUrl         (showBaseUrl)
 
@@ -36,6 +40,7 @@ import           Database.Party                 (runDb)
 import           Middleware.Flash               (flash)
 import           Middleware.Session             (SessionState (SessionInvalidated),
                                                  getSessionOrDie,
+                                                 getUserFromSession,
                                                  invalidateSession,
                                                  popOffSession, startSession)
 import           Network.Spotify                (authorizeLink, getMe,
@@ -45,7 +50,8 @@ import qualified Network.Spotify                as Spotify
 import qualified Network.Spotify.Api.Types.User as Spotify.User
 import           Utils                          (badRequest, bsToStr,
                                                  lazyBsToStr, noSessionError,
-                                                 serverError, strToBS)
+                                                 serverError, strToBS,
+                                                 unauthorized)
 
 -- HTTP 301 MOVED PERMANENTLY (i.e. redirect)
 type GetMoved contentTypes a = Verb 'GET 301 contentTypes a
@@ -69,6 +75,9 @@ type LoginCallbackAPI = "callback"
     :> QueryParam "error" String
     :> QueryParam "state" Spotify.State
     :> Redirect
+
+type TokenAPI = "token" :> Vault :> Get '[JSON] TokenResponse
+
 type LogoutAPI   = "logout"
     :> Vault :> Redirect
 
@@ -85,7 +94,7 @@ getCallbackLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LoginCallbac
 getLogoutLink :: HasLink LogoutAPI => MkLink LogoutAPI
 getLogoutLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LogoutAPI)
 
-type AuthAPI = LoginAPI :<|> LoginCallbackAPI :<|> LogoutAPI
+type AuthAPI = LoginAPI :<|> LoginCallbackAPI :<|> TokenAPI :<|> LogoutAPI
 
 login :: Vault -> Maybe String -> App RedirectHeaders
 login vault maybeReturnTo = do
@@ -103,7 +112,7 @@ login vault maybeReturnTo = do
         clientId = Just $
             unpack $ Spotify.clientId $ getSpotifyAuthorization cfg
         redirectUri = getSpotifyCallback cfg
-        scope = Spotify.scopeFromList $ Prelude.map pack
+        requiredScope = Spotify.scopeFromList $ Prelude.map pack
             [ "user-read-email"
             , "user-read-private"
             , "playlist-read-private"
@@ -114,7 +123,7 @@ login vault maybeReturnTo = do
             (Just Spotify.ResponseType)
             (Just redirectUri)
             (Just state)
-            (Just scope)
+            (Just requiredScope)
             Nothing
         location = base ++ "/" ++ show authLink
     return $ addHeader location NoContent
@@ -160,6 +169,13 @@ callback vault maybeAuthCode maybeError maybeState =
                             let newAccessToken = Spotify.access_token tokenResponse
                                 newRefreshToken = Spotify.refresh_token tokenResponse
 
+                            -- Calculate token exiry date
+                            -- TODO: Modularize this calulation and unit test
+                            currentTime <- liftIO getCurrentTime
+                            let tokenExpiry = addUTCTime
+                                    (realToFrac $ Spotify.expires_in tokenResponse)
+                                    currentTime
+
                             getMeResponse <- liftIO $ runExceptT $ getMe
                                 (Spotify.Authorization newAccessToken)
                                 (getManager cfg)
@@ -172,12 +188,15 @@ callback vault maybeAuthCode maybeError maybeState =
                                         newUserAccessToken = Just $ unpack newAccessToken
                                         newUserRefreshToken = case newRefreshToken of
                                             Spotify.RefreshToken Nothing -> Nothing
-                                            Spotify.RefreshToken (Just token) -> Just $ unpack token
+                                            Spotify.RefreshToken (Just t) -> Just $ unpack t
+                                        newUserTokenScope = Just $ show (Spotify.scope tokenResponse)
                                         newUser = NewUser
                                             userId
                                             (lazyBsToStr $ encode user)
                                             newUserAccessToken
                                             newUserRefreshToken
+                                            (Just tokenExpiry)
+                                            newUserTokenScope
                                         getUserByUsername = getBy $ UniqueUsername userId
                                             :: SqlPersistT IO (Maybe (Entity User))
                                     maybeUser <- runDb getUserByUsername
@@ -195,11 +214,12 @@ callback vault maybeAuthCode maybeError maybeState =
                                                     return response
 
                                          Just (Entity userKey _) -> do
-                                             currentTime <- liftIO getCurrentTime
                                              let updateUser = Persist.update userKey
                                                     [ UserSpotifyUser =. spotifyUser newUser
                                                     , UserAccessToken =. accessToken newUser
                                                     , UserRefreshToken =. refreshToken newUser
+                                                    , UserTokenExpiryDate =. tokenExpiryDate newUser
+                                                    , UserTokenScope =. tokenScope newUser
                                                     , UserUpdatedAt =. currentTime
                                                     ]
                                                     :: SqlPersistT IO ()
@@ -231,6 +251,29 @@ checkStatesOrDie state sessionLookup = do
 popAuthReturnOffSession :: PartySession -> IO String
 popAuthReturnOffSession session = popOffSession session "AUTH_RETURN_TO" "/"
 
+token :: Vault -> App TokenResponse
+token vault = do
+    eitherUser <- getUserFromSession vault
+
+    -- TODO: Check expiry of token, if expired then refresh it
+
+    case eitherUser of
+        Left _ -> throwError $ fromServantError (unauthorized "Session is unauthenticated")
+        Right sessionUser -> return tokenResponse where
+            tokenResponse = TokenResponse
+                (pack $ fromJust $ userAccessToken sessionUser)
+                (fromJust $ userTokenExpiryDate sessionUser)
+                (pack $ fromJust $ userTokenScope sessionUser)
+
+data TokenResponse = TokenResponse
+    { access_token :: Text
+    , expiry_date  :: UTCTime
+    , scope        :: Text
+    } deriving (Generic)
+
+instance FromJSON TokenResponse
+instance ToJSON TokenResponse
+
 logout :: Vault -> App RedirectHeaders
 logout vault = do
     sessionState <- invalidateSession vault
@@ -239,4 +282,4 @@ logout vault = do
         _                  -> throwError $ fromServantError noSessionError
 
 authServer :: ServerT AuthAPI App
-authServer = login :<|> callback :<|> logout
+authServer = login :<|> callback :<|> token :<|> logout
