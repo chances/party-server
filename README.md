@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chances/chances-party.svg)](https://travis-ci.org/chances/chances-party)
 
-A party web app to facilitate guest interaction at [Chance Snow's](http://chancesnow.me) parties.
+A party web app to facilitate guest interaction at your parties.
 
 This application tightly integrates with the [Spotify Web API]() to help party hosts and guests curate a playlist of music as well as keep a guest list for a party.
 
