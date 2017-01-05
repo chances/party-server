@@ -9,13 +9,7 @@ to the Spec tests (Which units?)
 - [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
-## Inline TODOs
-- [ ] Use this [Headers middleware] for Cache-Control, HTTP-Authenticate on 401, etc. [src/Middleware/Headers.hs](src/Middleware/Headers.hs)
-- [x] Refactor this removeFlashMiddleware monstrosity [src/Middleware/Flash.hs](src/Middleware/Flash.hs)
-- [ ] Refactor this auth callback monstrosity [src/Api/Auth.hs](src/Api/Auth.hs)
-- [x] Make this [Party API base URL] configurable via environment (move to Config?) [src/Utils.hs](src/Utils.hs)
-- [ ] Add encompasing middleware that checks the Origin req header **TODO** [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
-- [ ] Figure out why this [corsRequireOrigin] doesn't work when deployed [src/Middleware/Cors.hs](src/Middleware/Cors.hs)
+## Be sure to pay attention to inline TODOs in source files!
 
 ## Security
 
