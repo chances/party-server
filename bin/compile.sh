@@ -3,9 +3,10 @@
 echo "Installing chances-party-exe to ./dist"
 
 # Install the chances-party executable for deployment
-stack --local-bin-path dist/ install # TODO: Add optimization flags?
+# TODO: Add optimization flags? (--ghc-options=-O)
+stack install --local-bin-path ./
 
-cp Procfile dist/.
+cp chances-party-exe Procfile dist/.
 
 echo "Copying public assets"
 
