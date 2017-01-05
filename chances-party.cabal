@@ -78,7 +78,7 @@ executable chances-party-exe
 test-suite chances-party-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             Spec.hs
+  main-is:             Main.hs
   build-depends:       base
                      , hspec
                      , servant
