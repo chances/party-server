@@ -41,7 +41,9 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 ## New Functionality
 
 - [ ] Add access token delivery endpoint
-  - [ ] With refresh option
+  - [ ] Deliver token to authenticated sessions
+  - [ ] Deliver token to guests via the party's host's user
+  - [ ] Automatically refresh token
 - [ ] Add timestamp utility functions (autonomously update them)
 - [ ] WebSockets streaming data integration
 - [ ] Add Guests model
