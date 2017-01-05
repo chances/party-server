@@ -41,7 +41,7 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 ## New Functionality
 
 - [ ] Add access token delivery endpoint
-  - [ ] Deliver token to authenticated sessions
+  - [x] Deliver token to authenticated sessions
   - [ ] Deliver token to guests via the party's host's user
   - [ ] Automatically refresh token
 - [ ] Remove user[s] endpoints because they're gaping security holes

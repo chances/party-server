@@ -32,6 +32,8 @@ User json
     spotifyPlaylistId String Maybe
     accessToken String Maybe
     refreshToken String Maybe
+    tokenExpiryDate UTCTime Maybe
+    tokenScope String Maybe
 
     createdAt UTCTime
     updatedAt UTCTime
@@ -43,10 +45,12 @@ User json
 |]
 
 data NewUser = NewUser
-    { username     :: String
-    , spotifyUser  :: String
-    , accessToken  :: Maybe String
-    , refreshToken :: Maybe String
+    { username        :: String
+    , spotifyUser     :: String
+    , accessToken     :: Maybe String
+    , refreshToken    :: Maybe String
+    , tokenExpiryDate :: Maybe UTCTime
+    , tokenScope      :: Maybe String
     } deriving (Show, Generic)
 
 instance ToJSON NewUser
@@ -58,6 +62,7 @@ toUser newUser = do
     return (
         User (username newUser) (spotifyUser newUser) Nothing
             (accessToken newUser) (refreshToken newUser)
+            (tokenExpiryDate newUser) (tokenScope newUser)
             currentTime currentTime
         )
 
