@@ -33,7 +33,7 @@ import           Config                               (App (..), Config (..),
                                                        PartySession)
 import           Database.Models
 import           Database.Party                       (runDb)
-import           Utils                                (bsToStr, bsToStr,
+import           Utils                                (bsToStr,
                                                        noSessionError, strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
