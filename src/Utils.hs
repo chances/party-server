@@ -10,6 +10,7 @@ module Utils
     , notFound
     , serverError
     , jsonContentType
+    , printDebug
     , strToBS
     , strToLazyBS
     ) where
@@ -18,6 +19,7 @@ import qualified Data.ByteString.Char8      as C8
 import qualified Data.ByteString.Lazy.Char8 as LazyC8
 import           Network.HTTP.Types         as HTTP
 import           Servant
+import           System.IO.Unsafe           (unsafePerformIO)
 
 jsonContentType :: HTTP.Header
 jsonContentType = (HTTP.hContentType, strToBS "application/json")
@@ -44,6 +46,11 @@ notFound message = err404 { errBody = strToLazyBS message }
 
 serverError :: String -> ServantErr
 serverError message = err500 { errBody = strToLazyBS message }
+
+printDebug :: Show a => a -> a
+printDebug x = unsafePerformIO $ do
+    print x
+    return x
 
 strToBS :: String -> C8.ByteString
 strToBS = C8.pack
