@@ -156,16 +156,14 @@ envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOri
 
 envAugmentSessionCookie :: Config -> C.SetCookie -> C.SetCookie
 envAugmentSessionCookie cfg setCookie =
-    let
-        env = getEnv cfg
-        in setCookie
-            { C.setCookieDomain = Just $
-                strToBS $ envSessionCookieDomain env
-            }
+    setCookie
+        { C.setCookieDomain = Just $
+            strToBS $ envSessionCookieDomain (getEnv cfg)
+        }
 
 envSessionCookieDomain :: Environment -> String
 envSessionCookieDomain Production = ".chancesnow.me"
-envSessionCookieDomain _          = ".localhost"
+envSessionCookieDomain _          = "localhost"
 
 envSessionCookieSecure :: Environment -> Bool
 envSessionCookieSecure Production = True

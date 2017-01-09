@@ -22,8 +22,7 @@ import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (Entity (..), SqlPersistT,
                                                        getBy)
 import           Network.HTTP.Types.Header            (Header)
-import           Network.Wai                          (Middleware,
-                                                       Response,
+import           Network.Wai                          (Middleware, Response,
                                                        mapResponseHeaders,
                                                        responseHeaders)
 import           Servant                              (throwError)
@@ -44,8 +43,8 @@ import           Config                               (App (..), Config (..),
                                                        envSessionCookieSecure)
 import           Database.Models
 import           Database.Party                       (runDb)
-import           Utils                                (bsToStr,
-                                                       noSessionError, strToBS)
+import           Utils                                (bsToStr, noSessionError,
+                                                       strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
@@ -59,9 +58,9 @@ sessionMiddleware cfg = do
 
 renameCookieDomainMiddleware :: Config -> Middleware
 renameCookieDomainMiddleware cfg app request sendResponse =
-    app request $ sendResponse . setCookieDomain cfg where
-        setCookieDomain :: Config -> Response -> Response
-        setCookieDomain _ response =
+    app request $ sendResponse . setCookieDomain where
+        setCookieDomain :: Response -> Response
+        setCookieDomain response =
             let headers = responseHeaders response
                 newHeaders =
                     replaceHeaders cfg headers setCookieSessionHeader
@@ -73,7 +72,7 @@ replaceHeaders cfg headers headerFilter =
     map (\header ->
         case headerFilter cfg header of
             Just newHeader -> newHeader
-            Nothing -> header
+            Nothing        -> header
     ) headers
 
 setCookieSessionHeader :: Config -> Header -> Maybe Header
@@ -86,7 +85,7 @@ setCookieSessionHeader cfg (headerName, headerValue) =
                     newSetCookie =
                         envAugmentSessionCookie cfg setCookie
                     newHeaderValue = Builder.toByteString
-                        (C.renderSetCookie setCookie)
+                        (C.renderSetCookie newSetCookie)
                     in (headerName, newHeaderValue)
                 _ -> Nothing
         else Nothing
