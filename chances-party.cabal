@@ -29,9 +29,11 @@ library
                      , Views.Index
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , blaze-builder
                      , blaze-html
                      , blaze-markup
                      , bytestring
+                     , cookie
                      , containers
                      , envelope
                      , http-client >= 0.5 && < 0.6

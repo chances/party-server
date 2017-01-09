@@ -12,6 +12,8 @@ module Config
     , defaultConfig
     , envPool
     , envSetCorsOrigin
+    , envAugmentSessionCookie
+    , envSessionCookieSecure
     , envManager
     , lookupSetting
     , setLogger
@@ -38,9 +40,11 @@ import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
 import           System.Exit                          (die)
 import           System.IO.Unsafe                     (unsafePerformIO)
+import qualified Web.Cookie                           as C
 
 import           Middleware.Cors                      (getCorsPolicy)
 import           Network.Spotify                      as Spotify
+import           Utils                                (strToBS)
 
 type PartySession = WS.Session IO Text ByteString
 -- type PartySession = Session SessionMap
@@ -149,6 +153,23 @@ envSetCorsOrigin :: Environment -> String -> Middleware
 envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOrigin)
 envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
 envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
+
+envAugmentSessionCookie :: Config -> C.SetCookie -> C.SetCookie
+envAugmentSessionCookie cfg setCookie =
+    let
+        env = getEnv cfg
+        in setCookie
+            { C.setCookieDomain = Just $
+                strToBS $ envSessionCookieDomain env
+            }
+
+envSessionCookieDomain :: Environment -> String
+envSessionCookieDomain Production = ".chancesnow.me"
+envSessionCookieDomain _          = ".localhost"
+
+envSessionCookieSecure :: Environment -> Bool
+envSessionCookieSecure Production = True
+envSessionCookieSecure _          = False
 
 envManager :: Environment -> IO Manager
 envManager env = newManager $ envManagerSettings env

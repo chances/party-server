@@ -24,7 +24,8 @@ import           Config                   (App (runApp), Config (..),
                                            envSetCorsOrigin, setLogger)
 import           Database.Party           (doMigrations, runSqlPool)
 import           Middleware.Flash         (flashMiddleware)
-import           Middleware.Session       (sessionMiddleware)
+import           Middleware.Session       (sessionMiddleware,
+                                           renameCookieDomainMiddleware)
 
 type AppAPI = ("auth" :> AuthAPI) :<|> UserAPI
 
@@ -64,6 +65,7 @@ run cfg = do
         logger = setLogger env :: Middleware
         corsPolicy = envSetCorsOrigin env (getCorsOrigin cfg) :: Middleware
         flash = flashMiddleware cfg :: Middleware
+        cookieDomain = renameCookieDomainMiddleware cfg :: Middleware
 
     session <- sessionMiddleware cfg
 
@@ -73,7 +75,7 @@ run cfg = do
         _           -> putStr ""
 
     -- Compose middleware pipeline
-    let middleware = logger . corsPolicy . session . flash
+    let middleware = logger . corsPolicy . session . flash . cookieDomain
         application = middleware $ app cfg
 
     -- Start Postgres pool and run the app
