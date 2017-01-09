@@ -163,7 +163,7 @@ envAugmentSessionCookie cfg setCookie =
 
 envSessionCookieDomain :: Environment -> String
 envSessionCookieDomain Production = ".chancesnow.me"
-envSessionCookieDomain _          = "localhost"
+envSessionCookieDomain _          = ".app.local"
 
 envSessionCookieSecure :: Environment -> Bool
 envSessionCookieSecure Production = True
