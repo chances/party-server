@@ -68,7 +68,7 @@ data Config = Config
     { getPool                 :: ConnectionPool
     , getPort                 :: Port
     , getEnv                  :: Environment
-    , getCorsOrigin           :: String
+    , getCorsOrigins          :: String
     , getVaultKey             :: Vault.Key PartySession
     , getManager              :: Manager
     , getSpotifyCallback      :: String
@@ -97,7 +97,7 @@ defaultConfig = Config
     { getPool = undefined
     , getPort = 8080
     , getEnv = Development
-    , getCorsOrigin = "http://chancesnow.me"
+    , getCorsOrigins = "http://chancesnow.me"
     , getVaultKey = setVaultKey
     , getManager = undefined
     , getSpotifyCallback = setSpotifyCallback
@@ -150,9 +150,7 @@ envPool Development = 1
 envPool Production  = 8
 
 envSetCorsOrigin :: Environment -> String -> Middleware
-envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOrigin)
-envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
-envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
+envSetCorsOrigin _ corsOrigins = Cors.cors $ getCorsPolicy (Just corsOrigins)
 
 envAugmentSessionCookie :: Config -> C.SetCookie -> C.SetCookie
 envAugmentSessionCookie cfg setCookie =

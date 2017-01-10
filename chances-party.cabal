@@ -54,6 +54,7 @@ library
                      , serversession-backend-persistent
                      , serversession-frontend-wai
                      , shakespeare
+                     , split
                      , string-conversions
                      , time
                      , text

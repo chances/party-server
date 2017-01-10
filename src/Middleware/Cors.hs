@@ -2,6 +2,7 @@ module Middleware.Cors
     ( getCorsPolicy
     ) where
 
+import           Data.List.Split             (splitOn)
 import           Network.Wai                 (Request)
 import           Network.Wai.Middleware.Cors (CorsResourcePolicy (..), Origin,
                                               simpleHeaders)
@@ -16,23 +17,24 @@ policyFromOrigins origins = CorsResourcePolicy
     , corsExposedHeaders = Nothing
     , corsMaxAge = Nothing
     , corsVaryOrigin = False
-    -- , corsRequireOrigin = case origins of
-    --     Nothing -> False
-    --     _       -> True
-    -- TODO: Figure out why this doesn't work when deployed
-    , corsRequireOrigin = False
+    , corsRequireOrigin = case origins of
+        Nothing -> False
+        _       -> False -- TODO: Should be True
+        -- TODO: Figure out why accessing app directly doesn't send Origin header
     , corsIgnoreFailures = False
     }
 
 generateCorsPolicy :: Maybe String -> CorsResourcePolicy
-generateCorsPolicy maybeCorsOrigin = case maybeCorsOrigin of
+generateCorsPolicy maybeCorsOrigins = case maybeCorsOrigins of
     Nothing -> policyFromOrigins Nothing
-    Just corsOrigin -> policyFromOrigins (Just (([strToBS corsOrigin], False)))
+    -- ([Origin], credentialsUsedToAccessTheResource :: Bool)
+    Just origins -> let originsList = map strToBS (splitOn "," origins)
+        in policyFromOrigins (Just ((originsList, True)))
 
 getCorsPolicy :: Maybe String -> (Request -> Maybe CorsResourcePolicy)
-getCorsPolicy corsOrigin = policy where
+getCorsPolicy maybeOrigins = policy where
     policy :: Request -> Maybe CorsResourcePolicy
-    policy _ = Just (generateCorsPolicy corsOrigin)
+    policy _ = Just (generateCorsPolicy (maybeOrigins))
 
 -- TODO: Add encompasing middleware that checks the Origin req header
 -- See: https://hackage.haskell.org/package/wai-cors-0.2.5/docs/Network-Wai-Middleware-Cors.html#v:cors

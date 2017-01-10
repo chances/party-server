@@ -63,7 +63,7 @@ run cfg = do
         -- Setup middleware
         env = getEnv cfg
         logger = setLogger env :: Middleware
-        corsPolicy = envSetCorsOrigin env (getCorsOrigin cfg) :: Middleware
+        corsPolicy = envSetCorsOrigin env (getCorsOrigins cfg) :: Middleware
         flash = flashMiddleware cfg :: Middleware
         cookieDomain = renameCookieDomainMiddleware cfg :: Middleware
 
