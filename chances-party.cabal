@@ -18,6 +18,7 @@ library
   exposed-modules:     App
                      , Api.Auth
                      , Api.Envelope
+                     , Api.Types.PingResponse
                      , Api.User
                      , Config
                      , Database.Party
