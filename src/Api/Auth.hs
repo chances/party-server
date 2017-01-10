@@ -32,7 +32,9 @@ import           GHC.Generics                   (Generic)
 import           Servant
 import           Servant.Common.BaseUrl         (showBaseUrl)
 
-import           Api.Envelope                   (fromServantError)
+import           Api.Envelope                   (Envelope, fromServantError,
+                                                 success)
+import           Api.Types.PingResponse         (PingResponse, apiAvailable)
 import           Config                         (App (..), Config (getManager, getSpotifyAuthorization, getSpotifyCallback),
                                                  PartySession)
 import           Database.Models
@@ -76,6 +78,8 @@ type LoginCallbackAPI = "callback"
     :> QueryParam "state" Spotify.State
     :> Redirect
 
+type PingAPI = "ping" :> Vault :> Get '[JSON] (Envelope PingResponse)
+
 type TokenAPI = "token" :> Vault :> Get '[JSON] TokenResponse
 
 type LogoutAPI   = "logout"
@@ -94,7 +98,7 @@ getCallbackLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LoginCallbac
 getLogoutLink :: HasLink LogoutAPI => MkLink LogoutAPI
 getLogoutLink = safeLink (Proxy :: Proxy AuthAPI) (Proxy :: Proxy LogoutAPI)
 
-type AuthAPI = LoginAPI :<|> LoginCallbackAPI :<|> TokenAPI :<|> LogoutAPI
+type AuthAPI = LoginAPI :<|> LoginCallbackAPI :<|> PingAPI :<|> TokenAPI :<|> LogoutAPI
 
 login :: Vault -> Maybe String -> App RedirectHeaders
 login vault maybeReturnTo = do
@@ -251,6 +255,13 @@ checkStatesOrDie state sessionLookup = do
 popAuthReturnOffSession :: PartySession -> IO String
 popAuthReturnOffSession session = popOffSession session "AUTH_RETURN_TO" "/"
 
+ping :: Vault -> App (Envelope PingResponse)
+ping _ = do
+    -- TODO: Verify Origin header for CORS, and what else to protect endpoint?
+    -- REVIEW: When is the API not available?
+
+    return $ success $ apiAvailable "Party API is available"
+
 token :: Vault -> App TokenResponse
 token vault = do
     eitherUser <- getUserFromSession vault
@@ -282,4 +293,4 @@ logout vault = do
         _                  -> throwError $ fromServantError noSessionError
 
 authServer :: ServerT AuthAPI App
-authServer = login :<|> callback :<|> token :<|> logout
+authServer = login :<|> callback :<|> ping :<|> token :<|> logout

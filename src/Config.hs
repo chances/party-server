@@ -12,6 +12,8 @@ module Config
     , defaultConfig
     , envPool
     , envSetCorsOrigin
+    , envAugmentSessionCookie
+    , envSessionCookieSecure
     , envManager
     , lookupSetting
     , setLogger
@@ -38,9 +40,11 @@ import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
 import           System.Exit                          (die)
 import           System.IO.Unsafe                     (unsafePerformIO)
+import qualified Web.Cookie                           as C
 
 import           Middleware.Cors                      (getCorsPolicy)
 import           Network.Spotify                      as Spotify
+import           Utils                                (strToBS)
 
 type PartySession = WS.Session IO Text ByteString
 -- type PartySession = Session SessionMap
@@ -64,7 +68,7 @@ data Config = Config
     { getPool                 :: ConnectionPool
     , getPort                 :: Port
     , getEnv                  :: Environment
-    , getCorsOrigin           :: String
+    , getCorsOrigins          :: String
     , getVaultKey             :: Vault.Key PartySession
     , getManager              :: Manager
     , getSpotifyCallback      :: String
@@ -93,7 +97,7 @@ defaultConfig = Config
     { getPool = undefined
     , getPort = 8080
     , getEnv = Development
-    , getCorsOrigin = "http://chancesnow.me"
+    , getCorsOrigins = "http://chancesnow.me"
     , getVaultKey = setVaultKey
     , getManager = undefined
     , getSpotifyCallback = setSpotifyCallback
@@ -146,9 +150,22 @@ envPool Development = 1
 envPool Production  = 8
 
 envSetCorsOrigin :: Environment -> String -> Middleware
-envSetCorsOrigin Test corsOrigin       = Cors.cors $ getCorsPolicy (Just corsOrigin)
-envSetCorsOrigin Development _         = Cors.cors $ getCorsPolicy Nothing
-envSetCorsOrigin Production corsOrigin = Cors.cors $ getCorsPolicy (Just corsOrigin)
+envSetCorsOrigin _ corsOrigins = Cors.cors $ getCorsPolicy (Just corsOrigins)
+
+envAugmentSessionCookie :: Config -> C.SetCookie -> C.SetCookie
+envAugmentSessionCookie cfg setCookie =
+    setCookie
+        { C.setCookieDomain = Just $
+            strToBS $ envSessionCookieDomain (getEnv cfg)
+        }
+
+envSessionCookieDomain :: Environment -> String
+envSessionCookieDomain Production = ".chancesnow.me"
+envSessionCookieDomain _          = ".app.local"
+
+envSessionCookieSecure :: Environment -> Bool
+envSessionCookieSecure Production = True
+envSessionCookieSecure _          = False
 
 envManager :: Environment -> IO Manager
 envManager env = newManager $ envManagerSettings env

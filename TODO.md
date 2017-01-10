@@ -42,6 +42,7 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 
 - [ ] Add access token delivery endpoint
   - [x] Deliver token to authenticated sessions
+  - [ ] Deliver token to authenticated sessions on same root domain
   - [ ] Deliver token to guests via the party's host's user
   - [ ] Automatically refresh token
 - [ ] Remove user[s] endpoints because they're gaping security holes

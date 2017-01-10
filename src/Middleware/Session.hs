@@ -10,38 +10,85 @@ module Middleware.Session
     , invalidateSession
     , popOffSession
     , sessionMiddleware
+    , renameCookieDomainMiddleware
     , startSession
     ) where
 
+import qualified Blaze.ByteString.Builder             as Builder
 import           Control.Monad.Reader                 (ask, liftIO)
 import           Data.Maybe                           (fromMaybe)
 import           Data.Text                            (Text, pack)
 import qualified Data.Vault.Lazy                      as Vault
 import           Database.Persist.Postgresql          (Entity (..), SqlPersistT,
                                                        getBy)
-import           Network.Wai                          (Middleware)
+import           Network.HTTP.Types.Header            (Header)
+import           Network.Wai                          (Middleware, Response,
+                                                       mapResponseHeaders,
+                                                       responseHeaders)
 import           Servant                              (throwError)
+import qualified Web.Cookie                           as C
 import           Web.ServerSession.Backend.Persistent (SqlStorage (..))
 import           Web.ServerSession.Frontend.Wai       (ForceInvalidate (AllSessionIdsOfLoggedUser),
                                                        forceInvalidate,
                                                        setAuthKey,
                                                        setCookieName,
+                                                       setHttpOnlyCookies,
+                                                       setSecureCookies,
                                                        withServerSession)
 
 import           Api.Envelope                         (fromServantError)
 import           Config                               (App (..), Config (..),
-                                                       PartySession)
+                                                       PartySession,
+                                                       envAugmentSessionCookie,
+                                                       envSessionCookieSecure)
 import           Database.Models
 import           Database.Party                       (runDb)
-import           Utils                                (bsToStr, bsToStr,
-                                                       noSessionError, strToBS)
+import           Utils                                (bsToStr, noSessionError,
+                                                       strToBS)
 
 sessionMiddleware :: Config -> IO Middleware
 sessionMiddleware cfg = do
     let sessionKey = getVaultKey cfg
         sessionStorage = SqlStorage (getPool cfg)
-        sessionOptions = setAuthKey "ID" . setCookieName "cpSESSION"
+        sessionOptions = setAuthKey "ID" .
+            setCookieName "cpSESSION" .
+            setHttpOnlyCookies False .
+            (setSecureCookies $ envSessionCookieSecure (getEnv cfg))
     withServerSession sessionKey sessionOptions sessionStorage :: IO Middleware
+
+renameCookieDomainMiddleware :: Config -> Middleware
+renameCookieDomainMiddleware cfg app request sendResponse =
+    app request $ sendResponse . setCookieDomain where
+        setCookieDomain :: Response -> Response
+        setCookieDomain response =
+            let headers = responseHeaders response
+                newHeaders =
+                    replaceHeaders cfg headers setCookieSessionHeader
+                in mapResponseHeaders (\_ -> newHeaders) response
+
+replaceHeaders :: Config -> [Header] ->
+    (Config -> Header -> Maybe Header) -> [Header]
+replaceHeaders cfg headers headerFilter =
+    map (\header ->
+        case headerFilter cfg header of
+            Just newHeader -> newHeader
+            Nothing        -> header
+    ) headers
+
+setCookieSessionHeader :: Config -> Header -> Maybe Header
+setCookieSessionHeader cfg (headerName, headerValue) =
+    if headerName == "Set-Cookie"
+        then let
+            setCookie = C.parseSetCookie headerValue
+            in case C.setCookieName setCookie of
+                "cpSESSION" -> Just $ let
+                    newSetCookie =
+                        envAugmentSessionCookie cfg setCookie
+                    newHeaderValue = Builder.toByteString
+                        (C.renderSetCookie newSetCookie)
+                    in (headerName, newHeaderValue)
+                _ -> Nothing
+        else Nothing
 
 data SessionState =
     SessionStarted PartySession

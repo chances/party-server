@@ -3,6 +3,7 @@ module Main where
 import qualified Configuration.Dotenv       as Dotenv
 import           Control.Exception.Enclosed (catchAnyDeep)
 import           System.Directory           (doesFileExist)
+import           System.Environment         (lookupEnv)
 import           System.Exit                (ExitCode (..), exitWith)
 import           System.IO                  (BufferMode (LineBuffering),
                                              hSetBuffering, stdout)
@@ -33,7 +34,7 @@ main = do
     -- Setup app configuration
     env <- lookupSetting "ENV" Development
     port <- lookupSetting "PORT" 8080
-    corsOrigin <- lookupSetting "CORS_ORIGIN" "http://chancesnow.me"
+    corsOrigins <- lookupEnv "CORS_ORIGINS"
     pool <- makePool env
     manager <- envManager env
 
@@ -41,7 +42,9 @@ main = do
           getPool = pool
         , getPort = port
         , getEnv = env
-        , getCorsOrigin = corsOrigin
+        , getCorsOrigins = case corsOrigins of
+            Nothing      -> "http://chancesnow.me"
+            Just origins -> origins
         , getManager = manager
         }
 

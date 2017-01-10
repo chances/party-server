@@ -18,6 +18,7 @@ library
   exposed-modules:     App
                      , Api.Auth
                      , Api.Envelope
+                     , Api.Types.PingResponse
                      , Api.User
                      , Config
                      , Database.Party
@@ -29,9 +30,11 @@ library
                      , Views.Index
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , blaze-builder
                      , blaze-html
                      , blaze-markup
                      , bytestring
+                     , cookie
                      , containers
                      , envelope
                      , http-client >= 0.5 && < 0.6
@@ -52,6 +55,7 @@ library
                      , serversession-backend-persistent
                      , serversession-frontend-wai
                      , shakespeare
+                     , split
                      , string-conversions
                      , time
                      , text
