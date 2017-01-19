@@ -42,8 +42,8 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 
 - [ ] Add access token delivery endpoint
   - [x] Deliver token to authenticated sessions
-  - [ ] Deliver token to authenticated sessions on same root domain
-  - [ ] Deliver token to guests via the party's host's user
+  - [x] Deliver token to authenticated sessions on same root domain
+  - [ ] Deliver token to guests via the party's host's user (somehow)
   - [ ] Automatically refresh token
 - [ ] Remove user[s] endpoints because they're gaping security holes
 - [ ] Change playlist to PUT instead of current GET, also don't redirect
@@ -168,6 +168,7 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
 - [websockets](https://github.com/jaspervdj/websockets)
 - [servant-subscriber](https://github.com/eskimor/servant-subscriber)
 - [ChatQY](https://github.com/realli/chatqy) (servant, websockets, and react.js)
+- [Redis Pub/Sub](https://redis.io/topics/pubsub) (For pub/sub paradigm to cart around reactive data to clients?)
 
 ### Authentication
 
