@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gopkg.in/gin-contrib/cors.v1"
@@ -18,6 +19,14 @@ func main() {
 	if dotenvErr != nil {
 		log.Println("Warning: .env file is not present. Using system provided environment variables")
 	}
+
+	setupOauth()
+
+	// === Data Stores ===
+	// Postgres
+
+	// Redis
+	pool = newRedisPool()
 
 	g := gin.New()
 	g.Use(gin.Logger())
@@ -33,15 +42,31 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	// Static files
-	g.Static("/css/", "./public")
+	// Session
+	g.Use(sessions.Sessions("cpSESSION", createSessionStore()))
+	g.Use(configureSession())
 
 	g.Use(gin.Recovery())
 
+	// Static files
+	g.Static("/css/", "./public")
+
 	// Application routes
 	g.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello, world!")
+		session := sessions.Default(c)
+		data := map[string]interface{}{}
+		if flashes := session.Flashes("error"); len(flashes) > 0 {
+			data["error"] = flashes[0]
+		}
+		if flashes := session.Flashes("user"); len(flashes) > 0 {
+			data["user"] = flashes[0]
+		}
+		log.Println(data)
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, "<p><a href=\"/login\">Login with Spotify</a></p><p>Error: None?</p>")
 	})
+	g.GET("/login", login)
+	g.GET("/auth/callback", spotifyCallback)
 
 	g.Run()
 }
