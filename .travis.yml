@@ -1,10 +1,7 @@
-# This .travis.yml is modified from the sample at
-# https://docs.haskellstack.org/en/stable/GUIDE/#travis-with-caching
+language: go
 
-# Use new container infrastructure to enable caching
-sudo: false
-
-language: c
+go:
+  - 1.8
 
 deploy:
   provider: script
@@ -12,74 +9,3 @@ deploy:
   skip_cleanup: true
   on:
     branch: development
-
-cache:
-  directories:
-  - "$HOME/.ghc"
-  - "$HOME/.cabal"
-  - "$HOME/.stack"
-  - ".stack-work"
-
-matrix:
-  include:
-  - env: BUILD=stack ARGS=""
-    compiler: ": stack 8.0.1"
-    addons:
-      apt:
-        packages:
-        - ghc-8.0.1
-        sources:
-        - hvr-ghc
-    os: linux
-
-before_install:
-# Using compiler above sets CC to an invalid value, so unset it
-- unset CC
-
-# We want to always allow newer versions of packages when building on GHC HEAD
-- CABALARGS=""
-- if [ "x$GHCVER" = "xhead" ]; then CABALARGS=--allow-newer; fi
-
-# Download and unpack the stack executable
-- export PATH=$PATH:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$HOME/.local/bin
-- mkdir -p ~/.local/bin
-- |
-  if [ `uname` = "Darwin" ]
-  then
-    curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
-  else
-    curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-  fi
-install:
-- echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
-- if [ -f configure.ac ]; then autoreconf -i; fi
-- |
-  case "$BUILD" in
-    stack)
-      ulimit -n 4096
-      stack --no-terminal --install-ghc $ARGS test --flag 'aeson:fast' --only-dependencies --fast
-      ;;
-    cabal)
-      cabal --version
-      travis_retry cabal update
-      cabal install --only-dependencies -ffast --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS
-      ;;
-  esac
-script:
-- |
-  case "$BUILD" in
-    stack)
-      ulimit -n 4096
-      stack --no-terminal $ARGS test --flag 'aeson:fast' --ghc-options="-O0 -Wall -fno-warn-unused-do-bind -fno-warn-unused-binds -fno-warn-orphans -Werror"
-      ;;
-    cabal)
-      cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -fno-warn-unused-do-bind -fno-warn-unused-binds -fno-warn-orphans -Werror"
-      cabal build
-      cabal check
-      cabal test
-      cabal copy
-      cabal sdist
-      SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz && \
-        (cd dist && cabal install --enable-tests --force-reinstalls "$SRC_TGZ")
-      ;;
-  esac
