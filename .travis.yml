@@ -5,10 +5,3 @@ go:
 
 install: go get -t -v ./...
 script: go test -v ./...
-
-deploy:
-  provider: script
-  script: ./bin/deploy.sh
-  skip_cleanup: true
-  on:
-    branch: development
