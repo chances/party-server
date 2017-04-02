@@ -1,1 +1,1 @@
-web: ./chances-party
+web: ./bin/chances-party
