@@ -1,12 +1,7 @@
-- [x] Implement custom server session frontend
-- [x] Find/implement OAuth2 solution for Spotify authentication
-- [x] Investigate [HTML datatype](https://github.com/haskell-servant/servant-lucid/blob/master/src/Servant/HTML/Lucid.hs)
-- [x] Figure out if the weird session recreation because of existing authID in
-packed session (serversession Core shit) is a problem **(It's not)**
-- [x] Speed up Travis builds. Went from 1m15s in JS-land to 5m30s in Haskell-land. (Something isn't being cached between builds...)
-- [ ] Add [QuickCheck](https://hackage.haskell.org/package/servant-quickcheck-0.0.2.2/docs/Servant-QuickCheck.html)
-to the Spec tests (Which units?)
-- [ ] Will [file-embed](https://hackage.haskell.org/package/file-embed) be useful?
+- [ ] Implement custom server session backend, see [gin-contrib/sessions](https://github.com/gin-contrib/sessions)
+- [ ] Find/implement OAuth2 solution for Spotify authentication
+- [ ] Add tests with go [testing](https://golang.org/pkg/testing/) tools
+- [ ] Switch to [Makefile based](https://github.com/chances/heroku-buildpack-go/tree/add-make-tool) Heroku deploy?
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
 ## Be sure to pay attention to inline TODOs in source files!
@@ -19,16 +14,16 @@ to the Spec tests (Which units?)
 
 ## Parity with original JS prototype
 
-- [x] Parity with [index (unauthenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
-- [x] Spotify OAuth2 integration
-- [x] Parity with [auth routes](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
-- [x] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
-  - [x] Get user data
-  - [x] Get user's own playlists
-  - [x] Render user data
-  - [x] Render user playlists
-  - [x] Log Out
-- [x] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
+- [ ] Parity with [index (unauthenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
+- [ ] Spotify OAuth2 integration
+- [ ] Parity with [auth routes](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
+- [ ] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
+  - [ ] Get user data
+  - [ ] Get user's own playlists
+  - [ ] Render user data
+  - [ ] Render user playlists
+  - [ ] Log Out
+- [ ] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
 - [ ] ~~Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)~~
   - [ ] ~~Add search to [servant-spotify](https://github.com/chances/servant-spotify#readme)~~
     - [ ] ~~For tracks~~
