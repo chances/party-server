@@ -1,1 +1,1 @@
-web: ./chances-party-exe
+web: ./chances-party

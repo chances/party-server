@@ -1,0 +1,3 @@
+chances-party:
+	go get -v ./...
+	go build
