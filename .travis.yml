@@ -3,6 +3,9 @@ language: go
 go:
   - 1.8
 
+install: go get -t ./...
+script: go test -v ./...
+
 deploy:
   provider: script
   script: ./bin/deploy.sh
