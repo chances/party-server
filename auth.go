@@ -23,9 +23,9 @@ var (
 
 func setupOauth() {
 	oauthConf = &oauth2.Config{
-		ClientID:     getenvOrFail("SPOTIFY_APP_KEY"),
-		ClientSecret: getenvOrFail("SPOTIFY_APP_SECRET"),
-		RedirectURL:  getenvOrFail("SPOTIFY_CALLBACK"),
+		ClientID:     getenvOrFatal("SPOTIFY_APP_KEY"),
+		ClientSecret: getenvOrFatal("SPOTIFY_APP_SECRET"),
+		RedirectURL:  getenvOrFatal("SPOTIFY_CALLBACK"),
 		Scopes: []string{
 			"user-read-email",
 			"user-read-private",

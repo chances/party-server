@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -79,11 +78,10 @@ func getenv(key, fallback string) string {
 	return value
 }
 
-func getenvOrFail(key string) string {
+func getenvOrFatal(key string) string {
 	value := os.Getenv(key)
 	if len(value) == 0 {
-		fmt.Fprintf(os.Stderr, "error: Missing environment variable: %v\n", key)
-		os.Exit(1)
+		log.Fatalf("error: Missing environment variable: %v\n", key)
 	}
 	return value
 }

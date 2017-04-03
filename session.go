@@ -19,13 +19,13 @@ func newRedisPool() *redis.Pool {
 		MaxIdle:     2,
 		IdleTimeout: 120 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			return redis.DialURL(getenvOrFail("REDIS_URL"))
+			return redis.DialURL(getenvOrFatal("REDIS_URL"))
 		},
 	}
 }
 
 func createSessionStore() sessions.Store {
-	secret := []byte(getenvOrFail("SESSION_SECRET"))
+	secret := []byte(getenvOrFatal("SESSION_SECRET"))
 	if gin.IsDebugging() {
 		return sessions.NewCookieStore(secret)
 	}
