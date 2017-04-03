@@ -26,30 +26,28 @@ func newRedisPool() *redis.Pool {
 
 func createSessionStore() sessions.Store {
 	secret := []byte(getenvOrFail("SESSION_SECRET"))
-	switch mode := getenv("GIN_MODE", "dev"); mode {
-	case "release":
-		store, err := sessions.NewRedisStoreWithPool(pool, secret)
-		if err != nil {
-			log.Fatalln("Could not create Redis pool")
-		}
-		return store
-	default:
+	if gin.IsDebugging() {
 		return sessions.NewCookieStore(secret)
 	}
+	store, err := sessions.NewRedisStoreWithPool(pool, secret)
+	if err != nil {
+		log.Fatalln("Could not create Redis pool")
+	}
+	return store
 }
 
 func configureSession() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
-		if getenv("GIN_MODE", "dev") == "release" {
+		if gin.IsDebugging() {
+			session.Options(sessions.Options{
+				HttpOnly: true,
+			})
+		} else {
 			session.Options(sessions.Options{
 				Domain:   ".chancesnow.me",
 				Secure:   true,
 				HttpOnly: false,
-			})
-		} else {
-			session.Options(sessions.Options{
-				HttpOnly: true,
 			})
 		}
 		c.Next()
