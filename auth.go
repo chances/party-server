@@ -30,6 +30,7 @@ func setupOauth() {
 			"user-read-email",
 			"user-read-private",
 			"playlist-read-private",
+			"playlist-read-collaborative",
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://accounts.spotify.com/authorize",
