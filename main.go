@@ -23,7 +23,8 @@ func main() {
 
 	// === Data Stores ===
 	// Postgres
-
+	db = initDatabase()
+	defer db.Close()
 	// Redis
 	pool = newRedisPool()
 
