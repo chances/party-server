@@ -61,37 +61,26 @@ func login(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, RedirectURL.String())
 }
 
-/*
-{
-  "country" : "US",
-  "display_name" : "Chance Snow",
-  "email" : "enigmaticeffigy@gmail.com",
-  "external_urls" : {
-    "spotify" : "https://open.spotify.com/user/enigmaticeffigy"
-  },
-  "followers" : {
-    "href" : null,
-    "total" : 13
-  },
-  "href" : "https://api.spotify.com/v1/users/enigmaticeffigy",
-  "id" : "enigmaticeffigy",
-  "images" : [ {
-    "height" : null,
-    "url" : "https://scontent.xx.fbcdn.net/v/t1.0-1/p200x200/11709579_962737417102995_4173853624753975160_n.jpg?oh=e8ef9c26cf6f8c2ba7cbc4a7876a489b&oe=596131A2",
-    "width" : null
-  } ],
-  "product" : "premium",
-  "type" : "user",
-  "uri" : "spotify:user:enigmaticeffigy"
-}
-*/
-
-type SpotifyUser struct {
-	id           string
-	email        string
-	display_name string
-	profileUrl   string
-	product      string
+type spotifyUser struct {
+	ID          string
+	Email       string
+	DisplayName string `json:"display_name"`
+	ProfileURL  string
+	Href        string
+	URI         string
+	Product     string
+	Country     string
+	Followers   struct {
+		Total int
+	}
+	ExternalURLs struct {
+		Spotify string
+	} `json:"external_urls"`
+	Images []struct {
+		URL    string
+		Width  int
+		Height int
+	}
 }
 
 func spotifyCallback(c *gin.Context) {
@@ -126,7 +115,7 @@ func spotifyCallback(c *gin.Context) {
 		log.Fatalln(err)
 	}
 
-	var user SpotifyUser
+	var user spotifyUser
 	if json.Unmarshal(body, &user) != nil {
 		redirectWithError(c, session, "Could not parse user", err)
 		return
