@@ -1,53 +1,30 @@
 package main
 
 import (
-	"database/sql"
 	"log"
-	"strings"
-	"time"
 
-	"github.com/fatih/camelcase"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/vattle/sqlboiler/boil"
 )
 
 var (
-	db *sql.DB
+	db *sqlx.DB
 )
 
-func initDatabase() *sql.DB {
+func initDatabase() *sqlx.DB {
 	driver := "postgres"
 	connString := getenvOrFatal("DATABASE_URL")
 
-	newDb, err := sql.Open(driver, connString)
+	newDb, err := sqlx.Connect(driver, connString)
 	if err != nil {
-		log.Fatalf("Could not init database: %s\n", err)
+		log.Fatalf("Could not init and ping database: %s\n", err)
 	}
 
 	newDb.SetMaxIdleConns(3)
 	newDb.SetMaxOpenConns(10)
 
-	err = newDb.Ping()
-	if err != nil {
-		log.Fatalf("Could not ping database: %s\n", err)
-	}
+	boil.SetDB(newDb)
 
 	return newDb
-}
-
-type model struct {
-	ID        int64
-	CreatedAt time.Time `orm:"created_at"`
-	UpdatedAt time.Time
-}
-
-func snakeCase(src string) string {
-	words := camelcase.Split(src)
-
-	// Map to lowercase words
-	lowercaseWords := make([]string, len(words))
-	for i, v := range words {
-		lowercaseWords[i] = strings.ToLower(v)
-	}
-
-	return strings.Join(words, "_")
 }

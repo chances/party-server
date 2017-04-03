@@ -12,10 +12,6 @@ pids
 # Built binaries
 chances-party
 
-# Session store db
-sessions.db
-
-# Application debug db
-party.db
+sqlboiler.toml
 
 deploy_key

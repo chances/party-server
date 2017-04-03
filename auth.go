@@ -11,9 +11,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/chances/chances-party/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
+	"github.com/vattle/sqlboiler/queries/qm"
 	"golang.org/x/oauth2"
 )
 
@@ -115,14 +117,42 @@ func spotifyCallback(c *gin.Context) {
 		log.Fatalln(err)
 	}
 
-	var user spotifyUser
-	if json.Unmarshal(body, &user) != nil {
+	var rawUser spotifyUser
+	if json.Unmarshal(body, &rawUser) != nil {
 		redirectWithError(c, session, "Could not parse user", err)
 		return
 	}
 
-	session.AddFlash(user, "user")
-	session.Save()
+	existingUser, err := models.UsersG(qm.Where("username = ?", rawUser.ID)).One()
+	if err == nil {
+		existingUser.SpotifyUser = body
+		existingUser.AccessToken = token.AccessToken
+		existingUser.RefreshToken = token.RefreshToken
+		existingUser.TokenExpiryDate = token.Expiry
+		existingUser.TokenScope = strings.Join(oauthConf.Scopes, " ")
+
+		err := existingUser.UpdateG()
+		if err != nil {
+			redirectWithError(c, session, "Could not update user", err)
+			return
+		}
+	} else {
+		newUser := models.User{
+			Username:        rawUser.ID,
+			SpotifyUser:     body,
+			AccessToken:     token.AccessToken,
+			RefreshToken:    token.RefreshToken,
+			TokenExpiryDate: token.Expiry,
+			TokenScope:      strings.Join(oauthConf.Scopes, " "),
+		}
+
+		err := newUser.InsertG()
+		if err != nil {
+			redirectWithError(c, session, "Could not create user", err)
+			return
+		}
+	}
+
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
