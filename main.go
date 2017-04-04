@@ -61,7 +61,7 @@ func main() {
 		if flashes := session.Flashes("user"); len(flashes) > 0 {
 			data["user"] = flashes[0]
 		}
-		log.Println(data)
+		log.Printf("User: %s\n", data)
 		c.Header("Content-Type", "text/html; charset=utf-8")
 		c.String(http.StatusOK, "<p><a href=\"/login\">Login with Spotify</a></p><p>Error: None?</p>")
 	})
