@@ -19,7 +19,7 @@ func main() {
 		log.Println("Warning: .env file is not present. Using system provided environment variables")
 	}
 
-	setupOauth()
+	setupAuth()
 
 	// === Data Stores ===
 	// Postgres

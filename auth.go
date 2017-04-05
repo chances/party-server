@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -16,163 +14,136 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/queries/qm"
-	"golang.org/x/oauth2"
+	"github.com/zmb3/spotify"
 )
 
 var (
-	oauthConf *oauth2.Config
+	auth   spotify.Authenticator
+	scopes string
 )
 
-func setupOauth() {
-	oauthConf = &oauth2.Config{
-		ClientID:     getenvOrFatal("SPOTIFY_APP_KEY"),
-		ClientSecret: getenvOrFatal("SPOTIFY_APP_SECRET"),
-		RedirectURL:  getenvOrFatal("SPOTIFY_CALLBACK"),
-		Scopes: []string{
-			"user-read-email",
-			"user-read-private",
-			"playlist-read-private",
-			"playlist-read-collaborative",
-		},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.spotify.com/authorize",
-			TokenURL: "https://accounts.spotify.com/api/token",
-		},
-	}
+func setupAuth() {
+	auth = spotify.NewAuthenticator(
+		getenvOrFatal("SPOTIFY_CALLBACK"),
+		spotify.ScopeUserReadPrivate,
+		spotify.ScopePlaylistReadPrivate,
+		spotify.ScopePlaylistReadCollaborative,
+	)
+	auth.SetAuthInfo(getenvOrFatal("SPOTIFY_APP_KEY"), getenvOrFatal("SPOTIFY_APP_SECRET"))
+
+	s := make([]string, 3)
+	s[0] = spotify.ScopeUserReadPrivate
+	s[1] = spotify.ScopePlaylistReadPrivate
+	s[2] = spotify.ScopePlaylistReadCollaborative
+	scopes = strings.Join(s, " ")
 }
 
 func login(c *gin.Context) {
-	RedirectURL, err := url.Parse(oauthConf.Endpoint.AuthURL)
-	if err != nil {
-		log.Fatal("Parse: ", err)
-	}
-	var params = url.Values{}
-	params.Add("client_id", oauthConf.ClientID)
-	params.Add("scope", strings.Join(oauthConf.Scopes, " "))
-	params.Add("redirect_uri", oauthConf.RedirectURL)
-	params.Add("response_type", "code")
-
 	state := uuid.NewV4().String()
-	params.Add("state", state)
 
 	session := sessions.Default(c)
 	session.Set("AUTH_STATE", state)
 	session.Save()
 
-	RedirectURL.RawQuery = params.Encode()
-	c.Redirect(http.StatusSeeOther, RedirectURL.String())
+	c.Redirect(http.StatusSeeOther, auth.AuthURL(state))
 }
 
-type spotifyUser struct {
-	ID          string
-	Email       string
-	DisplayName string `json:"display_name"`
-	ProfileURL  string
-	Href        string
-	URI         string
-	Product     string
-	Country     string
-	Followers   struct {
-		Total int
-	}
-	ExternalURLs struct {
-		Spotify string
-	} `json:"external_urls"`
-	Images []struct {
-		URL    string
-		Width  int
-		Height int
-	}
-}
-
+// IDEA: Convert error handling shenanigans to Observable chain
 func spotifyCallback(c *gin.Context) {
 	session := sessions.Default(c)
-	callbackState := session.Get("AUTH_STATE")
+	sessionState, ok := session.Get("AUTH_STATE").(string)
+	log.Println(sessionState)
+	if !ok {
+		c.Error(errors.New("Token request failed, invalid state"))
+		// TODO: In error handling middleware, add Authorization header for Unauthorized responses
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	session.Delete("AUTH_STATE")
 	session.Save()
 
-	state := c.Query("state")
-	if state != callbackState {
-		redirectWithError(c, session, "Invalid oauth state", nil)
+	// Validate OAuth state
+	oauthState := c.Request.FormValue("state")
+	if oauthState != sessionState {
+		c.Error(errors.New("Auth failed, mismatched state"))
+		// TODO: In error handling middleware, add Authorization header for Unauthorized responses
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 
-	code := c.Query("code")
-	token, err := oauthConf.Exchange(context.Background(), code)
+	// Retrieve token
+	token, err := auth.Token(sessionState, c.Request)
 	if err != nil {
-		redirectWithError(c, session, "Token request failed", err)
+		c.Error(errors.New("Token request failed"))
+		// TODO: In error handling middleware, flash error to session if redirecting
+		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
 
-	tokenRequest := spotifyGet("me", token)
-	resp, err := http.DefaultClient.Do(tokenRequest)
+	// Get logged in user
+	client := auth.NewClient(token)
+	spotifyUser, err := client.CurrentUser()
 	if err != nil {
-		redirectWithError(c, session, "Could not get user", err)
+		c.Error(errors.New("Could not get user"))
+		// TODO: In error handling middleware, flash error to session if redirecting
+		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
 
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	spotifyUserJSON, err := json.Marshal(spotifyUser)
 	if err != nil {
-		log.Fatalln(err)
-	}
-
-	var rawUser spotifyUser
-	if json.Unmarshal(body, &rawUser) != nil {
-		redirectWithError(c, session, "Could not parse user", err)
+		c.Error(errors.New("Could not serialize user"))
+		// TODO: In error handling middleware, flash error to session if redirecting
+		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
 
-	existingUser, err := models.UsersG(qm.Where("username = ?", rawUser.ID)).One()
+	existingUser, err := models.UsersG(qm.Where("username = ?", spotifyUser.ID)).One()
 	if err == nil {
-		existingUser.SpotifyUser = body
+		existingUser.SpotifyUser = spotifyUserJSON
 		existingUser.AccessToken = token.AccessToken
 		existingUser.RefreshToken = token.RefreshToken
 		existingUser.TokenExpiryDate = token.Expiry
-		existingUser.TokenScope = strings.Join(oauthConf.Scopes, " ")
+		existingUser.TokenScope = scopes
 
 		err := existingUser.UpdateG()
 		if err != nil {
-			redirectWithError(c, session, "Could not update user", err)
+			c.Error(errors.New("Could not update user"))
+			// TODO: In error handling middleware, flash error to session if redirecting
+			c.Redirect(http.StatusSeeOther, "/")
 			return
 		}
 	} else {
 		newUser := models.User{
-			Username:        rawUser.ID,
-			SpotifyUser:     body,
+			Username:        spotifyUser.ID,
+			SpotifyUser:     spotifyUserJSON,
 			AccessToken:     token.AccessToken,
 			RefreshToken:    token.RefreshToken,
 			TokenExpiryDate: token.Expiry,
-			TokenScope:      strings.Join(oauthConf.Scopes, " "),
+			TokenScope:      scopes,
 		}
 
 		err := newUser.InsertG()
 		if err != nil {
-			redirectWithError(c, session, "Could not create user", err)
+			c.Error(errors.New("Could not create user"))
+			// TODO: In error handling middleware, flash error to session if redirecting
+			c.Redirect(http.StatusSeeOther, "/")
 			return
 		}
 	}
 
+	// Successfully logged in
 	c.Redirect(http.StatusSeeOther, "/")
 }
 
 func redirectWithError(c *gin.Context, session sessions.Session, message string, err error) {
+	// TOOD: Move this to general error handler middleware
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %s\n", message, err)
 	} else {
 		fmt.Fprintf(os.Stderr, "%s\n", message)
 	}
-	session.AddFlash("Login was unsuccessful: "+message, "error")
+	session.AddFlash("Could not login to Spotify: "+message, "error")
 	session.Save()
 	c.Redirect(http.StatusSeeOther, "/")
-}
-
-func spotifyGet(resource string, token *oauth2.Token) *http.Request {
-	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/"+resource, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	token.SetAuthHeader(req)
-	return req
 }
