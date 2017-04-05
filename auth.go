@@ -2,11 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/chances/chances-party/models"
@@ -54,9 +51,8 @@ func spotifyCallback(c *gin.Context) {
 	sessionState, ok := session.Get("AUTH_STATE").(string)
 	log.Println(sessionState)
 	if !ok {
-		c.Error(errors.New("Token request failed, invalid state"))
-		// TODO: In error handling middleware, add Authorization header for Unauthorized responses
-		c.Status(http.StatusUnauthorized)
+		c.Error(errAuth.WithDetail("Token request failed, invalid state"))
+		c.Abort()
 		return
 	}
 	session.Delete("AUTH_STATE")
@@ -65,18 +61,16 @@ func spotifyCallback(c *gin.Context) {
 	// Validate OAuth state
 	oauthState := c.Request.FormValue("state")
 	if oauthState != sessionState {
-		c.Error(errors.New("Auth failed, mismatched state"))
-		// TODO: In error handling middleware, add Authorization header for Unauthorized responses
-		c.Status(http.StatusUnauthorized)
+		c.Error(errAuth.WithDetail("Auth failed, mismatched state"))
+		c.Abort()
 		return
 	}
 
 	// Retrieve token
 	token, err := auth.Token(sessionState, c.Request)
 	if err != nil {
-		c.Error(errors.New("Token request failed"))
-		// TODO: In error handling middleware, flash error to session if redirecting
-		c.Redirect(http.StatusSeeOther, "/")
+		c.Error(errAuth.WithDetail("Token request failed"))
+		c.Abort()
 		return
 	}
 
@@ -84,17 +78,15 @@ func spotifyCallback(c *gin.Context) {
 	client := auth.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
-		c.Error(errors.New("Could not get user"))
-		// TODO: In error handling middleware, flash error to session if redirecting
-		c.Redirect(http.StatusSeeOther, "/")
+		c.Error(errAuth.WithDetail("Could not get user"))
+		c.Abort()
 		return
 	}
 
 	spotifyUserJSON, err := json.Marshal(spotifyUser)
 	if err != nil {
-		c.Error(errors.New("Could not serialize user"))
-		// TODO: In error handling middleware, flash error to session if redirecting
-		c.Redirect(http.StatusSeeOther, "/")
+		c.Error(errAuth.WithDetail("Could not serialize user"))
+		c.Abort()
 		return
 	}
 
@@ -108,9 +100,8 @@ func spotifyCallback(c *gin.Context) {
 
 		err := existingUser.UpdateG()
 		if err != nil {
-			c.Error(errors.New("Could not update user"))
-			// TODO: In error handling middleware, flash error to session if redirecting
-			c.Redirect(http.StatusSeeOther, "/")
+			c.Error(errAuth.WithDetail("Could not update user"))
+			c.Abort()
 			return
 		}
 	} else {
@@ -125,25 +116,12 @@ func spotifyCallback(c *gin.Context) {
 
 		err := newUser.InsertG()
 		if err != nil {
-			c.Error(errors.New("Could not create user"))
-			// TODO: In error handling middleware, flash error to session if redirecting
-			c.Redirect(http.StatusSeeOther, "/")
+			c.Error(errAuth.WithDetail("Could not create user"))
+			c.Abort()
 			return
 		}
 	}
 
 	// Successfully logged in
-	c.Redirect(http.StatusSeeOther, "/")
-}
-
-func redirectWithError(c *gin.Context, session sessions.Session, message string, err error) {
-	// TOOD: Move this to general error handler middleware
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s\n", message, err)
-	} else {
-		fmt.Fprintf(os.Stderr, "%s\n", message)
-	}
-	session.AddFlash("Could not login to Spotify: "+message, "error")
-	session.Save()
 	c.Redirect(http.StatusSeeOther, "/")
 }

@@ -46,6 +46,7 @@ func main() {
 	g.Use(sessions.Sessions("cpSESSION", createSessionStore()))
 	g.Use(configureSession())
 
+	g.Use(handleErrors())
 	g.Use(gin.Recovery())
 
 	// Static files
