@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Adapted from https://github.com/gin-gonic/gin/issues/274
+
 var (
 	errAuth     = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
 	errInternal = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
@@ -40,7 +42,11 @@ func (e *partyError) Error() string {
 
 		trace := *e.Meta.trace
 		n := bytes.IndexByte(trace, 0)
-		return fmt.Sprintf("%d: %s\n%s\n\n%s\n\n", e.Code, *e.Meta.detail, e.Meta.cause, string(trace[:n]))
+		return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause, string(trace[:n]))
+	}
+
+	if e.Meta.detail != nil {
+		return fmt.Sprintf("%d: %s\n%s", e.Code, e.Message, *e.Meta.detail)
 	}
 
 	return fmt.Sprintf("%d: %s", e.Code, e.Message)
@@ -98,7 +104,7 @@ func handleErrors() gin.HandlerFunc {
 		// Add all errors to an array, following the Errors JSOn API spec
 		// http://jsonapi.org/format/#errors
 		for i, ginError := range c.Errors {
-			fmt.Fprintf(os.Stderr, "%s", ginError)
+			fmt.Fprintf(os.Stderr, "%s\n", ginError)
 			// IDEA: Send the error detail and cause to some log manager?
 
 			switch ginError.Err.(type) {
