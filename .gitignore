@@ -7,6 +7,8 @@ pids
 *.pid
 *.seed
 
+.idea
+
 .env
 
 # Built binaries
