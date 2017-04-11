@@ -4,9 +4,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/antonlindstrom/pgstore"
+	"github.com/chances/chances-party/models"
 	"github.com/garyburd/redigo/redis"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	gsessions "github.com/gorilla/sessions"
 )
 
 var (
@@ -24,16 +28,34 @@ func newRedisPool() *redis.Pool {
 	}
 }
 
-func createSessionStore() sessions.Store {
+func createSessionStore() postgresStore {
 	secret := []byte(getenvOrFatal("SESSION_SECRET"))
-	if gin.IsDebugging() {
-		return sessions.NewCookieStore(secret)
-	}
-	store, err := sessions.NewRedisStoreWithPool(pool, secret)
+	store, err := pgstore.NewPGStoreFromPool(db.DB, secret)
 	if err != nil {
 		log.Fatalln("Could not create Redis pool")
 	}
-	return store
+
+	defer store.StopCleanup(store.Cleanup(time.Minute * 5))
+
+	return &pgStore{store}
+}
+
+type postgresStore interface {
+	sessions.Store
+}
+
+type pgStore struct {
+	*pgstore.PGStore
+}
+
+func (c *pgStore) Options(options sessions.Options) {
+	c.PGStore.Options = &gsessions.Options{
+		Path:     options.Path,
+		Domain:   options.Domain,
+		MaxAge:   options.MaxAge,
+		Secure:   options.Secure,
+		HttpOnly: options.HttpOnly,
+	}
 }
 
 func configureSession() gin.HandlerFunc {
