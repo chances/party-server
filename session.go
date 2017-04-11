@@ -72,6 +72,19 @@ func configureSession() gin.HandlerFunc {
 				HttpOnly: false,
 			})
 		}
+
+		// If the session has a user, associate it with Sentry
+		u, hasUser := c.Get("user")
+		if hasUser {
+			user, ok := u.(models.User)
+			if ok {
+				raven.SetUserContext(&raven.User{
+					ID:       string(user.ID),
+					Username: user.Username,
+				})
+			}
+		}
+
 		c.Next()
 	}
 }
