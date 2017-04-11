@@ -40,7 +40,12 @@ func login(c *gin.Context) {
 
 	session := sessions.Default(c)
 	session.Set("AUTH_STATE", state)
-	session.Save()
+	err := session.Save()
+	if err != nil {
+		c.Error(errAuth.WithDetail("Couldn't save session").CausedBy(err))
+		c.Abort()
+		return
+	}
 
 	c.Redirect(http.StatusSeeOther, auth.AuthURL(state))
 }
@@ -48,10 +53,18 @@ func login(c *gin.Context) {
 // IDEA: Convert error handling shenanigans to Observable chain
 func spotifyCallback(c *gin.Context) {
 	session := sessions.Default(c)
-	sessionState, ok := session.Get("AUTH_STATE").(string)
-	log.Println(sessionState)
+	var sessionState string
+	v := session.Get("AUTH_STATE")
+	log.Printf("\n\n%s\n\n", v)
+	if v == nil {
+		c.Error(errAuth.WithDetail("Auth state is nil"))
+		c.Abort()
+		return
+	}
+	sessionState, ok := v.(string)
+	log.Printf("blah\n\n%s\n\n", sessionState)
 	if !ok {
-		c.Error(errAuth.WithDetail("Token request failed, invalid state"))
+		c.Error(errAuth.WithDetail("Auth state is *not* string"))
 		c.Abort()
 		return
 	}
@@ -69,7 +82,7 @@ func spotifyCallback(c *gin.Context) {
 	// Retrieve token
 	token, err := auth.Token(sessionState, c.Request)
 	if err != nil {
-		c.Error(errAuth.WithDetail("Token request failed"))
+		c.Error(errAuth.WithDetail("Token request failed").CausedBy(err))
 		c.Abort()
 		return
 	}
@@ -78,14 +91,14 @@ func spotifyCallback(c *gin.Context) {
 	client := auth.NewClient(token)
 	spotifyUser, err := client.CurrentUser()
 	if err != nil {
-		c.Error(errAuth.WithDetail("Could not get user"))
+		c.Error(errAuth.WithDetail("Could not get user").CausedBy(err))
 		c.Abort()
 		return
 	}
 
 	spotifyUserJSON, err := json.Marshal(spotifyUser)
 	if err != nil {
-		c.Error(errAuth.WithDetail("Could not serialize user"))
+		c.Error(errAuth.WithDetail("Could not serialize user").CausedBy(err))
 		c.Abort()
 		return
 	}
@@ -100,7 +113,7 @@ func spotifyCallback(c *gin.Context) {
 
 		err := existingUser.UpdateG()
 		if err != nil {
-			c.Error(errAuth.WithDetail("Could not update user"))
+			c.Error(errAuth.WithDetail("Could not update user").CausedBy(err))
 			c.Abort()
 			return
 		}
@@ -116,7 +129,7 @@ func spotifyCallback(c *gin.Context) {
 
 		err := newUser.InsertG()
 		if err != nil {
-			c.Error(errAuth.WithDetail("Could not create user"))
+			c.Error(errAuth.WithDetail("Could not create user").CausedBy(err))
 			c.Abort()
 			return
 		}
