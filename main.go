@@ -82,6 +82,14 @@ func main() {
 	})
 	g.GET("/auth/login", login)
 	g.GET("/auth/callback", spotifyCallback)
+	g.GET("/auth/logout", func(c *gin.Context) {
+		if IsLoggedIn(c) {
+			session := DefaultSession(c)
+			session.Delete("USER")
+		}
+
+		c.Redirect(http.StatusSeeOther, "/")
+	})
 
 	g.Run()
 }
