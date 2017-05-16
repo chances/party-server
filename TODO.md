@@ -42,7 +42,8 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
   - [ ] ~~Automatically refresh token~~ (Automatic with Go OAuth2 library)
 - [ ] Change playlist to PUT instead of current GET, also don't redirect
 - [ ] Add timestamp utility functions (autonomously update them)
-- [ ] WebSockets streaming data integration
+- [ ] Server-Sent Events data integration for party state updates sent to clients (TrackList and Party models)
+- [ ] WebSockets streaming data integration? (Do I need full duplex send/receive sockets?)
 - [ ] Add Guests model
   - JSON blob (Array of):
     - Name
