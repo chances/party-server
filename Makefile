@@ -1,3 +1,3 @@
-chances-party: main.go auth.go database.go session.go errors.go
+chances-party: main.go spotify.go auth.go database.go session.go errors.go
 	go get -v ./...
 	go build

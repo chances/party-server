@@ -73,8 +73,9 @@ func main() {
 			}
 
 			c.HTML(http.StatusOK, "index.html", gin.H{
-				"user":  spotifyUser,
-				"error": "",
+				"user":      spotifyUser,
+				"playlists": Playlists(ClientFromSession(c)), // TODO: Cache these?
+				"error":     "",
 			})
 		} else {
 			c.HTML(http.StatusOK, "index.html", gin.H{})
