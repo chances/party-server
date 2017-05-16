@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify"
 	"gopkg.in/gin-contrib/cors.v1"
+	null "gopkg.in/nullbio/null.v6"
 )
 
 func main() {
@@ -72,15 +73,54 @@ func main() {
 				return
 			}
 
+			var currentPlaylist *spotify.SimplePlaylist
+			currentPlaylist = nil
+			playlists := Playlists(ClientFromSession(c)) // TODO: Cache these?
+			for _, playlist := range playlists {
+				if currentUser.SpotifyPlaylistID.String == playlist.ID.String() {
+					currentPlaylist = &playlist
+					break
+				}
+			}
 			c.HTML(http.StatusOK, "index.html", gin.H{
-				"user":      spotifyUser,
-				"playlists": Playlists(ClientFromSession(c)), // TODO: Cache these?
-				"error":     "",
+				"user":            spotifyUser,
+				"currentPlaylist": currentPlaylist,
+				"playlists":       playlists,
+				"error":           "",
 			})
 		} else {
 			c.HTML(http.StatusOK, "index.html", gin.H{})
 		}
 	})
+
+	g.GET("/playlist", func(c *gin.Context) {
+		id := c.Query("id")
+		if id != "" {
+			currentUser := CurrentUser(c)
+
+			var validPlaylistID bool
+			validPlaylistID = false
+			playlists := Playlists(ClientFromSession(c)) // TODO: Cache these?
+			for _, playlist := range playlists {
+				if id == playlist.ID.String() {
+					validPlaylistID = true
+				}
+			}
+
+			if validPlaylistID {
+				currentUser.SpotifyPlaylistID = null.StringFrom(id)
+				err := currentUser.UpdateG("spotify_playlist_id")
+				if err != nil {
+					c.Error(errInternal.WithDetail("Could not update user").CausedBy(err))
+					c.Abort()
+					return
+				}
+			}
+		}
+
+		c.Redirect(http.StatusSeeOther, "/")
+	})
+
 	g.GET("/auth/login", login)
 	g.GET("/auth/callback", spotifyCallback)
 	g.GET("/auth/logout", func(c *gin.Context) {
