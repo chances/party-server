@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/zmb3/spotify"
 	"gopkg.in/gin-contrib/cors.v1"
 )
 
@@ -51,6 +52,8 @@ func main() {
 	// Static files
 	g.Static("/css/", "./public")
 
+	g.LoadHTMLGlob("views/*")
+
 	// Application routes
 	g.GET("/", func(c *gin.Context) {
 		// session := DefaultSession(c)
@@ -60,14 +63,24 @@ func main() {
 		// 	data["error"] = flashes[0]
 		// }
 		if IsLoggedIn(c) {
+			currentUser := CurrentUser(c)
+			var spotifyUser spotify.PrivateUser
+			err := currentUser.SpotifyUser.Unmarshal(&spotifyUser)
+			if err != nil {
+				c.Error(err)
+				c.Abort()
+				return
+			}
 
+			c.HTML(http.StatusOK, "index.html", gin.H{
+				"user":  spotifyUser,
+				"error": "",
+			})
 		} else {
-
+			c.HTML(http.StatusOK, "index.html", gin.H{})
 		}
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, "<p><a href=\"/login\">Login with Spotify</a></p><p>Error: None?</p>")
 	})
-	g.GET("/login", login)
+	g.GET("/auth/login", login)
 	g.GET("/auth/callback", spotifyCallback)
 
 	g.Run()

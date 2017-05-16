@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chance's Party - Admin</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  {{ if not .user }}
+  <p>
+    <a href="/auth/login">Login with Spotify</a>
+  </p>
+  {{ else }}
+  <p>
+    <a href="/auth/logout">Log Out</a>
+  </p>
+  <h1>Logged in as {{ .user.DisplayName }}</h1>
+  <img id="avatar" width="200" src="{{ (index .user.Images 0).URL }}" />
+  <div id="user">
+    <p>ID: {{ .user.ID }}</p>
+    <p>Profile: <a href="{{ .user.URI }}">{{ .user.URI }}</a></p>
+    <p>Followers: {{ .user.Followers.Count }}</p>
+    <p>Country: {{ .user.Country }}</p>
+    <p>Product: {{ .user.Product }}</p>
+  </div>
+  <p>Current playlist: {{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}</p>
+  <div style="clear: both;"></div>
+  {{ if .playlists }}
+  <h2>Pick a playlist for the party</h2>
+  {{ $user := .user }}
+  <ul>{{ range .playlists }}
+    {{ if eq .Owner.ID $user.ID }}
+    <li>
+      <a href="/playlist?id={{ urlquery .ID }}">{{ .Name }}</a>
+      <a href="{{ .Endpoint }}" class="link-back">On Spotify</a>
+    </li>
+    {{ end }}
+  {{ end }}</ul>
+  {{ end }}
+  {{ end }}
+  {{ if .error }}
+  <p>Error:</p>
+  <p>{{ .error }}</p>
+  {{ end }}
+</body>
+</html>
