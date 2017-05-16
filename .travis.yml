@@ -3,5 +3,10 @@ language: go
 go:
   - 1.8
 
+cache:
+  directories:
+    - $GOPATH/src
+    - $GOPATH/pkg
+
 install: go get -t -v ./...
 script: go test $(go list ./... | grep -v /models)
