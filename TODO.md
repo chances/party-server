@@ -39,8 +39,7 @@ _Note: Removed search endpoint task in favor of access token delivery to clients
   - [ ] Deliver token to authenticated sessions
   - [ ] Deliver token to authenticated sessions on same root domain
   - [ ] Deliver token to guests via the party's host's user
-  - [ ] Automatically refresh token
-- [ ] Remove user[s] endpoints because they're gaping security holes
+  - [ ] ~~Automatically refresh token~~ (Automatic with Go OAuth2 library)
 - [ ] Change playlist to PUT instead of current GET, also don't redirect
 - [ ] Add timestamp utility functions (autonomously update them)
 - [ ] WebSockets streaming data integration
