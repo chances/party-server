@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/chances/chances-party/models"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/queries/qm"
@@ -38,9 +36,8 @@ func setupAuth() {
 func login(c *gin.Context) {
 	state := uuid.NewV4().String()
 
-	session := sessions.Default(c)
-	session.Set("AUTH_STATE", state)
-	err := session.Save()
+	session := DefaultSession(c)
+	err := session.Set("AUTH_STATE", state)
 	if err != nil {
 		c.Error(errAuth.WithDetail("Couldn't save session").CausedBy(err))
 		c.Abort()
@@ -52,24 +49,14 @@ func login(c *gin.Context) {
 
 // IDEA: Convert error handling shenanigans to Observable chain
 func spotifyCallback(c *gin.Context) {
-	session := sessions.Default(c)
-	var sessionState string
-	v := session.Get("AUTH_STATE")
-	log.Printf("\n\n%s\n\n", v)
-	if v == nil {
-		c.Error(errAuth.WithDetail("Auth state is nil"))
-		c.Abort()
-		return
-	}
-	sessionState, ok := v.(string)
-	log.Printf("blah\n\n%s\n\n", sessionState)
-	if !ok {
-		c.Error(errAuth.WithDetail("Auth state is *not* string"))
+	session := DefaultSession(c)
+	sessionState, err := session.Get("AUTH_STATE")
+	if err != nil {
+		c.Error(errAuth.WithDetail("Could not retrieve auth state").CausedBy(err))
 		c.Abort()
 		return
 	}
 	session.Delete("AUTH_STATE")
-	session.Save()
 
 	// Validate OAuth state
 	oauthState := c.Request.FormValue("state")
@@ -103,6 +90,7 @@ func spotifyCallback(c *gin.Context) {
 		return
 	}
 
+	var userID string
 	existingUser, err := models.UsersG(qm.Where("username = ?", spotifyUser.ID)).One()
 	if err == nil {
 		existingUser.SpotifyUser = spotifyUserJSON
@@ -110,6 +98,9 @@ func spotifyCallback(c *gin.Context) {
 		existingUser.RefreshToken = token.RefreshToken
 		existingUser.TokenExpiryDate = token.Expiry
 		existingUser.TokenScope = scopes
+
+		c.Set("user", existingUser)
+		userID = existingUser.Username
 
 		err := existingUser.UpdateG()
 		if err != nil {
@@ -133,7 +124,12 @@ func spotifyCallback(c *gin.Context) {
 			c.Abort()
 			return
 		}
+
+		c.Set("user", newUser)
+		userID = newUser.Username
 	}
+
+	session.Set("USER", userID)
 
 	// Successfully logged in
 	c.Redirect(http.StatusSeeOther, "/")

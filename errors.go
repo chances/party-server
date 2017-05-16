@@ -8,7 +8,6 @@ import (
 	"runtime/debug"
 
 	"github.com/getsentry/raven-go"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,7 +41,11 @@ func (e *partyError) Error() string {
 
 		trace := *e.Meta.trace
 		n := bytes.IndexByte(trace, 0)
-		return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause, string(trace[:n]))
+		if n > 0 {
+			return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause, string(trace[:n]))
+		}
+
+		return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause)
 	}
 
 	if e.Meta.detail != nil {
@@ -114,9 +117,9 @@ func handleErrors() gin.HandlerFunc {
 				// On errAuth flash error to session and redirect to index on errAuth
 				switch err.Code {
 				case http.StatusSeeOther:
-					session := sessions.Default(c)
-					session.AddFlash(err, "error")
-					session.Save()
+					// session := DefaultSession(c)
+					// session.AddFlash(err, "error")
+					// TODO: Save error to flash
 
 					c.Redirect(err.Code, "/")
 					return

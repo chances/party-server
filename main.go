@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gopkg.in/gin-contrib/cors.v1"
@@ -27,6 +26,7 @@ func main() {
 	defer db.Close()
 	// Redis
 	pool = newRedisPool()
+	defer pool.Close()
 
 	g := gin.New()
 	g.Use(gin.Logger())
@@ -43,8 +43,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 	// Session
-	g.Use(sessions.Sessions("cpSESSION", createSessionStore()))
-	g.Use(configureSession())
+	g.Use(partySession())
 
 	g.Use(handleErrors())
 	g.Use(gin.Recovery())
@@ -54,15 +53,17 @@ func main() {
 
 	// Application routes
 	g.GET("/", func(c *gin.Context) {
-		session := sessions.Default(c)
-		data := map[string]interface{}{}
-		if flashes := session.Flashes("error"); len(flashes) > 0 {
-			data["error"] = flashes[0]
+		// session := DefaultSession(c)
+		// TODO: Read errors from session flash
+		// data := map[string]interface{}{}
+		// if flashes := session.Flashes("error"); len(flashes) > 0 {
+		// 	data["error"] = flashes[0]
+		// }
+		if IsLoggedIn(c) {
+
+		} else {
+
 		}
-		if flashes := session.Flashes("user"); len(flashes) > 0 {
-			data["user"] = flashes[0]
-		}
-		log.Printf("User: %s\n", data)
 		c.Header("Content-Type", "text/html; charset=utf-8")
 		c.String(http.StatusOK, "<p><a href=\"/login\">Login with Spotify</a></p><p>Error: None?</p>")
 	})
