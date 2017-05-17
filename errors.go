@@ -23,14 +23,14 @@ type partyErrors struct {
 }
 
 type partyError struct {
-	Code    int `json:"status"`
-	Title   string
+	Code    int    `json:"status"`
+	Title   string `json:"title"`
 	Message string `json:"detail"`
 	Meta    struct {
 		cause  error
 		trace  *[]byte
 		detail *string
-	}
+	} `json:"meta"`
 }
 
 func (e *partyError) Error() string {
@@ -104,7 +104,7 @@ func handleErrors() gin.HandlerFunc {
 		errors := make([]*partyError, numErrors)
 		var code int
 
-		// Add all errors to an array, following the Errors JSOn API spec
+		// Add all errors to an array, following the Errors JSON API spec
 		// http://jsonapi.org/format/#errors
 		for i, ginError := range c.Errors {
 			fmt.Fprintf(os.Stderr, "%s\n", ginError)
