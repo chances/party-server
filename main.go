@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -57,12 +58,11 @@ func main() {
 
 	// Application routes
 	g.GET("/", func(c *gin.Context) {
-		// session := DefaultSession(c)
-		// TODO: Read errors from session flash
-		// data := map[string]interface{}{}
-		// if flashes := session.Flashes("error"); len(flashes) > 0 {
-		// 	data["error"] = flashes[0]
-		// }
+		session := DefaultSession(c)
+		flashedError, err := session.Error()
+		if err != nil {
+			c.Error(errInternal.CausedBy(err))
+		}
 		if IsLoggedIn(c) {
 			currentUser := CurrentUser(c)
 			var spotifyUser spotify.PrivateUser
@@ -86,10 +86,12 @@ func main() {
 				"user":            spotifyUser,
 				"currentPlaylist": currentPlaylist,
 				"playlists":       playlists,
-				"error":           "",
+				"error":           flashedError,
 			})
 		} else {
-			c.HTML(http.StatusOK, "index.html", gin.H{})
+			c.HTML(http.StatusOK, "index.html", gin.H{
+				"error": flashedError,
+			})
 		}
 	})
 

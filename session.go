@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
+	"errors"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/chances/chances-party/models"
@@ -67,15 +69,11 @@ func partySession() gin.HandlerFunc {
 	}
 }
 
-// TODO: Add session flash
-
 // Session is a hella simple strng value session store for chances-party
 type Session struct {
 	name    string
-	request *http.Request
 	ID      string
-	written bool
-	writer  http.ResponseWriter
+	flashes map[string]interface{}
 }
 
 func loadSession(c *gin.Context) *Session {
@@ -83,13 +81,54 @@ func loadSession(c *gin.Context) *Session {
 
 	if err != nil {
 		id := uuid.NewV4().String()
-		return &Session{"cpSESSION", c.Request, id, false, c.Writer}
+		flashes := make(map[string]interface{})
+		return &Session{"cpSESSION", id, flashes}
 	}
 
-	return &Session{"cpSESSION", c.Request, cookie, false, c.Writer}
+	return &Session{"cpSESSION", cookie, loadFlashes(cookie)}
 }
 
 // TODO: Serialize session into JSON
+func loadFlashes(id string) map[string]interface{} {
+	c := pool.Get()
+	defer c.Close()
+
+	value, err := redis.Bytes(c.Do("GET", id+":flashes"))
+	if err != nil {
+		return make(map[string]interface{})
+	}
+
+	var flashes map[string]interface{}
+	flashesBuffer := bytes.NewBuffer(value)
+	dec := gob.NewDecoder(flashesBuffer)
+	err = dec.Decode(&flashes)
+	if err != nil {
+		return make(map[string]interface{})
+	}
+	return flashes
+}
+
+func (s *Session) saveFlashes() {
+	if s.flashes == nil {
+		return
+	}
+
+	flashesBuffer := new(bytes.Buffer)
+	enc := gob.NewEncoder(flashesBuffer)
+	err := enc.Encode(s.flashes)
+	if err != nil {
+		log.Fatal("cp flash:", err)
+	}
+
+	c := pool.Get()
+	defer c.Close()
+
+	// status, err
+	_, err = c.Do("SET", s.ID+":flashes", flashesBuffer.Bytes())
+	if err != nil {
+		log.Fatal("cp flash:", err)
+	}
+}
 
 // Get returns the session value associated to the given key.
 func (s *Session) Get(key string) (string, error) {
@@ -122,6 +161,58 @@ func (s *Session) Set(key string, value string) error {
 	}
 
 	return nil
+}
+
+// Flash a keyed value to session flash storage
+func (s *Session) Flash(key string, value interface{}) {
+	s.flashes[key] = value
+	s.saveFlashes()
+}
+
+// Flashes retrieves values from session flash storage
+func (s *Session) Flashes(key ...string) ([]interface{}, error) {
+	numKeys := len(key)
+	if numKeys == 0 {
+		flashes := s.flashes
+		val := make([]interface{}, len(flashes))
+		idx := 0
+		for _, value := range flashes {
+			val[idx] = value
+			idx++
+		}
+
+		s.flashes = make(map[string]interface{})
+		s.saveFlashes()
+
+		return val, nil
+	} else if numKeys == 1 {
+		if val, ok := s.flashes[key[0]]; ok {
+			valResult := make([]interface{}, 1)
+			valResult[0] = val
+
+			delete(s.flashes, key[0])
+			s.saveFlashes()
+
+			return valResult, nil
+		}
+
+		return make([]interface{}, 0), nil
+	}
+
+	return nil, errors.New("Flashes accepts only zero or one keys")
+}
+
+// Error retrieves an error from session flash storage
+func (s *Session) Error() (string, error) {
+	errors, err := s.Flashes("error")
+	if err != nil {
+		return "", err
+	}
+	if len(errors) > 0 {
+		return errors[0].(string), nil
+	}
+
+	return "", nil
 }
 
 // Delete removes the session value associated to the given key.

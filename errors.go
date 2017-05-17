@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -117,9 +118,9 @@ func handleErrors() gin.HandlerFunc {
 				// On errAuth flash error to session and redirect to index on errAuth
 				switch err.Code {
 				case http.StatusSeeOther:
-					// session := DefaultSession(c)
-					// session.AddFlash(err, "error")
-					// TODO: Save error to flash
+					session := DefaultSession(c)
+					errorJSON, _ := json.Marshal(err)
+					session.Flash("error", string(errorJSON))
 
 					c.Redirect(err.Code, "/")
 					return
