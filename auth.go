@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
@@ -91,15 +92,17 @@ func spotifyCallback(c *gin.Context) {
 
 	var userID string
 	var user models.User
+	user.Username = spotifyUser.ID
 	user.SpotifyUser = spotifyUserJSON
 	user.AccessToken = token.AccessToken
 	user.RefreshToken = token.RefreshToken
 	user.TokenExpiryDate = token.Expiry
 	user.TokenScope = scopes
+	user.UpdatedAt = time.Now()
 
-	err = user.Upsert(db, true, []string{"id"}, []string{
+	err = user.Upsert(db, true, []string{"username"}, []string{
 		"spotify_user", "access_token", "refresh_token",
-		"token_expiry_date", "token_scope",
+		"token_expiry_date", "token_scope", "updated_at",
 	})
 	if err != nil {
 		c.Error(errAuth.WithDetail("Could not create/update user").CausedBy(err))
