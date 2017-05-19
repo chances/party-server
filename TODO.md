@@ -57,22 +57,21 @@ _Note: The Android client app authenticates with Spotify directly._
       - Spotify Track ID
       - Name
       - Artist
+      - Began playing timestamp
+      - Duration (in seconds)
       - Contributor name
       - Contributor ID (index in Guest array)
     - Timestamps
-
-
-- [ ] Add History model
-  - Fields:
-    - TrackList foreign key
-    - Began playing timestamp
-    - Timestamps
-  - Show duration on frontend?
+  - Show duration on frontend
 
 
 - [ ] Add a Party Model
   - Fields:
-    - Host name (Location/address, scheduled time too? _Facebook inegration?_)
+    - Host name
+    - Location JSON blob:
+      - Location/address string
+      - Scheduled time?
+      - _Facebook inegration?_
     - Room code (NULL when party has ended)
       - Random four letter combination
     - Ended flag
@@ -84,7 +83,7 @@ _Note: The Android client app authenticates with Spotify directly._
         - Contributor name
         - Contributor ID (index in Guest array)
     - Queue foreign key (_To TrackList_)
-    - History foreign key
+    - History foreign key (_To TrackList_)
     - Guests foreign key
 
 ### JSON Web Tokens
@@ -122,6 +121,10 @@ _Note: The Android client app authenticates with Spotify directly._
 - [ ] Add Party endpoints
   - [ ] Create
   - [ ] End (Stop/Quit?)
+  - [ ] Join a party
+    - Via _pseudo-authenticated_ room code, delivering JWT, or
+    - Check-In via OAuth provider
+    - [ ] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
   - _Maybe better with a WebSocket?_
