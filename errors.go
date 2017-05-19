@@ -36,7 +36,7 @@ type partyError struct {
 }
 
 func (e *partyError) Error() string {
-	if e.Meta.cause != nil {
+	if e.HasCause() {
 		if e.Meta.trace == nil {
 			return fmt.Sprintf("%d: %s\n%s", e.Code, *e.Meta.detail, e.Meta.cause)
 		}
@@ -50,7 +50,7 @@ func (e *partyError) Error() string {
 		return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause)
 	}
 
-	if e.Meta.detail != nil {
+	if e.HasDetail() {
 		return fmt.Sprintf("%d: %s\n%s", e.Code, e.Message, *e.Meta.detail)
 	}
 
@@ -64,8 +64,9 @@ func (e *partyError) WithDetail(detail string) *partyError {
 	})
 
 	// Add detail to provided partyError
-	e.Meta.detail = &detail
-	return e
+	augmentedError := *e
+	augmentedError.Meta.detail = &detail
+	return &augmentedError
 }
 
 func (e *partyError) HasDetail() bool {
@@ -73,12 +74,13 @@ func (e *partyError) HasDetail() bool {
 }
 
 func (e *partyError) CausedBy(err error) *partyError {
+	augmentedError := *e
 	if gin.IsDebugging() {
 		trace := debug.Stack()
-		e.Meta.trace = &trace
+		augmentedError.Meta.trace = &trace
 	}
-	e.Meta.cause = err
-	return e
+	augmentedError.Meta.cause = err
+	return &augmentedError
 }
 
 func (e *partyError) HasCause() bool {
