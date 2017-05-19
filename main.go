@@ -94,17 +94,26 @@ func main() {
 		}
 	})
 
-	g.GET("/playlist", func(c *gin.Context) {
-		id := c.Query("id")
-		if id != "" {
+	g.PATCH("/playlist", func(c *gin.Context) {
+		var patchPlaylist struct {
+			Data struct {
+				ID string `json:"id" binding:"required"`
+			} `json:"data" binding:"required"`
+		}
+
+		if c.Bind(&patchPlaylist) == nil {
+			id := patchPlaylist.Data.ID
 			currentUser := CurrentUser(c)
 
+			var playlist spotify.SimplePlaylist
 			var validPlaylistID bool
 			validPlaylistID = false
 			playlists := Playlists(ClientFromSession(c)) // TODO: Cache these?
-			for _, playlist := range playlists {
-				if id == playlist.ID.String() {
+			for _, p := range playlists {
+				if id == p.ID.String() {
+					playlist = p
 					validPlaylistID = true
+					break
 				}
 			}
 
@@ -116,10 +125,12 @@ func main() {
 					c.Abort()
 					return
 				}
-			}
-		}
 
-		c.Redirect(http.StatusSeeOther, "/")
+				c.JSON(http.StatusOK, playlist)
+			}
+
+			c.Error(errBadRequest.WithDetail("Invalid playlist id"))
+		}
 	})
 
 	g.GET("/auth/login", login)
