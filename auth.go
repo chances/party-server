@@ -90,7 +90,6 @@ func spotifyCallback(c *gin.Context) {
 		return
 	}
 
-	var userID string
 	var user models.User
 	user.Username = spotifyUser.ID
 	user.SpotifyUser = spotifyUserJSON
@@ -111,9 +110,7 @@ func spotifyCallback(c *gin.Context) {
 	}
 
 	c.Set("user", user)
-	userID = user.Username
-
-	session.Set("USER", userID)
+	session.Set("USER", user.Username)
 
 	// Successfully logged in
 	c.Redirect(http.StatusSeeOther, "/")

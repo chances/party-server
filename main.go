@@ -72,9 +72,15 @@ func main() {
 				return
 			}
 
+      spotifyClient := ClientFromSession(c)
+      if spotifyClient == nil {
+        c.Abort()
+        return
+      }
+
 			var currentPlaylist *spotify.SimplePlaylist
 			currentPlaylist = nil
-			playlists := Playlists(ClientFromSession(c)) // TODO: Cache these?
+			playlists := Playlists(*spotifyClient) // TODO: Cache these?
 			for _, playlist := range playlists {
 				if currentUser.SpotifyPlaylistID.String == playlist.ID.String() {
 					currentPlaylist = &playlist
@@ -105,10 +111,16 @@ func main() {
 			id := patchPlaylist.Data.ID
 			currentUser := CurrentUser(c)
 
+      spotifyClient := ClientFromSession(c)
+      if spotifyClient == nil {
+        c.Abort()
+        return
+      }
+
 			var playlist spotify.SimplePlaylist
 			var validPlaylistID bool
 			validPlaylistID = false
-			playlists := Playlists(ClientFromSession(c)) // TODO: Cache these?
+			playlists := Playlists(*spotifyClient) // TODO: Cache these?
 			for _, p := range playlists {
 				if id == p.ID.String() {
 					playlist = p
