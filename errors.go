@@ -29,29 +29,29 @@ type partyError struct {
 	Title   string `json:"title"`
 	Message string `json:"detail"`
 	Meta    struct {
-		cause  error
+		Cause  error `json:"cause"`
 		trace  *[]byte
-		detail *string
+		Detail *string `json:"details"`
 	} `json:"meta"`
 }
 
 func (e *partyError) Error() string {
 	if e.HasCause() {
 		if e.Meta.trace == nil {
-			return fmt.Sprintf("%d: %s\n%s", e.Code, *e.Meta.detail, e.Meta.cause)
+			return fmt.Sprintf("%d: %s\n%s", e.Code, *e.Meta.Detail, e.Meta.Cause)
 		}
 
 		trace := *e.Meta.trace
 		n := bytes.IndexByte(trace, 0)
 		if n > 0 {
-			return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause, string(trace[:n]))
+			return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause, string(trace[:n]))
 		}
 
-		return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.detail, e.Meta.cause)
+		return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause)
 	}
 
 	if e.HasDetail() {
-		return fmt.Sprintf("%d: %s\n%s", e.Code, e.Message, *e.Meta.detail)
+		return fmt.Sprintf("%d: %s\n%s", e.Code, e.Message, *e.Meta.Detail)
 	}
 
 	return fmt.Sprintf("%d: %s", e.Code, e.Message)
@@ -65,12 +65,12 @@ func (e *partyError) WithDetail(detail string) *partyError {
 
 	// Add detail to provided partyError
 	augmentedError := *e
-	augmentedError.Meta.detail = &detail
+	augmentedError.Meta.Detail = &detail
 	return &augmentedError
 }
 
 func (e *partyError) HasDetail() bool {
-	return e.Meta.detail != nil
+	return e.Meta.Detail != nil
 }
 
 func (e *partyError) CausedBy(err error) *partyError {
@@ -79,12 +79,12 @@ func (e *partyError) CausedBy(err error) *partyError {
 		trace := debug.Stack()
 		augmentedError.Meta.trace = &trace
 	}
-	augmentedError.Meta.cause = err
+	augmentedError.Meta.Cause = err
 	return &augmentedError
 }
 
 func (e *partyError) HasCause() bool {
-	return e.Meta.cause != nil
+	return e.Meta.Cause != nil
 }
 
 func newPartyError(code int, title string, publicMessage string) *partyError {
