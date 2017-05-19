@@ -1,7 +1,10 @@
 - [x] Implement custom server session backend, see [gin-contrib/sessions](https://github.com/gin-contrib/sessions)
 - [x] Find/implement OAuth2 solution for Spotify authentication
 - [ ] Add tests with go [testing](https://golang.org/pkg/testing/) tools
-- [ ] Switch to [Makefile based](https://github.com/chances/heroku-buildpack-go/tree/add-make-tool) Heroku deploy?
+- [ ] Add the Node.js buildpack to build Node.js assets
+
+  See: [Deploying Golang app with Bower on Heroku](http://stackoverflow.com/a/33387855/1363247)
+
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
 ## Be sure to pay attention to inline TODOs in source files!
