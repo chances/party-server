@@ -41,7 +41,7 @@ _Note: The Android client app authenticates with Spotify directly._
 
 ### Models
 
-- [ ] Add Guests model
+- [x] Add Guests model
   - JSON blob (Array of):
     - Name
     - Alias (Future use?)

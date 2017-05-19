@@ -15,56 +15,67 @@ import "testing"
 func TestParent(t *testing.T) {
 	t.Run("Users", testUsers)
 	t.Run("TrackLists", testTrackLists)
+	t.Run("Guests", testGuests)
 }
 
 func TestDelete(t *testing.T) {
 	t.Run("Users", testUsersDelete)
 	t.Run("TrackLists", testTrackListsDelete)
+	t.Run("Guests", testGuestsDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Users", testUsersQueryDeleteAll)
 	t.Run("TrackLists", testTrackListsQueryDeleteAll)
+	t.Run("Guests", testGuestsQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Users", testUsersSliceDeleteAll)
 	t.Run("TrackLists", testTrackListsSliceDeleteAll)
+	t.Run("Guests", testGuestsSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
 	t.Run("Users", testUsersExists)
 	t.Run("TrackLists", testTrackListsExists)
+	t.Run("Guests", testGuestsExists)
 }
 
 func TestFind(t *testing.T) {
 	t.Run("Users", testUsersFind)
 	t.Run("TrackLists", testTrackListsFind)
+	t.Run("Guests", testGuestsFind)
 }
 
 func TestBind(t *testing.T) {
 	t.Run("Users", testUsersBind)
 	t.Run("TrackLists", testTrackListsBind)
+	t.Run("Guests", testGuestsBind)
 }
 
 func TestOne(t *testing.T) {
 	t.Run("Users", testUsersOne)
 	t.Run("TrackLists", testTrackListsOne)
+	t.Run("Guests", testGuestsOne)
 }
 
 func TestAll(t *testing.T) {
 	t.Run("Users", testUsersAll)
 	t.Run("TrackLists", testTrackListsAll)
+	t.Run("Guests", testGuestsAll)
 }
 
 func TestCount(t *testing.T) {
 	t.Run("Users", testUsersCount)
 	t.Run("TrackLists", testTrackListsCount)
+	t.Run("Guests", testGuestsCount)
 }
 
 func TestHooks(t *testing.T) {
 	t.Run("Users", testUsersHooks)
 	t.Run("TrackLists", testTrackListsHooks)
+	t.Run("Guests", testGuestsHooks)
 }
 
 func TestInsert(t *testing.T) {
@@ -72,6 +83,8 @@ func TestInsert(t *testing.T) {
 	t.Run("Users", testUsersInsertWhitelist)
 	t.Run("TrackLists", testTrackListsInsert)
 	t.Run("TrackLists", testTrackListsInsertWhitelist)
+	t.Run("Guests", testGuestsInsert)
+	t.Run("Guests", testGuestsInsertWhitelist)
 }
 
 // TestToOne tests cannot be run in parallel
@@ -117,29 +130,35 @@ func TestToManyRemove(t *testing.T) {}
 func TestReload(t *testing.T) {
 	t.Run("Users", testUsersReload)
 	t.Run("TrackLists", testTrackListsReload)
+	t.Run("Guests", testGuestsReload)
 }
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Users", testUsersReloadAll)
 	t.Run("TrackLists", testTrackListsReloadAll)
+	t.Run("Guests", testGuestsReloadAll)
 }
 
 func TestSelect(t *testing.T) {
 	t.Run("Users", testUsersSelect)
 	t.Run("TrackLists", testTrackListsSelect)
+	t.Run("Guests", testGuestsSelect)
 }
 
 func TestUpdate(t *testing.T) {
 	t.Run("Users", testUsersUpdate)
 	t.Run("TrackLists", testTrackListsUpdate)
+	t.Run("Guests", testGuestsUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Users", testUsersSliceUpdateAll)
 	t.Run("TrackLists", testTrackListsSliceUpdateAll)
+	t.Run("Guests", testGuestsSliceUpdateAll)
 }
 
 func TestUpsert(t *testing.T) {
 	t.Run("Users", testUsersUpsert)
 	t.Run("TrackLists", testTrackListsUpsert)
+	t.Run("Guests", testGuestsUpsert)
 }
