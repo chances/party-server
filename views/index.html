@@ -22,7 +22,9 @@
     <p>Country: {{ .user.Country }}</p>
     <p>Product: {{ .user.Product }}</p>
   </div>
-  <p>Current playlist: {{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}</p>
+  <p>Current playlist: <span id="currentPlaylist">
+    {{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}
+  </span></p>
   <div style="clear: both;"></div>
   {{ if .playlists }}
   <h2>Pick a playlist for the party</h2>
@@ -30,7 +32,9 @@
   <ul>{{ range .playlists }}
     {{ if eq .Owner.ID $user.ID }}
     <li>
-      <a href="/playlist?id={{ urlquery .ID }}">{{ .Name }}</a>
+      <a class="playlist" data-id="{{ urlquery .ID }}" href="#playlist/{{ urlquery .ID }}">
+        {{ .Name }}
+      </a>
       <a href="{{ .Endpoint }}" class="link-back">On Spotify</a>
     </li>
     {{ end }}
@@ -41,5 +45,41 @@
   <p>Error:</p>
   <p>{{ .error }}</p>
   {{ end }}
+  <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch"></script>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function domContentLoaded() {
+      let playlistLinks = [].slice.call(document.querySelectorAll('a.playlist'));
+      playlistLinks.forEach(function (playlistLink) {
+        playlistLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let patchPlaylist = window.fetch(new Request('/playlist', {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({
+              data: { id: playlistId }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (patchedPlaylistOrErrors) {
+            if (patchedPlaylistOrErrors.errors !== undefined) {
+              console.log(patchedPlaylistOrErrors);
+              throw new Error(patchedPlaylistOrErrors.errors);
+            }
+
+            return patchedPlaylistOrErrors.data;
+          });
+
+          patchPlaylist.then(function (playlist) {
+            document.querySelector('#currentPlaylist').innerText =
+              playlist.name;
+          });
+        })
+      })
+    })
+  </script>
 </body>
 </html>

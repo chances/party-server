@@ -40,7 +40,7 @@ _Note: The Android client app authenticates with Spotify directly._
 ## New Functionality
 
 - [x] Change playlist endpoint to PATCH instead of current GET, also don't redirect
-  - [ ] Update the Party's current playlist asynchronously
+  - [x] Update the Party's current playlist asynchronously
 
 ### Models
 

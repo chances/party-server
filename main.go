@@ -101,6 +101,12 @@ func main() {
 	})
 
 	g.PATCH("/playlist", func(c *gin.Context) {
+		if !IsLoggedIn(c) {
+			c.Error(errUnauthorized)
+			c.Abort()
+			return
+		}
+
 		var patchPlaylist struct {
 			Data struct {
 				ID string `json:"id" binding:"required"`
@@ -111,34 +117,28 @@ func main() {
 			id := patchPlaylist.Data.ID
 			currentUser := CurrentUser(c)
 
-      spotifyClient := ClientFromSession(c)
-      if spotifyClient == nil {
-        c.Abort()
-        return
-      }
-
-			var playlist spotify.SimplePlaylist
-			var validPlaylistID bool
-			validPlaylistID = false
-			playlists := Playlists(*spotifyClient) // TODO: Cache these?
-			for _, p := range playlists {
-				if id == p.ID.String() {
-					playlist = p
-					validPlaylistID = true
-					break
-				}
+			spotifyClient := ClientFromSession(c)
+			if spotifyClient == nil {
+				c.Abort()
+				return
 			}
 
-			if validPlaylistID {
-				currentUser.SpotifyPlaylistID = null.StringFrom(id)
-				err := currentUser.UpdateG("spotify_playlist_id")
-				if err != nil {
-					c.Error(errInternal.WithDetail("Could not update user").CausedBy(err))
-					c.Abort()
+			playlists := Playlists(*spotifyClient) // TODO: Cache these?
+			for _, playlist := range playlists {
+				if id == playlist.ID.String() {
+					currentUser.SpotifyPlaylistID = null.StringFrom(id)
+					err := currentUser.UpdateG("spotify_playlist_id")
+					if err != nil {
+						c.Error(errInternal.WithDetail("Could not update user").CausedBy(err))
+						c.Abort()
+						return
+					}
+
+					c.JSON(http.StatusOK, gin.H{
+						"data": playlist,
+					})
 					return
 				}
-
-				c.JSON(http.StatusOK, playlist)
 			}
 
 			c.Error(errBadRequest.WithDetail("Invalid playlist id"))
