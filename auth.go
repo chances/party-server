@@ -8,7 +8,6 @@ import (
 	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
-	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/zmb3/spotify"
 )
 
@@ -91,43 +90,25 @@ func spotifyCallback(c *gin.Context) {
 	}
 
 	var userID string
-	existingUser, err := models.UsersG(qm.Where("username = ?", spotifyUser.ID)).One()
-	if err == nil {
-		existingUser.SpotifyUser = spotifyUserJSON
-		existingUser.AccessToken = token.AccessToken
-		existingUser.RefreshToken = token.RefreshToken
-		existingUser.TokenExpiryDate = token.Expiry
-		existingUser.TokenScope = scopes
+	var user models.User
+	user.SpotifyUser = spotifyUserJSON
+	user.AccessToken = token.AccessToken
+	user.RefreshToken = token.RefreshToken
+	user.TokenExpiryDate = token.Expiry
+	user.TokenScope = scopes
 
-		c.Set("user", existingUser)
-		userID = existingUser.Username
-
-		err := existingUser.UpdateG()
-		if err != nil {
-			c.Error(errAuth.WithDetail("Could not update user").CausedBy(err))
-			c.Abort()
-			return
-		}
-	} else {
-		newUser := models.User{
-			Username:        spotifyUser.ID,
-			SpotifyUser:     spotifyUserJSON,
-			AccessToken:     token.AccessToken,
-			RefreshToken:    token.RefreshToken,
-			TokenExpiryDate: token.Expiry,
-			TokenScope:      scopes,
-		}
-
-		err := newUser.InsertG()
-		if err != nil {
-			c.Error(errAuth.WithDetail("Could not create user").CausedBy(err))
-			c.Abort()
-			return
-		}
-
-		c.Set("user", newUser)
-		userID = newUser.Username
+	err = user.Upsert(db, true, []string{"id"}, []string{
+		"spotify_user", "access_token", "refresh_token",
+		"token_expiry_date", "token_scope",
+	})
+	if err != nil {
+		c.Error(errAuth.WithDetail("Could not create/update user").CausedBy(err))
+		c.Abort()
+		return
 	}
+
+	c.Set("user", user)
+	userID = user.Username
 
 	session.Set("USER", userID)
 
