@@ -14,51 +14,64 @@ import "testing"
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
 	t.Run("Users", testUsers)
+	t.Run("TrackLists", testTrackLists)
 }
 
 func TestDelete(t *testing.T) {
 	t.Run("Users", testUsersDelete)
+	t.Run("TrackLists", testTrackListsDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Users", testUsersQueryDeleteAll)
+	t.Run("TrackLists", testTrackListsQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Users", testUsersSliceDeleteAll)
+	t.Run("TrackLists", testTrackListsSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
 	t.Run("Users", testUsersExists)
+	t.Run("TrackLists", testTrackListsExists)
 }
 
 func TestFind(t *testing.T) {
 	t.Run("Users", testUsersFind)
+	t.Run("TrackLists", testTrackListsFind)
 }
 
 func TestBind(t *testing.T) {
 	t.Run("Users", testUsersBind)
+	t.Run("TrackLists", testTrackListsBind)
 }
 
 func TestOne(t *testing.T) {
 	t.Run("Users", testUsersOne)
+	t.Run("TrackLists", testTrackListsOne)
 }
 
 func TestAll(t *testing.T) {
 	t.Run("Users", testUsersAll)
+	t.Run("TrackLists", testTrackListsAll)
 }
 
 func TestCount(t *testing.T) {
 	t.Run("Users", testUsersCount)
+	t.Run("TrackLists", testTrackListsCount)
 }
 
 func TestHooks(t *testing.T) {
 	t.Run("Users", testUsersHooks)
+	t.Run("TrackLists", testTrackListsHooks)
 }
 
 func TestInsert(t *testing.T) {
 	t.Run("Users", testUsersInsert)
 	t.Run("Users", testUsersInsertWhitelist)
+	t.Run("TrackLists", testTrackListsInsert)
+	t.Run("TrackLists", testTrackListsInsertWhitelist)
 }
 
 // TestToOne tests cannot be run in parallel
@@ -103,24 +116,30 @@ func TestToManyRemove(t *testing.T) {}
 
 func TestReload(t *testing.T) {
 	t.Run("Users", testUsersReload)
+	t.Run("TrackLists", testTrackListsReload)
 }
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Users", testUsersReloadAll)
+	t.Run("TrackLists", testTrackListsReloadAll)
 }
 
 func TestSelect(t *testing.T) {
 	t.Run("Users", testUsersSelect)
+	t.Run("TrackLists", testTrackListsSelect)
 }
 
 func TestUpdate(t *testing.T) {
 	t.Run("Users", testUsersUpdate)
+	t.Run("TrackLists", testTrackListsUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Users", testUsersSliceUpdateAll)
+	t.Run("TrackLists", testTrackListsSliceUpdateAll)
 }
 
 func TestUpsert(t *testing.T) {
 	t.Run("Users", testUsersUpsert)
+	t.Run("TrackLists", testTrackListsUpsert)
 }
