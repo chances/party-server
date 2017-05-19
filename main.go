@@ -67,7 +67,7 @@ func main() {
 			var spotifyUser spotify.PrivateUser
 			err := currentUser.SpotifyUser.Unmarshal(&spotifyUser)
 			if err != nil {
-				c.Error(err)
+				c.Error(errInternal.CausedBy(err))
 				c.Abort()
 				return
 			}
