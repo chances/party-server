@@ -195,14 +195,8 @@ _Note: The Android client app authenticates with Spotify directly._
 
 ### WebSockets
 
-- [socket-io](http://hackage.haskell.org/package/socket-io)
-- [websockets](https://github.com/jaspervdj/websockets)
-- [servant-subscriber](https://github.com/eskimor/servant-subscriber)
-- [ChatQY](https://github.com/realli/chatqy) (servant, websockets, and react.js)
+_TODO: Get resources for Go/TypeScript WebSockets_
 
 ### Authentication
 
-- ~~[servant-auth](https://github.com/plow-technologies/servant-auth)~~
-- ~~[authenticate-oauth](https://www.stackage.org/package/authenticate-oauth)~~
-
-_Implemented manually in [servant-spotify](https://github.com/chances/servant-spotify#readme)._
+_TODO: Get resources for Go OAuth providers (Facebook, Google, Twitter, GitHub, etc.) and super pretty frontend login buttons_
