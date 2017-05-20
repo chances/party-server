@@ -72,11 +72,11 @@ func main() {
 				return
 			}
 
-      spotifyClient := ClientFromSession(c)
-      if spotifyClient == nil {
-        c.Abort()
-        return
-      }
+			spotifyClient := ClientFromSession(c)
+			if spotifyClient == nil {
+				c.Abort()
+				return
+			}
 
 			var currentPlaylist *spotify.SimplePlaylist
 			currentPlaylist = nil
