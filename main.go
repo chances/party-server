@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify"
@@ -134,8 +135,8 @@ func main() {
 						return
 					}
 
-					c.JSON(http.StatusOK, gin.H{
-						"data": playlist,
+					c.JSON(http.StatusOK, models.Response{
+						Data: playlist,
 					})
 					return
 				}
