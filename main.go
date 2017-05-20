@@ -39,8 +39,8 @@ func main() {
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
 	g.Use(cors.New(cors.Config{
 		AllowOrigins:     corsOrigins,
-		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowMethods:     []string{"GET", "PUT", "POST", "PATCH", "DELETE"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
