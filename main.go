@@ -49,19 +49,6 @@ func main() {
 	g.Use(handleErrors())
 	g.Use(gin.Recovery())
 
-	// Require SSL in production
-	g.Use(func() gin.HandlerFunc {
-		return func(c *gin.Context) {
-			if gin.IsDebugging() == false && c.Request.TLS == nil {
-				c.Error(errBadRequest.WithDetail("Party requires SSL"))
-				c.Abort()
-				return
-			}
-
-			c.Next()
-		}
-	}())
-
 	// Static files
 	g.Static("/css/", "./public")
 
