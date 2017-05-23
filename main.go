@@ -81,7 +81,13 @@ func main() {
 
 			var currentPlaylist *spotify.SimplePlaylist
 			currentPlaylist = nil
-			playlists := Playlists(*spotifyClient) // TODO: Cache these?
+			playlists := Playlists(*spotifyClient)
+			if exists, _ := redisExists("playlists:" + currentUser.Username); !exists {
+				go cachePlaylists("playlists:"+currentUser.Username, *spotifyClient, playlists)
+			} else {
+				// TODO: Retreive cached playlists
+			}
+
 			for _, playlist := range playlists {
 				if currentUser.SpotifyPlaylistID.String == playlist.ID.String() {
 					currentPlaylist = &playlist

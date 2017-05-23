@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -98,6 +99,17 @@ func redisSet(key string, value string) error {
 	}
 
 	return nil
+}
+
+func redisExists(key string) (bool, error) {
+	c := pool.Get()
+	defer c.Close()
+
+	ok, err := redis.Bool(c.Do("EXISTS", key))
+	if err != nil {
+		return ok, fmt.Errorf("Could not determine if key %s exists: %v", key, err)
+	}
+	return ok, err
 }
 
 // Session is a hella simple strng value session store for chances-party
