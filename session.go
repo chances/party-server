@@ -69,6 +69,37 @@ func partySession() gin.HandlerFunc {
 	}
 }
 
+func redisGet(key string) (string, error) {
+	c := pool.Get()
+	defer c.Close()
+
+	value, err := redis.String(c.Do("GET", key))
+
+	if err != nil {
+		println(err.Error())
+		log.Printf("Could not GET %s\n", key)
+		return "", err
+	}
+
+	return value, nil
+}
+
+func redisSet(key string, value string) error {
+	c := pool.Get()
+	defer c.Close()
+
+	// status, err
+	_, err := c.Do("SET", key, value)
+
+	if err != nil {
+		println(err.Error())
+		log.Printf("Could not SET %s:%s\n", key, value)
+		return err
+	}
+
+	return nil
+}
+
 // Session is a hella simple strng value session store for chances-party
 type Session struct {
 	name    string
@@ -132,14 +163,8 @@ func (s *Session) saveFlashes() {
 
 // Get returns the session value associated to the given key.
 func (s *Session) Get(key string) (string, error) {
-	c := pool.Get()
-	defer c.Close()
-
-	value, err := redis.String(c.Do("GET", s.ID+":"+key))
-
+	value, err := redisGet(s.ID + ":" + key)
 	if err != nil {
-		println(err.Error())
-		log.Printf("Could not GET %s\n", key)
 		return "", err
 	}
 
@@ -148,15 +173,8 @@ func (s *Session) Get(key string) (string, error) {
 
 // Set sets the session value associated to the given key.
 func (s *Session) Set(key string, value string) error {
-	c := pool.Get()
-	defer c.Close()
-
-	// status, err
-	_, err := c.Do("SET", s.ID+":"+key, value)
-
+	err := redisSet(s.ID+":"+key, value)
 	if err != nil {
-		println(err.Error())
-		log.Printf("Could not SET %s:%s\n", key, value)
 		return err
 	}
 
