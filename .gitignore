@@ -7,40 +7,13 @@ pids
 *.pid
 *.seed
 
-.idea/
-chances-party.iml
-/ideaHaskellLib
+.idea
 
-/.env
+.env
 
-# Built source
-/build
+# Built binaries
+chances-party
 
-# Session store db
-sessions.db
-
-# Application debug db
-party.db
+sqlboiler.toml
 
 deploy_key
-
-# Haskell Stack
-dist
-dist-*
-cabal-dev
-*.o
-*.hi
-*.chi
-*.chs.h
-*.dyn_o
-*.dyn_hi
-.hpc
-.hsenv
-.cabal-sandbox/
-cabal.sandbox.config
-*.prof
-*.aux
-*.hp
-*.eventlog
-.stack-work/
-cabal.project.local

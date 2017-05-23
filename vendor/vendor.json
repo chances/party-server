@@ -1,0 +1,11 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [],
+	"rootPath": "github.com/chances/chances-party",
+  "heroku": {
+    "plain": true,
+    "install" : [ "./..." ],
+    "goVersion": "go1.8"
+  }
+}
