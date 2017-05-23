@@ -73,8 +73,9 @@ func main() {
 				return
 			}
 
-			spotifyClient := ClientFromSession(c)
-			if spotifyClient == nil {
+			spotifyClient, err := ClientFromSession(c)
+			if err != nil {
+				c.Error(errInternal.CausedBy(err))
 				c.Abort()
 				return
 			}

@@ -20,25 +20,24 @@ func Playlists(client spotify.Client) []spotify.SimplePlaylist {
 }
 
 // ClientFromSession gets a Spotify client from the session's user
-func ClientFromSession(c *gin.Context) *spotify.Client {
+func ClientFromSession(c *gin.Context) (*spotify.Client, error) {
 	user := CurrentUser(c)
-  newClient := auth.NewClient(&oauth2.Token{
+	newClient := auth.NewClient(&oauth2.Token{
 		AccessToken:  user.AccessToken,
 		RefreshToken: user.RefreshToken,
 	})
 
-  token, err := newClient.Token()
-  if err != nil {
-    c.Error(errInternal.CausedBy(err))
-    return nil
-  }
+	token, err := newClient.Token()
+	if err != nil {
+		return nil, err
+	}
 
-  if token.AccessToken != user.AccessToken {
-    user.AccessToken = token.AccessToken
-    user.RefreshToken = token.RefreshToken
-    user.TokenExpiryDate = token.Expiry
-    user.UpdateGP()
-  }
+	if token.AccessToken != user.AccessToken {
+		user.AccessToken = token.AccessToken
+		user.RefreshToken = token.RefreshToken
+		user.TokenExpiryDate = token.Expiry
+		user.UpdateGP()
+	}
 
-  return &newClient
+	return &newClient, nil
 }
