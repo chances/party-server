@@ -33,6 +33,18 @@ func setupAuth() {
 	scopes = strings.Join(s, " ")
 }
 
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !IsLoggedIn(c) {
+			c.Error(errUnauthorized)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func login(c *gin.Context) {
 	state := uuid.NewV4().String()
 
