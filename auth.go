@@ -7,14 +7,16 @@ import (
 	"time"
 
 	"github.com/chances/chances-party/models"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/zmb3/spotify"
 )
 
 var (
-	auth   spotify.Authenticator
-	scopes string
+	auth          spotify.Authenticator
+	scopes        string
+	jwtSigningKey []byte
 )
 
 func setupAuth() {
@@ -31,6 +33,8 @@ func setupAuth() {
 	s[1] = spotify.ScopePlaylistReadPrivate
 	s[2] = spotify.ScopePlaylistReadCollaborative
 	scopes = strings.Join(s, " ")
+
+	jwtSigningKey = []byte(getenvOrFatal("JWT_SECRET"))
 }
 
 // AuthRequired guards against unauthenticated sessions
@@ -44,6 +48,23 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func authGuest() (string, error) {
+	// TODO: Auth a guest session given a party "room" or after OAuth
+
+	jwtSessionID := uuid.NewV4().String()
+	// TODO: Store token ID is Redis with expiration
+	// TODO: Goroutine to clean expired JWTs
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": jwtSessionID,
+	})
+
+	tokenString, err := token.SignedString(jwtSigningKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
 
 func login(c *gin.Context) {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify"
@@ -105,6 +106,19 @@ func main() {
 	{
 		playlist.PATCH("/", patchPlaylist)
 	}
+
+	g.GET("/auth/guest", func(c *gin.Context) {
+		token, err := authGuest()
+		if err != nil {
+			c.Error(errUnauthorized.WithDetail("Could not create JWT").CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		c.JSON(http.StatusOK, models.Response{
+			Data: token,
+		})
+	})
 
 	g.GET("/auth/login", login)
 	g.GET("/auth/callback", spotifyCallback)
