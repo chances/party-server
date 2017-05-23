@@ -33,6 +33,7 @@ func setupAuth() {
 	scopes = strings.Join(s, " ")
 }
 
+// AuthRequired guards against unauthenticated sessions
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !IsLoggedIn(c) {
