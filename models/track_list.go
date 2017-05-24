@@ -19,14 +19,16 @@ import (
 	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/vattle/sqlboiler/strmangle"
 	"github.com/vattle/sqlboiler/types"
+	"gopkg.in/nullbio/null.v6"
 )
 
 // TrackList is an object representing the database table.
 type TrackList struct {
-	ID        int        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Data      types.JSON `boil:"data" json:"data" toml:"data" yaml:"data"`
-	CreatedAt time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt time.Time  `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Data              types.JSON  `boil:"data" json:"data" toml:"data" yaml:"data"`
+	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	SpotifyPlaylistID null.String `boil:"spotify_playlist_id" json:"spotify_playlist_id,omitempty" toml:"spotify_playlist_id" yaml:"spotify_playlist_id,omitempty"`
 
 	R *trackListR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L trackListL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,8 +42,8 @@ type trackListR struct {
 type trackListL struct{}
 
 var (
-	trackListColumns               = []string{"id", "data", "created_at", "updated_at"}
-	trackListColumnsWithoutDefault = []string{"data"}
+	trackListColumns               = []string{"id", "data", "created_at", "updated_at", "spotify_playlist_id"}
+	trackListColumnsWithoutDefault = []string{"data", "spotify_playlist_id"}
 	trackListColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	trackListPrimaryKeyColumns     = []string{"id"}
 )

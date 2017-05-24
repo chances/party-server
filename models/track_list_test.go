@@ -533,7 +533,7 @@ func testTrackListsSelect(t *testing.T) {
 }
 
 var (
-	trackListDBTypes = map[string]string{`CreatedAt`: `timestamp with time zone`, `Data`: `json`, `ID`: `integer`, `UpdatedAt`: `timestamp with time zone`}
+	trackListDBTypes = map[string]string{`CreatedAt`: `timestamp with time zone`, `Data`: `json`, `ID`: `integer`, `SpotifyPlaylistID`: `text`, `UpdatedAt`: `timestamp with time zone`}
 	_                = bytes.MinRead
 )
 
