@@ -30,7 +30,7 @@
   <h2>Pick a playlist for the party</h2>
   {{ $user := .user }}
   <ul>{{ range .playlists }}
-    {{ if eq .Owner.ID $user.ID }}
+    {{ if eq .Owner $user.ID }}
     <li>
       <a class="playlist" data-id="{{ urlquery .ID }}" href="#playlist/{{ urlquery .ID }}">
         {{ .Name }}

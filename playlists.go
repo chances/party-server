@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
@@ -29,8 +29,8 @@ func patchPlaylist(c *gin.Context) {
 		}
 
 		playlists := Playlists(*spotifyClient) // TODO: Cache these?
-		for _, playlist := range playlists {
-			if id == playlist.ID.String() {
+		for _, playlist := range playlists.Playlists {
+			if id == playlist.ID {
 				currentUser.SpotifyPlaylistID = null.StringFrom(id)
 				err := currentUser.UpdateG("spotify_playlist_id")
 				if err != nil {
@@ -56,29 +56,11 @@ type cachedPlaylists struct {
 }
 
 type cachedPlaylistsItem struct {
-	ID          string
-	Name        string
-	TotalTracks uint
-}
-
-func cachePlaylists(key string, client spotify.Client, playlists []spotify.SimplePlaylist) {
-	cache := make([]cachedPlaylistsItem, 0)
-
-	for _, playlist := range playlists {
-		go cachePlaylist(client, playlist)
-
-		cacheItem := cachedPlaylistsItem{
-			ID:          playlist.ID.String(),
-			Name:        playlist.Name,
-			TotalTracks: playlist.Tracks.Total,
-		}
-
-		cache = append(cache, cacheItem)
-	}
-
-	cacheJSON, _ := json.Marshal(&cache)
-
-	redisSet(key, string(cacheJSON))
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Owner       string `json:"owner"`
+	Endpoint    string `json:"endpoint"`
+	TotalTracks uint   `json:"total_tracks"`
 }
 
 type cachedPlaylist struct {
@@ -89,13 +71,11 @@ type cachedPlaylist struct {
 func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) {
 	tracks, err := client.GetPlaylistTracks(playlist.Owner.ID, playlist.ID)
 	if err == nil {
-		cache := cachedPlaylist{
-			Playlist: playlist,
-			Tracks:   tracks.Tracks,
-		}
-
-		playlistJSON, _ := json.Marshal(&cache)
-
-		redisSet("playlist:"+playlist.ID.String(), string(playlistJSON))
+		partyCache.Set("playlist:"+playlist.ID.String(), cache.Forever(
+			cachedPlaylist{
+				Playlist: playlist,
+				Tracks:   tracks.Tracks,
+			},
+		))
 	}
 }

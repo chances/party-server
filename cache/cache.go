@@ -3,6 +3,7 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
+	"log"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -21,14 +22,28 @@ type Entry struct {
 
 // IsExpired returns true if entry is expired
 func (e *Entry) IsExpired() bool {
-	return !e.Expiry.IsZero() && e.Expiry.Before(time.Now())
+	isForever := e.Expiry.Equal(time.Unix(0, 0))
+	return !isForever && e.Expiry.Before(time.Now())
 }
 
-// Forever instructs cache to never evict an entry (Equal to Unix epoch)
-var Forever time.Time = time.Unix(0, 0)
+// Value creates a plain cache entry given a value
+func Value(value interface{}) Entry {
+	return Entry{
+		Value: &value,
+	}
+}
+
+// Forever creates a cache entry that shall never expire
+func Forever(value interface{}) Entry {
+	return Entry{
+		Expiry: time.Unix(0, 0),
+		Value:  &value,
+	}
+}
 
 // NewStore instantiates a cache store given a Redis pool
 func NewStore(p *redis.Pool) Store {
+	gob.Register(map[string]string{})
 	gob.Register(Entry{})
 	return Store{
 		pool: p,
@@ -47,29 +62,28 @@ func (s *Store) Get(key string) (*Entry, error) {
 		return nil, err
 	}
 
-	var value *Entry
+	var value Entry
 	valueBuffer := bytes.NewBuffer(valueBytes)
 	dec := gob.NewDecoder(valueBuffer)
-	err = dec.Decode(value)
+	err = dec.Decode(&value)
 	if err != nil {
 		return nil, err
 	}
 
-	return value, nil
+	return &value, nil
 }
 
 // GetOrDefer a cache entry, deferring to supplier func if entry doesn't exist
 // or is expired. If key exists and is expired, entry is deleted
-func (s *Store) GetOrDefer(key string, deferFn func() *interface{}) (*Entry, error) {
-	now := time.Now()
+func (s *Store) GetOrDefer(key string, deferFn func() Entry) (*Entry, error) {
 	exists, err := s.redisExists(key)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		return &Entry{
-			Value: deferFn(),
-		}, nil
+		entry := deferFn()
+		go s.Set(key, entry)
+		return &entry, nil
 	}
 
 	entry, err := s.Get(key)
@@ -77,11 +91,10 @@ func (s *Store) GetOrDefer(key string, deferFn func() *interface{}) (*Entry, err
 		return nil, err
 	}
 
-	if !entry.Expiry.IsZero() && entry.Expiry.Before(now) {
-		go s.redisDelete(key)
-		return &Entry{
-			Value: deferFn(),
-		}, nil
+	if entry.IsExpired() {
+		entry := deferFn()
+		go s.Set(key, entry)
+		return &entry, nil
 	}
 	return entry, nil
 }

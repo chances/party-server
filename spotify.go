@@ -7,16 +7,35 @@ import (
 )
 
 // Playlists gets the user's current playlists
-func Playlists(client spotify.Client) []spotify.SimplePlaylist {
+func Playlists(client spotify.Client) cachedPlaylists {
 	limit := 50
 	playlists, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
 	})
 	if err != nil {
-		return nil
+		// TODO: Fix "The access token expired" errors
+		return cachedPlaylists{}
 	}
 
-	return playlists.Playlists
+	cached := make([]cachedPlaylistsItem, 0)
+
+	for _, playlist := range playlists.Playlists {
+		go cachePlaylist(client, playlist)
+
+		cacheItem := cachedPlaylistsItem{
+			ID:          playlist.ID.String(),
+			Name:        playlist.Name,
+			Owner:       playlist.Owner.ID,
+			Endpoint:    playlist.ExternalURLs["spotify"],
+			TotalTracks: playlist.Tracks.Total,
+		}
+
+		cached = append(cached, cacheItem)
+	}
+
+	return cachedPlaylists{
+		Playlists: cached,
+	}
 }
 
 // ClientFromSession gets a Spotify client from the session's user

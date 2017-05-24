@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/gob"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/models"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -29,6 +31,12 @@ func main() {
 	// Redis
 	pool = newRedisPool()
 	defer pool.Close()
+	// Cache
+	partyCache = cache.NewStore(pool)
+
+	gob.Register(cachedPlaylist{})
+	gob.Register(cachedPlaylists{})
+	gob.Register(cachedPlaylistsItem{})
 
 	// === Initialize Gin ===
 	g := gin.New()
@@ -46,7 +54,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 	// Session
-	g.Use(partySession())
+	g.Use(partySession(partyCache))
 
 	g.Use(handleErrors())
 	g.Use(gin.Recovery())
@@ -80,17 +88,20 @@ func main() {
 				return
 			}
 
-			var currentPlaylist *spotify.SimplePlaylist
-			currentPlaylist = nil
-			playlists := Playlists(*spotifyClient)
-			if exists, _ := redisExists("playlists:" + currentUser.Username); !exists {
-				go cachePlaylists("playlists:"+currentUser.Username, *spotifyClient, playlists)
-			} else {
-				// TODO: Retreive cached playlists
+			var currentPlaylist *cachedPlaylistsItem
+			playlistsEntry, err := partyCache.GetOrDefer("playlists:"+currentUser.Username, func() cache.Entry {
+				playlists := Playlists(*spotifyClient)
+				return cache.Forever(playlists)
+			})
+			if err != nil {
+				c.Error(errInternal.CausedBy(err))
+				c.Abort()
+				return
 			}
 
-			for _, playlist := range playlists {
-				if currentUser.SpotifyPlaylistID.String == playlist.ID.String() {
+			playlists := (*playlistsEntry.Value).(cachedPlaylists)
+			for _, playlist := range playlists.Playlists {
+				if currentUser.SpotifyPlaylistID.String == playlist.ID {
 					currentPlaylist = &playlist
 					break
 				}
@@ -98,7 +109,7 @@ func main() {
 			c.HTML(http.StatusOK, "index.html", gin.H{
 				"user":            spotifyUser,
 				"currentPlaylist": currentPlaylist,
-				"playlists":       playlists,
+				"playlists":       playlists.Playlists,
 				"error":           flashedError,
 			})
 		} else {
