@@ -30,10 +30,11 @@ func main() {
 	pool = newRedisPool()
 	defer pool.Close()
 
+	// === Initialize Gin ===
 	g := gin.New()
-	g.Use(gin.Logger())
 
 	// === Middleware ===
+	g.Use(gin.Logger())
 	// CORS
 	corsOrigins :=
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
