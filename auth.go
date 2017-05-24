@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -40,6 +41,8 @@ func setupAuth() {
 // AuthRequired guards against unauthenticated sessions
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// TODO: Check for JWT, if available, otherwise...
+
 		if !IsLoggedIn(c) {
 			c.Error(errUnauthorized)
 			c.Abort()
@@ -65,6 +68,25 @@ func authGuest() (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func validateJwt(tokenString string) (string, bool, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if token.Header["alg"] != jwt.SigningMethodHS256.Alg() {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return jwtSigningKey, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["id"].(string), token.Valid, nil
+	}
+
+	return "", token.Valid, nil
 }
 
 func login(c *gin.Context) {
