@@ -48,6 +48,7 @@ func ClientFromSession(c *gin.Context) (*spotify.Client, error) {
 	newClient := auth.NewClient(&oauth2.Token{
 		AccessToken:  user.AccessToken,
 		RefreshToken: user.RefreshToken,
+    Expiry: user.TokenExpiryDate,
 	})
 
 	token, err := newClient.Token()
