@@ -185,6 +185,10 @@ func (s *Session) Delete(key string) error {
 	return s.store.Delete(s.ID+":"+key)
 }
 
+func (s *Session) Logout() error {
+  return s.Delete("USER")
+}
+
 // DefaultSession shortcut to get the session
 func DefaultSession(c *gin.Context) *Session {
 	return c.MustGet(sessionDefaultKey).(*Session)
