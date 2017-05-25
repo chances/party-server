@@ -14,7 +14,7 @@
     <a href="/auth/logout">Log Out</a>
   </p>
   <h1>Logged in as {{ .user.DisplayName }}</h1>
-  <img id="avatar" width="200" src="{{ (index .user.Images 0).URL }}" />
+  <img id="avatar" width="200" height="200" src="{{ (index .user.Images 0).URL }}" />
   <div id="user">
     <p>ID: {{ .user.ID }}</p>
     <p>Profile: <a href="{{ .user.URI }}">{{ .user.URI }}</a></p>
