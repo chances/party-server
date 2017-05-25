@@ -3,7 +3,6 @@ package cache
 import (
 	"bytes"
 	"encoding/gob"
-	"log"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
