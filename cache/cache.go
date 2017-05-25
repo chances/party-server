@@ -32,6 +32,14 @@ func Value(value interface{}) Entry {
 	}
 }
 
+// Expires creates a cache entry that expires at the given time
+func Expires(expiry time.Time, value interface{}) Entry {
+	return Entry{
+		Expiry: expiry,
+		Value:  &value,
+	}
+}
+
 // Forever creates a cache entry that shall never expire
 func Forever(value interface{}) Entry {
 	return Entry{
