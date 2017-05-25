@@ -27,13 +27,7 @@
   - [x] Render user playlists
   - [x] Log Out
 - [x] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
-- [ ] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
-  - [ ] Add search
-    - [ ] For tracks
-    - [ ] For artists
-    - [ ] For albums
-    - [ ] Expose "See more results in Spotify" href
-  - Get access tokens for searching via [Client Credentials Flow](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) if session is unauthorized with Spotify
+- [x] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
 
 _Note: The Android client app authenticates with Spotify directly._
 
@@ -41,6 +35,12 @@ _Note: The Android client app authenticates with Spotify directly._
 
 - [x] Change playlist endpoint to PATCH instead of current GET, also don't redirect
   - [x] Update the Party's current playlist asynchronously
+- [ ] Add search
+  - [x] For tracks
+  - [ ] For artists
+  - [ ] For albums
+  - [ ] Expose "See more results in Spotify" href
+  - [x] Get access tokens for searching via [Client Credentials Flow](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) if session is unauthorized with Spotify
 
 ### Models
 

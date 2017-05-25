@@ -182,7 +182,7 @@ func (s *Session) Error() (string, error) {
 
 // Delete removes the session value associated with the given key
 func (s *Session) Delete(key string) error {
-	return s.store.Delete(key)
+	return s.store.Delete(s.ID+":"+key)
 }
 
 // DefaultSession shortcut to get the session

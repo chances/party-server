@@ -127,6 +127,40 @@ func main() {
 		playlist.PATCH("", patchPlaylist)
 	}
 
+  g.Group("/search").Use(AuthRequired()).GET("", func(c *gin.Context) {
+    query, exists := c.GetQuery("q")
+    if !exists {
+      query, exists = c.GetQuery("query")
+    }
+    if !exists {
+      c.Error(errBadRequest.WithDetail("Malformed search, missing query"))
+      c.Abort()
+      return
+    }
+
+    spotifyClient, err := DefaultClient()
+    if err != nil {
+      c.Error(errInternal.CausedBy(err))
+      c.Abort()
+      return
+    }
+    result, err := spotifyClient.Search(query, spotify.SearchTypeTrack)
+    if err != nil {
+      c.Error(errInternal.CausedBy(err))
+      c.Abort()
+      return
+    }
+
+    c.JSON(http.StatusOK, models.Response{
+      Data: gin.H{
+        "tracks": result.Tracks.Tracks,
+        "limit": result.Tracks.Limit,
+        "offset": result.Tracks.Offset,
+        "total": result.Tracks.Total,
+      },
+    })
+  })
+
 	g.GET("/auth/guest", func(c *gin.Context) {
 		token, err := authGuest()
 		if err != nil {
@@ -145,7 +179,7 @@ func main() {
 	g.GET("/auth/logout", func(c *gin.Context) {
 		if IsLoggedIn(c) {
 			session := DefaultSession(c)
-			session.Delete("USER")
+			session.Logout()
 		}
 
 		c.Redirect(http.StatusSeeOther, "/")

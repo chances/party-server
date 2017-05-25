@@ -105,20 +105,21 @@ func validateJwt(tokenString string) (string, bool, error) {
 	return "", token.Valid, nil
 }
 
-func getDefaultToken() (oauth2.Token, error) {
+func defaultToken() (*oauth2.Token, error) {
 	tokenEntry, err := partyCache.GetOrDefer("SPOTIFY_TOKEN", func() cache.Entry {
 		token, err := defaultAuth.Token(context.Background())
 		if err != nil {
 			log.Fatalf("spotify client credentials: %v\n", err)
 		}
 		log.Println(token)
-		return cache.Expires(token.Expiry, token)
+		return cache.Expires(token.Expiry, *token)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return (*tokenEntry.Value).(oauth2.Token), nil
+  token := (*tokenEntry.Value).(oauth2.Token)
+	return &token, nil
 }
 
 func login(c *gin.Context) {

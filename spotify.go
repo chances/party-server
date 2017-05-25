@@ -30,6 +30,18 @@ func Playlists(client spotify.Client) models.Playlists {
 	}
 }
 
+// DefaultClient gets a Spotify client from the default token
+// The default token is provided via
+func DefaultClient() (*spotify.Client, error) {
+  token, err := defaultToken()
+  if err != nil {
+    return nil, err
+  }
+
+  newClient := auth.NewClient(token)
+  return &newClient, nil
+}
+
 // ClientFromSession gets a Spotify client from the session's user
 func ClientFromSession(c *gin.Context) (*spotify.Client, error) {
 	user := CurrentUser(c)
