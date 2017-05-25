@@ -1,26 +1,35 @@
 package main
 
 import (
+	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/zmb3/spotify"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 var (
 	auth          spotify.Authenticator
 	scopes        string
+	defaultAuth   clientcredentials.Config
 	jwtSigningKey []byte
 )
 
 func setupAuth() {
+	gob.Register(oauth2.Token{})
+
 	auth = spotify.NewAuthenticator(
 		getenvOrFatal("SPOTIFY_CALLBACK"),
 		spotify.ScopeUserReadPrivate,
@@ -34,6 +43,13 @@ func setupAuth() {
 	s[1] = spotify.ScopePlaylistReadPrivate
 	s[2] = spotify.ScopePlaylistReadCollaborative
 	scopes = strings.Join(s, " ")
+
+	// Spotify Client Credentials auth flow
+	defaultAuth = clientcredentials.Config{
+		ClientID:     getenvOrFatal("SPOTIFY_APP_KEY"),
+		ClientSecret: getenvOrFatal("SPOTIFY_APP_SECRET"),
+		TokenURL:     "https://accounts.spotify.com/api/token",
+	}
 
 	jwtSigningKey = []byte(getenvOrFatal("JWT_SECRET"))
 }
@@ -87,6 +103,22 @@ func validateJwt(tokenString string) (string, bool, error) {
 	}
 
 	return "", token.Valid, nil
+}
+
+func getDefaultToken() (oauth2.Token, error) {
+	tokenEntry, err := partyCache.GetOrDefer("SPOTIFY_TOKEN", func() cache.Entry {
+		token, err := defaultAuth.Token(context.Background())
+		if err != nil {
+			log.Fatalf("spotify client credentials: %v\n", err)
+		}
+		log.Println(token)
+		return cache.Expires(token.Expiry, token)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return (*tokenEntry.Value).(oauth2.Token), nil
 }
 
 func login(c *gin.Context) {

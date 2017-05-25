@@ -22,8 +22,6 @@ func main() {
 		log.Println("Warning: .env file is not present. Using system provided environment variables")
 	}
 
-	setupAuth()
-
 	// === Data Stores ===
 	// Postgres
 	db = initDatabase()
@@ -37,8 +35,10 @@ func main() {
 	gob.Register(models.CachedPlaylist{})
 	gob.Register(models.Playlists{})
 	gob.Register(models.Playlist{})
-  gob.Register(models.Track{})
-  gob.Register(models.TrackArtist{})
+	gob.Register(models.Track{})
+	gob.Register(models.TrackArtist{})
+
+	setupAuth()
 
 	// === Initialize Gin ===
 	g := gin.New()
