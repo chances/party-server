@@ -124,7 +124,7 @@ func main() {
 	playlist := g.Group("/playlist")
 	playlist.Use(AuthRequired())
 	{
-		playlist.PATCH("/", patchPlaylist)
+		playlist.PATCH("", patchPlaylist)
 	}
 
 	g.GET("/auth/guest", func(c *gin.Context) {
