@@ -28,7 +28,17 @@ func patchPlaylist(c *gin.Context) {
 			return
 		}
 
-		playlists := Playlists(*spotifyClient) // TODO: Cache these?
+    playlistsEntry, err := partyCache.GetOrDefer("playlists:"+currentUser.Username, func() cache.Entry {
+      playlists := Playlists(*spotifyClient)
+      return cache.Forever(playlists)
+    })
+    if err != nil {
+      c.Error(errInternal.CausedBy(err))
+      c.Abort()
+      return
+    }
+
+    playlists := (*playlistsEntry.Value).(cachedPlaylists)
 		for _, playlist := range playlists.Playlists {
 			if id == playlist.ID {
 				currentUser.SpotifyPlaylistID = null.StringFrom(id)
