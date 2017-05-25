@@ -34,9 +34,11 @@ func main() {
 	// Cache
 	partyCache = cache.NewStore(pool)
 
-	gob.Register(cachedPlaylist{})
-	gob.Register(cachedPlaylists{})
-	gob.Register(cachedPlaylistsItem{})
+	gob.Register(models.CachedPlaylist{})
+	gob.Register(models.Playlists{})
+	gob.Register(models.Playlist{})
+  gob.Register(models.Track{})
+  gob.Register(models.TrackArtist{})
 
 	// === Initialize Gin ===
 	g := gin.New()
@@ -88,7 +90,7 @@ func main() {
 				return
 			}
 
-			var currentPlaylist *cachedPlaylistsItem
+			var currentPlaylist *models.Playlist
 			playlistsEntry, err := partyCache.GetOrDefer("playlists:"+currentUser.Username, func() cache.Entry {
 				playlists := Playlists(*spotifyClient)
 				return cache.Forever(playlists)
@@ -99,8 +101,8 @@ func main() {
 				return
 			}
 
-			playlists := (*playlistsEntry.Value).(cachedPlaylists)
-			for _, playlist := range playlists.Playlists {
+			playlists := (*playlistsEntry.Value).(models.Playlists).Playlists
+			for _, playlist := range playlists {
 				if currentUser.SpotifyPlaylistID.String == playlist.ID {
 					currentPlaylist = &playlist
 					break
@@ -109,7 +111,7 @@ func main() {
 			c.HTML(http.StatusOK, "index.html", gin.H{
 				"user":            spotifyUser,
 				"currentPlaylist": currentPlaylist,
-				"playlists":       playlists.Playlists,
+				"playlists":       playlists,
 				"error":           flashedError,
 			})
 		} else {

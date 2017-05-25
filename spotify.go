@@ -4,37 +4,29 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"
+  "github.com/chances/chances-party/models"
 )
 
 // Playlists gets the user's current playlists
-func Playlists(client spotify.Client) cachedPlaylists {
+func Playlists(client spotify.Client) models.Playlists {
 	limit := 50
-	playlists, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
+	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
 	})
 	if err != nil {
 		// TODO: Fix "The access token expired" errors
-		return cachedPlaylists{}
+		return models.Playlists{}
 	}
 
-	cached := make([]cachedPlaylistsItem, 0)
+	playlists := make([]models.Playlist, len(playlistPage.Playlists))
 
-	for _, playlist := range playlists.Playlists {
+	for i, playlist := range playlistPage.Playlists {
 		go cachePlaylist(client, playlist)
-
-		cacheItem := cachedPlaylistsItem{
-			ID:          playlist.ID.String(),
-			Name:        playlist.Name,
-			Owner:       playlist.Owner.ID,
-			Endpoint:    playlist.ExternalURLs["spotify"],
-			TotalTracks: playlist.Tracks.Total,
-		}
-
-		cached = append(cached, cacheItem)
+    playlists[i] = models.NewPlaylist(playlist)
 	}
 
-	return cachedPlaylists{
-		Playlists: cached,
+	return models.Playlists{
+		Playlists: playlists,
 	}
 }
 

@@ -38,8 +38,8 @@ func patchPlaylist(c *gin.Context) {
       return
     }
 
-    playlists := (*playlistsEntry.Value).(cachedPlaylists)
-		for _, playlist := range playlists.Playlists {
+    playlists := (*playlistsEntry.Value).(models.Playlists).Playlists
+		for _, playlist := range playlists {
 			if id == playlist.ID {
 				currentUser.SpotifyPlaylistID = null.StringFrom(id)
 				err := currentUser.UpdateG("spotify_playlist_id")
@@ -60,32 +60,24 @@ func patchPlaylist(c *gin.Context) {
 	}
 }
 
-// TODO: Heavily refactor this playlist caching crap (Add playlist model)
-type cachedPlaylists struct {
-	Playlists []cachedPlaylistsItem
-}
-
-type cachedPlaylistsItem struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Owner       string `json:"owner"`
-	Endpoint    string `json:"endpoint"`
-	TotalTracks uint   `json:"total_tracks"`
-}
-
-type cachedPlaylist struct {
-	Playlist spotify.SimplePlaylist
-	Tracks   []spotify.PlaylistTrack
-}
-
 func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) {
-	tracks, err := client.GetPlaylistTracks(playlist.Owner.ID, playlist.ID)
-	if err == nil {
-		partyCache.Set("playlist:"+playlist.ID.String(), cache.Forever(
-			cachedPlaylist{
-				Playlist: playlist,
-				Tracks:   tracks.Tracks,
-			},
-		))
-	}
+	tracksPage, err := client.GetPlaylistTracks(playlist.Owner.ID, playlist.ID)
+  // TODO: Page through all tracks
+  if err != nil {
+    return
+  }
+
+  tracks := models.NewTracks(tracksPage.Tracks)
+  go func() {
+    var trackList models.TrackList
+    trackList.SpotifyPlaylistID = null.StringFrom(playlist.ID.String())
+    trackList.Data.Marshal(&tracks)
+    trackList.Upsert(db, true, []string{"spotify_playlist_id"}, []string{"data"})
+  }()
+  partyCache.Set("playlist:"+playlist.ID.String(), cache.Forever(
+    models.CachedPlaylist{
+      Playlist: models.NewPlaylist(playlist),
+      Tracks: tracks,
+    },
+  ))
 }
