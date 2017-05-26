@@ -62,7 +62,7 @@ func partySession(store cache.Store) gin.HandlerFunc {
 		if gin.IsDebugging() {
 			c.SetCookie(s.name, s.ID, maxAge, "", "", false, true)
 		} else {
-			c.SetCookie(s.name, s.ID, maxAge, "", ".chancesnow.me", true, false)
+			c.SetCookie(s.name, s.ID, maxAge, "", ".chancesnow.me", true, true)
 		}
 
 		c.Next()
