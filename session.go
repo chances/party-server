@@ -182,11 +182,12 @@ func (s *Session) Error() (string, error) {
 
 // Delete removes the session value associated with the given key
 func (s *Session) Delete(key string) error {
-	return s.store.Delete(s.ID+":"+key)
+	return s.store.Delete(s.ID + ":" + key)
 }
 
+// Logout effectively ends a session by deleting user-land keys
 func (s *Session) Logout() error {
-  return s.Delete("USER")
+	return s.Delete("USER")
 }
 
 // DefaultSession shortcut to get the session
