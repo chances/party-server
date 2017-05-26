@@ -1,11 +1,9 @@
-package main
+package errors
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"runtime/debug"
 
 	"github.com/getsentry/raven-go"
@@ -15,10 +13,10 @@ import (
 // Adapted from https://github.com/gin-gonic/gin/issues/274
 
 var (
-	errAuth         = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
-  errUnauthorized = newPartyError(http.StatusUnauthorized, "Unauthorized", "Unauthorized request made to Party")
-	errBadRequest   = newPartyError(http.StatusBadRequest, "Bad Request", "Bad request made to Party")
-	errInternal     = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
+	Auth         = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
+	Unauthorized = newPartyError(http.StatusUnauthorized, "Unauthorized", "Unauthorized request made to Party")
+	BadRequest   = newPartyError(http.StatusBadRequest, "Bad Request", "Bad request made to Party")
+	Internal     = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
 )
 
 type partyErrors struct {
@@ -93,57 +91,5 @@ func newPartyError(code int, title string, publicMessage string) *partyError {
 		Code:    code,
 		Title:   title,
 		Message: publicMessage,
-	}
-}
-
-func handleErrors() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next() // Run through all handlers
-
-		numErrors := len(c.Errors)
-		// Bail if there are no errors
-		if numErrors == 0 {
-			return
-		}
-
-		errors := make([]*partyError, numErrors)
-		var code int
-
-		// Add all errors to an array, following the Errors JSON API spec
-		// http://jsonapi.org/format/#errors
-		for i, ginError := range c.Errors {
-			fmt.Fprintf(os.Stderr, "%s\n", ginError)
-			// IDEA: Send the error detail and cause to some log manager?
-
-			switch ginError.Err.(type) {
-			case *partyError:
-				err := ginError.Err.(*partyError)
-
-				// On errAuth flash error to session and redirect to index on errAuth
-				switch err.Code {
-				case http.StatusSeeOther:
-					session := DefaultSession(c)
-					errorJSON, _ := json.Marshal(err)
-					session.Flash("error", string(errorJSON))
-
-					c.Redirect(err.Code, "/")
-					return
-				case http.StatusUnauthorized:
-					c.Header("Www-Authenticate", fmt.Sprintf(`Bearer realm="spotify", error="unauthorized", error_description="%s"`, err.Message))
-				}
-
-				// Otherwise add to list of errors
-				errors[i] = err
-				code = err.Code
-			default:
-				errors[i] = errInternal
-				code = errInternal.Code
-			}
-		}
-
-		// Respond with errors
-		c.JSON(code, partyErrors{
-			Errors: errors,
-		})
 	}
 }
