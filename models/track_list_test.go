@@ -29,7 +29,7 @@ func testTrackListsDelete(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	trackList := &TrackList{}
-	if err = randomize.Struct(seed, trackList, trackListDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, trackList, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize TrackList struct: %s", err)
 	}
 
@@ -59,7 +59,7 @@ func testTrackListsQueryDeleteAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	trackList := &TrackList{}
-	if err = randomize.Struct(seed, trackList, trackListDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, trackList, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize TrackList struct: %s", err)
 	}
 
@@ -89,7 +89,7 @@ func testTrackListsSliceDeleteAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	trackList := &TrackList{}
-	if err = randomize.Struct(seed, trackList, trackListDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, trackList, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize TrackList struct: %s", err)
 	}
 
@@ -272,145 +272,7 @@ func testTrackListsCount(t *testing.T) {
 		t.Error("want 2 records, got:", count)
 	}
 }
-func trackListBeforeInsertHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
 
-func trackListAfterInsertHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListAfterSelectHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListBeforeUpdateHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListAfterUpdateHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListBeforeDeleteHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListAfterDeleteHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListBeforeUpsertHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func trackListAfterUpsertHook(e boil.Executor, o *TrackList) error {
-	*o = TrackList{}
-	return nil
-}
-
-func testTrackListsHooks(t *testing.T) {
-	t.Parallel()
-
-	var err error
-
-	empty := &TrackList{}
-	o := &TrackList{}
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, trackListDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize TrackList object: %s", err)
-	}
-
-	AddTrackListHook(boil.BeforeInsertHook, trackListBeforeInsertHook)
-	if err = o.doBeforeInsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
-	}
-	trackListBeforeInsertHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.AfterInsertHook, trackListAfterInsertHook)
-	if err = o.doAfterInsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
-	}
-	trackListAfterInsertHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.AfterSelectHook, trackListAfterSelectHook)
-	if err = o.doAfterSelectHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
-	}
-	trackListAfterSelectHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.BeforeUpdateHook, trackListBeforeUpdateHook)
-	if err = o.doBeforeUpdateHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
-	}
-	trackListBeforeUpdateHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.AfterUpdateHook, trackListAfterUpdateHook)
-	if err = o.doAfterUpdateHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
-	}
-	trackListAfterUpdateHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.BeforeDeleteHook, trackListBeforeDeleteHook)
-	if err = o.doBeforeDeleteHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
-	}
-	trackListBeforeDeleteHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.AfterDeleteHook, trackListAfterDeleteHook)
-	if err = o.doAfterDeleteHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
-	}
-	trackListAfterDeleteHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.BeforeUpsertHook, trackListBeforeUpsertHook)
-	if err = o.doBeforeUpsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
-	}
-	trackListBeforeUpsertHooks = []TrackListHook{}
-
-	AddTrackListHook(boil.AfterUpsertHook, trackListAfterUpsertHook)
-	if err = o.doAfterUpsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
-	}
-	trackListAfterUpsertHooks = []TrackListHook{}
-}
 func testTrackListsInsert(t *testing.T) {
 	t.Parallel()
 
@@ -449,7 +311,7 @@ func testTrackListsInsertWhitelist(t *testing.T) {
 
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
-	if err = trackList.Insert(tx, trackListColumns...); err != nil {
+	if err = trackList.Insert(tx, trackListColumnsWithoutDefault...); err != nil {
 		t.Error(err)
 	}
 
@@ -460,6 +322,299 @@ func testTrackListsInsertWhitelist(t *testing.T) {
 
 	if count != 1 {
 		t.Error("want one record, got:", count)
+	}
+}
+
+func testTrackListToManyQueueParties(t *testing.T) {
+	var err error
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a TrackList
+	var b, c Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize TrackList struct: %s", err)
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	randomize.Struct(seed, &b, partyDBTypes, false, partyColumnsWithDefault...)
+	randomize.Struct(seed, &c, partyDBTypes, false, partyColumnsWithDefault...)
+
+	b.QueueID = a.ID
+	c.QueueID = a.ID
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	party, err := a.QueueParties(tx).All()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range party {
+		if v.QueueID == b.QueueID {
+			bFound = true
+		}
+		if v.QueueID == c.QueueID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := TrackListSlice{&a}
+	if err = a.L.LoadQueueParties(tx, false, (*[]*TrackList)(&slice)); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.QueueParties); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.QueueParties = nil
+	if err = a.L.LoadQueueParties(tx, true, &a); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.QueueParties); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", party)
+	}
+}
+
+func testTrackListToManyHistoryParties(t *testing.T) {
+	var err error
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a TrackList
+	var b, c Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize TrackList struct: %s", err)
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	randomize.Struct(seed, &b, partyDBTypes, false, partyColumnsWithDefault...)
+	randomize.Struct(seed, &c, partyDBTypes, false, partyColumnsWithDefault...)
+
+	b.HistoryID = a.ID
+	c.HistoryID = a.ID
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	party, err := a.HistoryParties(tx).All()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range party {
+		if v.HistoryID == b.HistoryID {
+			bFound = true
+		}
+		if v.HistoryID == c.HistoryID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := TrackListSlice{&a}
+	if err = a.L.LoadHistoryParties(tx, false, (*[]*TrackList)(&slice)); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.HistoryParties); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.HistoryParties = nil
+	if err = a.L.LoadHistoryParties(tx, true, &a); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.HistoryParties); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", party)
+	}
+}
+
+func testTrackListToManyAddOpQueueParties(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a TrackList
+	var b, c, d, e Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, trackListDBTypes, false, strmangle.SetComplement(trackListPrimaryKeyColumns, trackListColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*Party{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*Party{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddQueueParties(tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.QueueID {
+			t.Error("foreign key was wrong value", a.ID, first.QueueID)
+		}
+		if a.ID != second.QueueID {
+			t.Error("foreign key was wrong value", a.ID, second.QueueID)
+		}
+
+		if first.R.Queue != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Queue != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.QueueParties[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.QueueParties[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.QueueParties(tx).Count()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testTrackListToManyAddOpHistoryParties(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a TrackList
+	var b, c, d, e Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, trackListDBTypes, false, strmangle.SetComplement(trackListPrimaryKeyColumns, trackListColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*Party{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*Party{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddHistoryParties(tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.HistoryID {
+			t.Error("foreign key was wrong value", a.ID, first.HistoryID)
+		}
+		if a.ID != second.HistoryID {
+			t.Error("foreign key was wrong value", a.ID, second.HistoryID)
+		}
+
+		if first.R.History != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.History != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.HistoryParties[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.HistoryParties[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.HistoryParties(tx).Count()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
 	}
 }
 
@@ -547,7 +702,7 @@ func testTrackListsUpdate(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	trackList := &TrackList{}
-	if err = randomize.Struct(seed, trackList, trackListDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, trackList, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize TrackList struct: %s", err)
 	}
 
@@ -585,7 +740,7 @@ func testTrackListsSliceUpdateAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	trackList := &TrackList{}
-	if err = randomize.Struct(seed, trackList, trackListDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, trackList, trackListDBTypes, true, trackListColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize TrackList struct: %s", err)
 	}
 

@@ -57,8 +57,6 @@ type (
 	// UserSlice is an alias for a slice of pointers to User.
 	// This should generally be used opposed to []User.
 	UserSlice []*User
-	// UserHook is the signature for custom User hook methods
-	UserHook func(boil.Executor, *User) error
 
 	userQuery struct {
 		*queries.Query
@@ -84,139 +82,6 @@ var (
 	// Force bytes in case of primary key column that uses []byte (for relationship compares)
 	_ = bytes.MinRead
 )
-var userBeforeInsertHooks []UserHook
-var userBeforeUpdateHooks []UserHook
-var userBeforeDeleteHooks []UserHook
-var userBeforeUpsertHooks []UserHook
-
-var userAfterInsertHooks []UserHook
-var userAfterSelectHooks []UserHook
-var userAfterUpdateHooks []UserHook
-var userAfterDeleteHooks []UserHook
-var userAfterUpsertHooks []UserHook
-
-// doBeforeInsertHooks executes all "before insert" hooks.
-func (o *User) doBeforeInsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range userBeforeInsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *User) doBeforeUpdateHooks(exec boil.Executor) (err error) {
-	for _, hook := range userBeforeUpdateHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *User) doBeforeDeleteHooks(exec boil.Executor) (err error) {
-	for _, hook := range userBeforeDeleteHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *User) doBeforeUpsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range userBeforeUpsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterInsertHooks executes all "after Insert" hooks.
-func (o *User) doAfterInsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range userAfterInsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterSelectHooks executes all "after Select" hooks.
-func (o *User) doAfterSelectHooks(exec boil.Executor) (err error) {
-	for _, hook := range userAfterSelectHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterUpdateHooks executes all "after Update" hooks.
-func (o *User) doAfterUpdateHooks(exec boil.Executor) (err error) {
-	for _, hook := range userAfterUpdateHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *User) doAfterDeleteHooks(exec boil.Executor) (err error) {
-	for _, hook := range userAfterDeleteHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *User) doAfterUpsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range userAfterUpsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// AddUserHook registers your hook function for all future operations.
-func AddUserHook(hookPoint boil.HookPoint, userHook UserHook) {
-	switch hookPoint {
-	case boil.BeforeInsertHook:
-		userBeforeInsertHooks = append(userBeforeInsertHooks, userHook)
-	case boil.BeforeUpdateHook:
-		userBeforeUpdateHooks = append(userBeforeUpdateHooks, userHook)
-	case boil.BeforeDeleteHook:
-		userBeforeDeleteHooks = append(userBeforeDeleteHooks, userHook)
-	case boil.BeforeUpsertHook:
-		userBeforeUpsertHooks = append(userBeforeUpsertHooks, userHook)
-	case boil.AfterInsertHook:
-		userAfterInsertHooks = append(userAfterInsertHooks, userHook)
-	case boil.AfterSelectHook:
-		userAfterSelectHooks = append(userAfterSelectHooks, userHook)
-	case boil.AfterUpdateHook:
-		userAfterUpdateHooks = append(userAfterUpdateHooks, userHook)
-	case boil.AfterDeleteHook:
-		userAfterDeleteHooks = append(userAfterDeleteHooks, userHook)
-	case boil.AfterUpsertHook:
-		userAfterUpsertHooks = append(userAfterUpsertHooks, userHook)
-	}
-}
 
 // OneP returns a single user record from the query, and panics on error.
 func (q userQuery) OneP() *User {
@@ -242,10 +107,6 @@ func (q userQuery) One() (*User, error) {
 		return nil, errors.Wrap(err, "models: failed to execute a one query for user")
 	}
 
-	if err := o.doAfterSelectHooks(queries.GetExecutor(q.Query)); err != nil {
-		return o, err
-	}
-
 	return o, nil
 }
 
@@ -261,19 +122,11 @@ func (q userQuery) AllP() UserSlice {
 
 // All returns all User records from the query.
 func (q userQuery) All() (UserSlice, error) {
-	var o UserSlice
+	var o []*User
 
 	err := q.Bind(&o)
 	if err != nil {
 		return nil, errors.Wrap(err, "models: failed to assign all query results to User slice")
-	}
-
-	if len(userAfterSelectHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doAfterSelectHooks(queries.GetExecutor(q.Query)); err != nil {
-				return o, err
-			}
-		}
 	}
 
 	return o, nil
@@ -432,10 +285,6 @@ func (o *User) Insert(exec boil.Executor, whitelist ...string) error {
 		o.UpdatedAt = currTime
 	}
 
-	if err := o.doBeforeInsertHooks(exec); err != nil {
-		return err
-	}
-
 	nzDefaults := queries.NonZeroDefaultSet(userColumnsWithDefault, o)
 
 	key := makeCacheKey(whitelist, nzDefaults)
@@ -461,13 +310,19 @@ func (o *User) Insert(exec boil.Executor, whitelist ...string) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"user\" (\"%s\") VALUES (%s)", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.IndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"user\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.IndexPlaceholders, len(wl), 1, 1))
 		} else {
 			cache.query = "INSERT INTO \"user\" DEFAULT VALUES"
 		}
 
+		var queryOutput, queryReturning string
+
 		if len(cache.retMapping) != 0 {
-			cache.query += fmt.Sprintf(" RETURNING \"%s\"", strings.Join(returnColumns, "\",\""))
+			queryReturning = fmt.Sprintf(" RETURNING \"%s\"", strings.Join(returnColumns, "\",\""))
+		}
+
+		if len(wl) != 0 {
+			cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
 		}
 	}
 
@@ -495,7 +350,7 @@ func (o *User) Insert(exec boil.Executor, whitelist ...string) error {
 		userInsertCacheMut.Unlock()
 	}
 
-	return o.doAfterInsertHooks(exec)
+	return nil
 }
 
 // UpdateG a single User record. See Update for
@@ -535,16 +390,18 @@ func (o *User) Update(exec boil.Executor, whitelist ...string) error {
 	o.UpdatedAt = currTime
 
 	var err error
-	if err = o.doBeforeUpdateHooks(exec); err != nil {
-		return err
-	}
 	key := makeCacheKey(whitelist, nil)
 	userUpdateCacheMut.RLock()
 	cache, cached := userUpdateCache[key]
 	userUpdateCacheMut.RUnlock()
 
 	if !cached {
-		wl := strmangle.UpdateColumnSet(userColumns, userPrimaryKeyColumns, whitelist)
+		wl := strmangle.UpdateColumnSet(
+			userColumns,
+			userPrimaryKeyColumns,
+			whitelist,
+		)
+
 		if len(whitelist) == 0 {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
@@ -580,7 +437,7 @@ func (o *User) Update(exec boil.Executor, whitelist ...string) error {
 		userUpdateCacheMut.Unlock()
 	}
 
-	return o.doAfterUpdateHooks(exec)
+	return nil
 }
 
 // UpdateAllP updates all rows with matching column names, and panics on error.
@@ -648,11 +505,9 @@ func (o UserSlice) UpdateAll(exec boil.Executor, cols M) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"UPDATE \"user\" SET %s WHERE (\"id\") IN (%s)",
+	sql := fmt.Sprintf("UPDATE \"user\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(o)*len(userPrimaryKeyColumns), len(colNames)+1, len(userPrimaryKeyColumns)),
-	)
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, userPrimaryKeyColumns, len(o)))
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -699,14 +554,11 @@ func (o *User) Upsert(exec boil.Executor, updateOnConflict bool, conflictColumns
 	}
 	o.UpdatedAt = currTime
 
-	if err := o.doBeforeUpsertHooks(exec); err != nil {
-		return err
-	}
-
 	nzDefaults := queries.NonZeroDefaultSet(userColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs postgres problems
 	buf := strmangle.GetBuffer()
+
 	if updateOnConflict {
 		buf.WriteByte('t')
 	} else {
@@ -738,14 +590,14 @@ func (o *User) Upsert(exec boil.Executor, updateOnConflict bool, conflictColumns
 	var err error
 
 	if !cached {
-		var ret []string
-		whitelist, ret = strmangle.InsertColumnSet(
+		insert, ret := strmangle.InsertColumnSet(
 			userColumns,
 			userColumnsWithDefault,
 			userColumnsWithoutDefault,
 			nzDefaults,
 			whitelist,
 		)
+
 		update := strmangle.UpdateColumnSet(
 			userColumns,
 			userPrimaryKeyColumns,
@@ -760,9 +612,9 @@ func (o *User) Upsert(exec boil.Executor, updateOnConflict bool, conflictColumns
 			conflict = make([]string, len(userPrimaryKeyColumns))
 			copy(conflict, userPrimaryKeyColumns)
 		}
-		cache.query = queries.BuildUpsertQueryPostgres(dialect, "\"user\"", updateOnConflict, ret, update, conflict, whitelist)
+		cache.query = queries.BuildUpsertQueryPostgres(dialect, "\"user\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(userType, userMapping, whitelist)
+		cache.valueMapping, err = queries.BindMapping(userType, userMapping, insert)
 		if err != nil {
 			return err
 		}
@@ -804,7 +656,7 @@ func (o *User) Upsert(exec boil.Executor, updateOnConflict bool, conflictColumns
 		userUpsertCacheMut.Unlock()
 	}
 
-	return o.doAfterUpsertHooks(exec)
+	return nil
 }
 
 // DeleteP deletes a single User record with an executor.
@@ -842,10 +694,6 @@ func (o *User) Delete(exec boil.Executor) error {
 		return errors.New("models: no User provided for delete")
 	}
 
-	if err := o.doBeforeDeleteHooks(exec); err != nil {
-		return err
-	}
-
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), userPrimaryKeyMapping)
 	sql := "DELETE FROM \"user\" WHERE \"id\"=$1"
 
@@ -857,10 +705,6 @@ func (o *User) Delete(exec boil.Executor) error {
 	_, err := exec.Exec(sql, args...)
 	if err != nil {
 		return errors.Wrap(err, "models: unable to delete from user")
-	}
-
-	if err := o.doAfterDeleteHooks(exec); err != nil {
-		return err
 	}
 
 	return nil
@@ -921,25 +765,14 @@ func (o UserSlice) DeleteAll(exec boil.Executor) error {
 		return nil
 	}
 
-	if len(userBeforeDeleteHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doBeforeDeleteHooks(exec); err != nil {
-				return err
-			}
-		}
-	}
-
 	var args []interface{}
 	for _, obj := range o {
 		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), userPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"DELETE FROM \"user\" WHERE (%s) IN (%s)",
-		strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, userPrimaryKeyColumns), ","),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(o)*len(userPrimaryKeyColumns), 1, len(userPrimaryKeyColumns)),
-	)
+	sql := "DELETE FROM \"user\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, userPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -949,14 +782,6 @@ func (o UserSlice) DeleteAll(exec boil.Executor) error {
 	_, err := exec.Exec(sql, args...)
 	if err != nil {
 		return errors.Wrap(err, "models: unable to delete all from user slice")
-	}
-
-	if len(userAfterDeleteHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doAfterDeleteHooks(exec); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -1039,11 +864,8 @@ func (o *UserSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"SELECT \"user\".* FROM \"user\" WHERE (%s) IN (%s)",
-		strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, userPrimaryKeyColumns), ","),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(*o)*len(userPrimaryKeyColumns), 1, len(userPrimaryKeyColumns)),
-	)
+	sql := "SELECT \"user\".* FROM \"user\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, userPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(exec, sql, args...)
 
@@ -1060,7 +882,6 @@ func (o *UserSlice) ReloadAll(exec boil.Executor) error {
 // UserExists checks if the User row exists.
 func UserExists(exec boil.Executor, id int64) (bool, error) {
 	var exists bool
-
 	sql := "select exists(select 1 from \"user\" where \"id\"=$1 limit 1)"
 
 	if boil.DebugMode {

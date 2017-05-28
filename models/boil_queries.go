@@ -14,6 +14,7 @@ var dialect = queries.Dialect{
 	LQ:                0x22,
 	RQ:                0x22,
 	IndexPlaceholders: true,
+	UseTopClause:      false,
 }
 
 // NewQueryG initializes a new Query using the passed in QueryMods

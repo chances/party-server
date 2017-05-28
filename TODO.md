@@ -68,7 +68,7 @@ _Note: The Android client app authenticates with Spotify directly._
   - Show duration on frontend
 
 
-- [ ] Add a Party Model
+- [x] Add a Party Model
   - Fields:
     - Host name
     - Location JSON blob:
