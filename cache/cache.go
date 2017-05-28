@@ -82,15 +82,18 @@ func (s *Store) Get(key string) (*Entry, error) {
 
 // GetOrDefer a cache entry, deferring to supplier func if entry doesn't exist
 // or is expired. If key exists and is expired, entry is deleted
-func (s *Store) GetOrDefer(key string, deferFn func() Entry) (*Entry, error) {
+func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, error) {
 	exists, err := s.redisExists(key)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		entry := deferFn()
-		go s.Set(key, entry)
-		return &entry, nil
+		entry, err := deferFn()
+		if err != nil {
+			return nil, err
+		}
+		go s.Set(key, *entry)
+		return entry, nil
 	}
 
 	entry, err := s.Get(key)
@@ -99,9 +102,12 @@ func (s *Store) GetOrDefer(key string, deferFn func() Entry) (*Entry, error) {
 	}
 
 	if entry.IsExpired() {
-		entry := deferFn()
-		go s.Set(key, entry)
-		return &entry, nil
+		entry, err := deferFn()
+		if err != nil {
+			return nil, err
+		}
+		go s.Set(key, *entry)
+		return entry, nil
 	}
 	return entry, nil
 }
