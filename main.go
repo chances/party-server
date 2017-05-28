@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/controllers"
@@ -15,7 +14,6 @@ import (
 	"github.com/chances/chances-party/session"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"gopkg.in/gin-contrib/cors.v1"
 )
 
 func main() {
@@ -57,13 +55,7 @@ func main() {
 	// CORS
 	corsOrigins :=
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
-	g.Use(cors.New(cors.Config{
-		AllowOrigins:     corsOrigins,
-		AllowMethods:     []string{"GET", "PUT", "POST", "PATCH", "DELETE"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	g.Use(m.CORS(corsOrigins))
 	// Session
 	g.Use(session.Middleware(partyCache))
 
