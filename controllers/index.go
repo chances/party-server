@@ -12,11 +12,13 @@ import (
 	"github.com/zmb3/spotify"
 )
 
+// Index controller
 type Index struct {
 	Controller
 	spotifyAuth spotify.Authenticator
 }
 
+// NewIndex creates a new Index controller
 func NewIndex(c cache.Store, auth spotify.Authenticator) Index {
 	newIndex := Index{
 		spotifyAuth: auth,
@@ -25,6 +27,7 @@ func NewIndex(c cache.Store, auth spotify.Authenticator) Index {
 	return newIndex
 }
 
+// Get the index page view
 func (cr *Index) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sesh := session.DefaultSession(c)

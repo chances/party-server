@@ -21,6 +21,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+// Auth controller for Party authentication
 type Auth struct {
 	Controller
 	SpotifyAuth        spotify.Authenticator
@@ -29,6 +30,7 @@ type Auth struct {
 	jwtSigningKey      []byte
 }
 
+// NewAuth creates a new Auth controller
 func NewAuth(c cache.Store, spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth {
 	gob.Register(oauth2.Token{})
 
@@ -60,6 +62,7 @@ func NewAuth(c cache.Store, spotifyKey, spotifySecret, spotifyCallback, jwtSecre
 	return newAuth
 }
 
+// Login ot Party via Spotify's Authorization Grant OAuth flow
 func (cr *Auth) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		state := uuid.NewV4().String()
@@ -76,6 +79,7 @@ func (cr *Auth) Login() gin.HandlerFunc {
 	}
 }
 
+// SpotifyCallback completes Spotify's Authorization Grant OAuth flow
 // IDEA: Convert error handling shenanigans to Observable chain
 func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -147,6 +151,7 @@ func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	}
 }
 
+// Logout the current user, if logged in
 func (cr *Auth) Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if session.IsLoggedIn(c) {
@@ -158,6 +163,7 @@ func (cr *Auth) Logout() gin.HandlerFunc {
 	}
 }
 
+// Guest authorizes a new guest user
 func (cr *Auth) Guest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := cr.authGuest()
@@ -190,6 +196,7 @@ func (cr *Auth) authGuest() (string, error) {
 	return tokenString, nil
 }
 
+// ValidateJwt validates a given JWT token
 func (cr *Auth) ValidateJwt(tokenString string) (string, bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if token.Header["alg"] != jwt.SigningMethodHS256.Alg() {

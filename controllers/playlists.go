@@ -14,11 +14,13 @@ import (
 	"gopkg.in/nullbio/null.v6"
 )
 
+// Playlists controller
 type Playlists struct {
 	Controller
 	spotifyAuth spotify.Authenticator
 }
 
+// NewPlaylists creates a new Playlists controller
 func NewPlaylists(c cache.Store, auth spotify.Authenticator) Playlists {
 	gob.Register(models.CachedPlaylist{})
 	gob.Register(models.Playlists{})
@@ -31,6 +33,7 @@ func NewPlaylists(c cache.Store, auth spotify.Authenticator) Playlists {
 	return newPlaylists
 }
 
+// Patch the current playlist via the new playlist's Spotify ID
 func (cr *Playlists) Patch() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var patchPlaylist struct {

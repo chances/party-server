@@ -12,12 +12,14 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+// Search controller
 type Search struct {
 	Controller
 	spotifyAuth        spotify.Authenticator
 	spotifyDefaultAuth clientcredentials.Config
 }
 
+// NewSearch creates a new Search controller
 func NewSearch(c cache.Store, auth spotify.Authenticator, defaultAuth clientcredentials.Config) Search {
 	newSearch := Search{
 		spotifyAuth:        auth,
@@ -27,6 +29,7 @@ func NewSearch(c cache.Store, auth spotify.Authenticator, defaultAuth clientcred
 	return newSearch
 }
 
+// SearchTracks searches for Spotify tracks given a query string
 func (cr *Search) SearchTracks() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		query, exists := c.GetQuery("q")
