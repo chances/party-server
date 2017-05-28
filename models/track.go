@@ -27,12 +27,12 @@ func NewTrack(t spotify.FullTrack) Track {
 		ID:            t.ID.String(),
 		Name:          t.Name,
 		Images:        t.Album.Images,
+		Artists:       make([]TrackArtist, len(t.Artists)),
 		Duration:      uint(t.Duration / 1000),
 		ContributorID: -1,
 	}
-	artists := make([]TrackArtist, len(t.Artists))
 	for i, artist := range t.Artists {
-		artists[i] = TrackArtist{
+		track.Artists[i] = TrackArtist{
 			ID:   artist.ID.String(),
 			Name: artist.Name,
 		}
@@ -41,11 +41,11 @@ func NewTrack(t spotify.FullTrack) Track {
 }
 
 func NewTracks(t []spotify.PlaylistTrack) []Track {
-  tracks := make([]Track, len(t))
-  for i, track := range t {
-    tracks[i] = NewTrack(track.Track)
-  }
-  return tracks
+	tracks := make([]Track, len(t))
+	for i, track := range t {
+		tracks[i] = NewTrack(track.Track)
+	}
+	return tracks
 }
 
 func (list *TrackList) Tracks() []Track {
