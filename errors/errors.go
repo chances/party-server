@@ -13,10 +13,14 @@ import (
 // Adapted from https://github.com/gin-gonic/gin/issues/274
 
 var (
-	Auth         = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
+	// Auth provides a new Authentication error builder
+	Auth = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
+	// Unauthorized provides a new Unauthorized error builder
 	Unauthorized = newPartyError(http.StatusUnauthorized, "Unauthorized", "Unauthorized request made to Party")
-	BadRequest   = newPartyError(http.StatusBadRequest, "Bad Request", "Bad request made to Party")
-	Internal     = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
+	// BadRequest provides a new Bad Request error builder
+	BadRequest = newPartyError(http.StatusBadRequest, "Bad Request", "Bad request made to Party")
+	// Internal provides a new Internal Server Error error builder
+	Internal = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
 )
 
 type partyErrors struct {
