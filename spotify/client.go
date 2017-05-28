@@ -12,14 +12,21 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-func DefaultToken(partyCache cache.Store, auth clientcredentials.Config) (*oauth2.Token, error) {
-	tokenEntry, err := partyCache.GetOrDefer("SPOTIFY_TOKEN", func() cache.Entry {
+var partyCache cache.Store
+
+func SetCache(c cache.Store) {
+	partyCache = c
+}
+
+func DefaultToken(auth clientcredentials.Config) (*oauth2.Token, error) {
+	tokenEntry, err := partyCache.GetOrDefer("SPOTIFY_TOKEN", func() (*cache.Entry, error) {
 		token, err := auth.Token(context.Background())
 		if err != nil {
 			log.Fatalf("spotify client credentials: %v\n", err)
 		}
 		log.Println(token)
-		return cache.Expires(token.Expiry, *token)
+		tokenEntry := cache.Expires(token.Expiry, *token)
+		return &tokenEntry, nil
 	})
 	if err != nil {
 		return nil, err
@@ -31,8 +38,8 @@ func DefaultToken(partyCache cache.Store, auth clientcredentials.Config) (*oauth
 
 // DefaultClient gets a Spotify client from the default token
 // The default token is provided via Spotify's Client Credentials auth flow
-func DefaultClient(partyCache cache.Store, def clientcredentials.Config, auth spotify.Authenticator) (*spotify.Client, error) {
-	token, err := DefaultToken(partyCache, def)
+func DefaultClient(def clientcredentials.Config, auth spotify.Authenticator) (*spotify.Client, error) {
+	token, err := DefaultToken(def)
 	if err != nil {
 		return nil, err
 	}

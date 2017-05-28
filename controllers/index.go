@@ -53,18 +53,14 @@ func (cr *Index) Get() gin.HandlerFunc {
 			}
 
 			var currentPlaylist *models.Playlist
-			playlistsEntry, err := cr.Cache.GetOrDefer("playlists:"+currentUser.Username, func() cache.Entry {
-				playlists := s.Playlists(cr.Cache, *spotifyClient)
-				return cache.Forever(playlists)
-			})
+			playlists, err := s.Playlists(cr.Cache, currentUser.Username, *spotifyClient)
 			if err != nil {
 				c.Error(e.Internal.CausedBy(err))
 				c.Abort()
 				return
 			}
 
-			playlists := (*playlistsEntry.Value).(models.Playlists).Playlists
-			for _, playlist := range playlists {
+			for _, playlist := range *playlists {
 				if currentUser.SpotifyPlaylistID.String == playlist.ID {
 					currentPlaylist = &playlist
 					break

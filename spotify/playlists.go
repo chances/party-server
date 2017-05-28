@@ -8,15 +8,32 @@ import (
 	"gopkg.in/nullbio/null.v6"
 )
 
-// Playlists gets the user's current playlists
-func Playlists(partyCache cache.Store, client spotify.Client) models.Playlists {
+// Playlists gets the current user's playlists
+func Playlists(partyCache cache.Store, username string, client spotify.Client) (*[]models.Playlist, error) {
+	playlistsEntry, err := partyCache.GetOrDefer("playlists:"+username, func() (*cache.Entry, error) {
+		playlists, err := _playlists(partyCache, client)
+		if err != nil {
+			return nil, err
+		}
+		playlistsEntry := cache.Forever(playlists)
+		return &playlistsEntry, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	playlists := (*playlistsEntry.Value).(*[]models.Playlist)
+	return playlists, nil
+}
+
+func _playlists(partyCache cache.Store, client spotify.Client) (*[]models.Playlist, error) {
 	limit := 50
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
 	})
 	if err != nil {
 		// TODO: Fix "The access token expired" errors
-		return models.Playlists{}
+		return nil, err
 	}
 
 	playlists := make([]models.Playlist, len(playlistPage.Playlists))
@@ -33,9 +50,7 @@ func Playlists(partyCache cache.Store, client spotify.Client) models.Playlists {
 		playlists[i] = models.NewPlaylist(playlist)
 	}
 
-	return models.Playlists{
-		Playlists: playlists,
-	}
+	return &playlists, nil
 }
 
 func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) (*cache.Entry, error) {

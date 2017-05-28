@@ -12,6 +12,7 @@ import (
 	m "github.com/chances/chances-party/middleware"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
+	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -34,6 +35,8 @@ func main() {
 
 	gob.Register(models.Track{})
 	gob.Register(models.TrackArtist{})
+
+	s.SetCache(partyCache)
 
 	// App controllers
 	auth := controllers.NewAuth(

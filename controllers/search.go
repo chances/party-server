@@ -42,7 +42,7 @@ func (cr *Search) SearchTracks() gin.HandlerFunc {
 			return
 		}
 
-		spotifyClient, err := s.DefaultClient(cr.Cache, cr.spotifyDefaultAuth, cr.spotifyAuth)
+		spotifyClient, err := s.DefaultClient(cr.spotifyDefaultAuth, cr.spotifyAuth)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()
