@@ -76,12 +76,14 @@ func main() {
 	parties := g.Group("/party")
 	parties.Use(m.AuthRequired())
 	{
+		parties.GET("", party.Get())
 		parties.POST("/start", party.Start())
 	}
 
 	playlist := g.Group("/playlist")
 	playlist.Use(m.AuthRequired())
 	{
+		playlist.GET("", playlists.Get())
 		playlist.PATCH("", playlists.Patch())
 	}
 

@@ -29,6 +29,37 @@ func NewPlaylists() Playlists {
 	return newPlaylists
 }
 
+// Get the current user's current playlist
+func (cr *Playlists) Get() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		currentUser := session.CurrentUser(c)
+
+		if !currentUser.SpotifyPlaylistID.Valid {
+			c.JSON(http.StatusNotFound, models.Response{
+				Data: gin.H{},
+			})
+		}
+
+		spotifyClient, err := cr.ClientFromSession(c)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		currentPlaylist, err := s.Playlist(currentUser.Username, currentUser.SpotifyPlaylistID.String, *spotifyClient)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		c.JSON(http.StatusOK, models.Response{
+			Data: currentPlaylist,
+		})
+	}
+}
+
 // Patch the current playlist via the new playlist's Spotify ID
 func (cr *Playlists) Patch() gin.HandlerFunc {
 	return func(c *gin.Context) {

@@ -126,6 +126,7 @@ _Note: The Android client app authenticates with Spotify directly._
 - [ ] Add Party endpoints
   - [x] Create (Start?)
   - [ ] End (Stop/Quit?)
+  - [x] Get current party
   - [ ] Join a party
     - Via _pseudo-authenticated_ room code, delivering JWT, or
     - Check-In via OAuth provider

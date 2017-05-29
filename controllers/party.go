@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	pseudoRand "math/rand"
@@ -34,6 +35,30 @@ func NewParty() Party {
 	}
 
 	return newParty
+}
+
+// Get the curren't user's party
+func (cr *Party) Get() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		currentUser := session.CurrentUser(c)
+
+		currentParty, err := currentUser.PartyG().One()
+		if err != nil {
+			if err != sql.ErrNoRows {
+				c.Error(e.Internal.CausedBy(err))
+				c.Abort()
+				return
+			}
+
+			c.JSON(http.StatusNotFound, models.Response{
+				Data: gin.H{},
+			})
+		}
+
+		c.JSON(http.StatusOK, models.Response{
+			Data: currentParty,
+		})
+	}
 }
 
 // Start a new party for the current user
