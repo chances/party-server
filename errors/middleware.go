@@ -27,7 +27,7 @@ func HandleErrors() gin.HandlerFunc {
 		// Add all errors to an array, following the Errors JSON API spec
 		// http://jsonapi.org/format/#errors
 		for i, ginError := range c.Errors {
-			fmt.Fprintf(os.Stderr, "%s\n", ginError)
+			fmt.Fprintf(os.Stderr, "%s\n", ginError.Error())
 			// IDEA: Send the error detail and cause to some log manager?
 
 			switch ginError.Err.(type) {

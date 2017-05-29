@@ -50,7 +50,11 @@ func (e *partyError) Error() string {
 			return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause, string(trace[:n]))
 		}
 
-		return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause)
+    if e.HasDetail() {
+      return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause)
+    }
+
+    return fmt.Sprintf("%d: %s\n", e.Code, e.Meta.Cause)
 	}
 
 	if e.HasDetail() {
