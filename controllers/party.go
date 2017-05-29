@@ -36,7 +36,7 @@ func NewParty() Party {
 	return newParty
 }
 
-// Start a new party
+// Start a new party for the current user
 func (cr *Party) Start() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var newParty struct {
@@ -133,7 +133,7 @@ func (cr *Party) Start() gin.HandlerFunc {
 			return
 		}
 
-		err = party.InsertG()
+		err = currentUser.SetPartyG(true, &party)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not create party").CausedBy(err))
 			c.Abort()
