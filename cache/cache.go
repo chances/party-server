@@ -88,8 +88,8 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		return nil, err
 	}
 	if !exists {
-		entry, err := deferFn()
-		if err != nil {
+		entry, deferErr := deferFn()
+		if deferErr != nil {
 			return nil, err
 		}
 		err = s.Set(key, *entry)
@@ -105,7 +105,7 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 	}
 
 	if entry.IsExpired() {
-		entry, err := deferFn()
+		entry, err = deferFn()
 		if err != nil {
 			return nil, err
 		}
