@@ -15,7 +15,7 @@
   </p>
   <h1>Logged in as {{ .user.DisplayName }}</h1>
   <img id="avatar" width="200" height="200" src="{{ (index .user.Images 0).URL }}" />
-  <div id="user">
+  <div id="user" class="details">
     <p>ID: {{ .user.ID }}</p>
     <p>Profile: <a href="{{ .user.URI }}">{{ .user.URI }}</a></p>
     <p>Followers: {{ .user.Followers.Count }}</p>
@@ -25,7 +25,11 @@
   <p>Current playlist: <span id="currentPlaylist">
     {{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}
   </span></p>
-  {{ if .currentPlaylist }}
+  {{ if .currentParty }}
+  <div class="details">
+    <p>Current party: {{ .currentParty.RoomCode }}</p>
+  </div>
+  {{ else }}
   <p>
     <a id="startParty" data-id="{{ urlquery .currentPlaylist.ID }}" data-host="{{ urlquery .user.DisplayName }}" href="#party/start">Start Party</a>
   </p>

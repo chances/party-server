@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"net/http"
 
 	e "github.com/chances/chances-party/errors"
@@ -48,6 +49,15 @@ func (cr *Index) Get() gin.HandlerFunc {
 				return
 			}
 
+			currentParty, err := currentUser.PartyG().One()
+			if err != nil {
+				if err != sql.ErrNoRows {
+					c.Error(e.Internal.CausedBy(err))
+					c.Abort()
+					return
+				}
+			}
+
 			var currentPlaylist *models.Playlist
 			playlists, err := s.Playlists(currentUser.Username, *spotifyClient)
 			if err != nil {
@@ -64,6 +74,7 @@ func (cr *Index) Get() gin.HandlerFunc {
 			}
 			c.HTML(http.StatusOK, "index.html", gin.H{
 				"user":            spotifyUser,
+				"currentParty":    currentParty,
 				"currentPlaylist": currentPlaylist,
 				"playlists":       playlists,
 				"error":           flashedError,

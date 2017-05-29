@@ -7,7 +7,7 @@ body {
   float: left;
 }
 
-#user > p {
+.details > p {
   margin: 0;
 }
 
