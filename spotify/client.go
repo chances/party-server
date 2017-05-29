@@ -14,10 +14,12 @@ import (
 
 var partyCache cache.Store
 
+// SetCache sets the Party cache store used by this Spotify client
 func SetCache(c cache.Store) {
 	partyCache = c
 }
 
+// DefaultToken gets a Spotify access token via Spotify's client credentials OAuth flow
 func DefaultToken(auth clientcredentials.Config) (*oauth2.Token, error) {
 	tokenEntry, err := partyCache.GetOrDefer("SPOTIFY_TOKEN", func() (*cache.Entry, error) {
 		token, err := auth.Token(context.Background())
