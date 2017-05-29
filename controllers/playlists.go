@@ -25,6 +25,7 @@ func NewPlaylists(c cache.Store, auth spotify.Authenticator) Playlists {
 	gob.Register(models.CachedPlaylist{})
 	gob.Register(models.Playlists{})
 	gob.Register(models.Playlist{})
+  gob.Register([]models.Playlist{})
 
 	newPlaylists := Playlists{
 		spotifyAuth: auth,
@@ -58,7 +59,7 @@ func (cr *Playlists) Patch() gin.HandlerFunc {
 			return
 		}
 
-		playlists, err := s.Playlists(cr.Cache, currentUser.Username, *spotifyClient)
+		playlists, err := s.Playlists(currentUser.Username, *spotifyClient)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()

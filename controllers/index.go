@@ -53,7 +53,7 @@ func (cr *Index) Get() gin.HandlerFunc {
 			}
 
 			var currentPlaylist *models.Playlist
-			playlists, err := s.Playlists(cr.Cache, currentUser.Username, *spotifyClient)
+			playlists, err := s.Playlists(currentUser.Username, *spotifyClient)
 			if err != nil {
 				c.Error(e.Internal.CausedBy(err))
 				c.Abort()

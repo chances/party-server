@@ -4,14 +4,71 @@ import (
 	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/models"
 	"github.com/vattle/sqlboiler/boil"
+	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/zmb3/spotify"
 	"gopkg.in/nullbio/null.v6"
 )
 
+// Playlist gets a Spotify user's playlist given its username and playlist ID
+func Playlist(username string, playlistID string, client spotify.Client) (*models.CachedPlaylist, error) {
+	playlistEntry, err := _playlist(username, playlistID, client)
+	if err != nil {
+		return nil, err
+	}
+	cachedPlaylist := (*playlistEntry.Value).(*models.CachedPlaylist)
+	return cachedPlaylist, nil
+}
+
+func _playlist(username string, playlistID string, client spotify.Client) (*cache.Entry, error) {
+	// Try to get CachedPlaylist, if not in cache try from DB, else get from Spotify API
+	playlistEntry, err := partyCache.GetOrDefer("playlist:"+playlistID, func() (*cache.Entry, error) {
+		trackList, err := models.TrackListsG(qm.Where("spotify_playlist_id=?", playlistID)).One()
+		if err != nil {
+			return nil, err
+		}
+
+		var playlistEntry cache.Entry
+		if trackList != nil {
+			var playlist models.CachedPlaylist
+			err := trackList.Data.Unmarshal(&playlistEntry)
+			if err != nil {
+				return nil, err
+			}
+			playlistEntry = cache.Forever(playlist)
+		} else {
+			playlist, err := client.GetPlaylist(username, spotify.ID(playlistID))
+			// TODO: Page through all tracks
+			if err != nil {
+				return nil, err
+			}
+
+			tracks := models.NewTracks(playlist.Tracks.Tracks)
+			playlistEntry = cache.Forever(
+				models.CachedPlaylist{
+					Playlist: models.NewPlaylistFromFullPlaylist(playlist),
+					Tracks:   tracks,
+				},
+			)
+			go func() {
+				var trackList models.TrackList
+				trackList.SpotifyPlaylistID = null.StringFrom(playlist.ID.String())
+				trackList.Data.Marshal(&playlistEntry.Value)
+				trackList.Upsert(boil.GetDB(), true, []string{"spotify_playlist_id"}, []string{"data"})
+			}()
+		}
+
+		return &playlistEntry, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return playlistEntry, nil
+}
+
 // Playlists gets the current user's playlists
-func Playlists(partyCache cache.Store, username string, client spotify.Client) (*[]models.Playlist, error) {
+func Playlists(username string, client spotify.Client) (*[]models.Playlist, error) {
 	playlistsEntry, err := partyCache.GetOrDefer("playlists:"+username, func() (*cache.Entry, error) {
-		playlists, err := _playlists(partyCache, client)
+		playlists, err := _playlists(client)
 		if err != nil {
 			return nil, err
 		}
@@ -22,11 +79,11 @@ func Playlists(partyCache cache.Store, username string, client spotify.Client) (
 		return nil, err
 	}
 
-	playlists := (*playlistsEntry.Value).(*[]models.Playlist)
-	return playlists, nil
+	playlists := (*playlistsEntry.Value).([]models.Playlist)
+	return &playlists, nil
 }
 
-func _playlists(partyCache cache.Store, client spotify.Client) (*[]models.Playlist, error) {
+func _playlists(client spotify.Client) (*[]models.Playlist, error) {
 	limit := 50
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
@@ -39,13 +96,6 @@ func _playlists(partyCache cache.Store, client spotify.Client) (*[]models.Playli
 	playlists := make([]models.Playlist, len(playlistPage.Playlists))
 
 	for i, playlist := range playlistPage.Playlists {
-		go func() {
-			playlistEntry, _ := cachePlaylist(client, playlist)
-			if playlistEntry == nil {
-				return
-			}
-			partyCache.Set("playlist:"+playlist.ID.String(), *playlistEntry)
-		}()
 		go cachePlaylist(client, playlist)
 		playlists[i] = models.NewPlaylist(playlist)
 	}
@@ -53,25 +103,26 @@ func _playlists(partyCache cache.Store, client spotify.Client) (*[]models.Playli
 	return &playlists, nil
 }
 
-func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) (*cache.Entry, error) {
+func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) error {
 	tracksPage, err := client.GetPlaylistTracks(playlist.Owner.ID, playlist.ID)
 	// TODO: Page through all tracks
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tracks := models.NewTracks(tracksPage.Tracks)
-	go func() {
-		var trackList models.TrackList
-		trackList.SpotifyPlaylistID = null.StringFrom(playlist.ID.String())
-		trackList.Data.Marshal(&tracks)
-		trackList.Upsert(boil.GetDB(), true, []string{"spotify_playlist_id"}, []string{"data"})
-	}()
 	playlistEntry := cache.Forever(
 		models.CachedPlaylist{
 			Playlist: models.NewPlaylist(playlist),
 			Tracks:   tracks,
 		},
 	)
-	return &playlistEntry, nil
+	go func() {
+		var trackList models.TrackList
+		trackList.SpotifyPlaylistID = null.StringFrom(playlist.ID.String())
+		trackList.Data.Marshal(&playlistEntry.Value)
+		trackList.Upsert(boil.GetDB(), true, []string{"spotify_playlist_id"}, []string{"data"})
+	}()
+	partyCache.Set("playlist:"+playlist.ID.String(), playlistEntry)
+	return nil
 }

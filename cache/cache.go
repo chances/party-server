@@ -92,7 +92,10 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		if err != nil {
 			return nil, err
 		}
-		go s.Set(key, *entry)
+		err = s.Set(key, *entry)
+    if err != nil {
+      return nil, err
+    }
 		return entry, nil
 	}
 
@@ -106,7 +109,10 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		if err != nil {
 			return nil, err
 		}
-		go s.Set(key, *entry)
+    err = s.Set(key, *entry)
+    if err != nil {
+      return nil, err
+    }
 		return entry, nil
 	}
 	return entry, nil
