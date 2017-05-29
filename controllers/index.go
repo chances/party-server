@@ -3,7 +3,6 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/chances/chances-party/cache"
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
@@ -15,15 +14,12 @@ import (
 // Index controller
 type Index struct {
 	Controller
-	spotifyAuth spotify.Authenticator
 }
 
 // NewIndex creates a new Index controller
-func NewIndex(c cache.Store, auth spotify.Authenticator) Index {
-	newIndex := Index{
-		spotifyAuth: auth,
-	}
-	newIndex.Cache = c
+func NewIndex() Index {
+	newIndex := Index{}
+	newIndex.Setup()
 	return newIndex
 }
 
@@ -45,7 +41,7 @@ func (cr *Index) Get() gin.HandlerFunc {
 				return
 			}
 
-			spotifyClient, err := s.ClientFromSession(c, cr.spotifyAuth)
+			spotifyClient, err := cr.ClientFromSession(c)
 			if err != nil {
 				c.Error(e.Internal.CausedBy(err))
 				c.Abort()
@@ -60,7 +56,7 @@ func (cr *Index) Get() gin.HandlerFunc {
 				return
 			}
 
-			for _, playlist := range *playlists {
+			for _, playlist := range playlists {
 				if currentUser.SpotifyPlaylistID.String == playlist.ID {
 					currentPlaylist = &playlist
 					break

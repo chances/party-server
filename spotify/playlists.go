@@ -10,16 +10,16 @@ import (
 )
 
 // Playlist gets a Spotify user's playlist given its username and playlist ID
-func Playlist(username string, playlistID string, client spotify.Client) (*models.CachedPlaylist, error) {
+func Playlist(username string, playlistID string, client spotify.Client) (models.CachedPlaylist, error) {
 	playlistEntry, err := _playlist(username, playlistID, client)
 	if err != nil {
-		return nil, err
+		return models.CachedPlaylist{}, err
 	}
-	cachedPlaylist := (*playlistEntry.Value).(*models.CachedPlaylist)
+	cachedPlaylist := playlistEntry.Value.(models.CachedPlaylist)
 	return cachedPlaylist, nil
 }
 
-func _playlist(username string, playlistID string, client spotify.Client) (*cache.Entry, error) {
+func _playlist(username string, playlistID string, client spotify.Client) (cache.Entry, error) {
 	// Try to get CachedPlaylist, if not in cache try from DB, else get from Spotify API
 	playlistEntry, err := partyCache.GetOrDefer("playlist:"+playlistID, func() (*cache.Entry, error) {
 		trackList, err := models.TrackListsG(qm.Where("spotify_playlist_id=?", playlistID)).One()
@@ -60,13 +60,13 @@ func _playlist(username string, playlistID string, client spotify.Client) (*cach
 		return &playlistEntry, nil
 	})
 	if err != nil {
-		return nil, err
+		return cache.Entry{}, err
 	}
-	return playlistEntry, nil
+	return *playlistEntry, nil
 }
 
 // Playlists gets the current user's playlists
-func Playlists(username string, client spotify.Client) (*[]models.Playlist, error) {
+func Playlists(username string, client spotify.Client) ([]models.Playlist, error) {
 	playlistsEntry, err := partyCache.GetOrDefer("playlists:"+username, func() (*cache.Entry, error) {
 		playlists, err := _playlists(client)
 		if err != nil {
@@ -79,11 +79,11 @@ func Playlists(username string, client spotify.Client) (*[]models.Playlist, erro
 		return nil, err
 	}
 
-	playlists := (*playlistsEntry.Value).([]models.Playlist)
-	return &playlists, nil
+	playlists := (*playlistsEntry).Value.([]models.Playlist)
+	return playlists, nil
 }
 
-func _playlists(client spotify.Client) (*[]models.Playlist, error) {
+func _playlists(client spotify.Client) ([]models.Playlist, error) {
 	limit := 50
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
@@ -100,7 +100,7 @@ func _playlists(client spotify.Client) (*[]models.Playlist, error) {
 		playlists[i] = models.NewPlaylist(playlist)
 	}
 
-	return &playlists, nil
+	return playlists, nil
 }
 
 func cachePlaylist(client spotify.Client, playlist spotify.SimplePlaylist) error {

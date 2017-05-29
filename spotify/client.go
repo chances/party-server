@@ -34,7 +34,7 @@ func DefaultToken(auth clientcredentials.Config) (*oauth2.Token, error) {
 		return nil, err
 	}
 
-	token := (*tokenEntry.Value).(oauth2.Token)
+	token := (*tokenEntry).Value.(oauth2.Token)
 	return &token, nil
 }
 

@@ -40,15 +40,14 @@ func main() {
 
 	// App controllers
 	auth := controllers.NewAuth(
-		partyCache,
 		getenvOrFatal("SPOTIFY_APP_KEY"),
 		getenvOrFatal("SPOTIFY_APP_SECRET"),
 		getenvOrFatal("SPOTIFY_CALLBACK"),
 		getenvOrFatal("JWT_SECRET"),
 	)
-	index := controllers.NewIndex(partyCache, auth.SpotifyAuth)
-	playlists := controllers.NewPlaylists(partyCache, auth.SpotifyAuth)
-	search := controllers.NewSearch(partyCache, auth.SpotifyAuth, auth.SpotifyDefaultAuth)
+	index := controllers.NewIndex()
+	playlists := controllers.NewPlaylists()
+	search := controllers.NewSearch()
 
 	// === Initialize Gin ===
 	g := gin.New()

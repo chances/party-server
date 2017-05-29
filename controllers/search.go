@@ -3,29 +3,22 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/chances/chances-party/cache"
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
-	"golang.org/x/oauth2/clientcredentials"
 )
 
 // Search controller
 type Search struct {
 	Controller
-	spotifyAuth        spotify.Authenticator
-	spotifyDefaultAuth clientcredentials.Config
 }
 
 // NewSearch creates a new Search controller
-func NewSearch(c cache.Store, auth spotify.Authenticator, defaultAuth clientcredentials.Config) Search {
-	newSearch := Search{
-		spotifyAuth:        auth,
-		spotifyDefaultAuth: defaultAuth,
-	}
-	newSearch.Cache = c
+func NewSearch() Search {
+	newSearch := Search{}
+	newSearch.Setup()
 	return newSearch
 }
 
@@ -42,7 +35,7 @@ func (cr *Search) SearchTracks() gin.HandlerFunc {
 			return
 		}
 
-		spotifyClient, err := s.DefaultClient(cr.spotifyDefaultAuth, cr.spotifyAuth)
+		spotifyClient, err := s.DefaultClient(cr.SpotifyDefaultAuth, cr.SpotifyAuth)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()

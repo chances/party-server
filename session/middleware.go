@@ -79,6 +79,6 @@ func loadFlashes(id string, store cache.Store) map[string]string {
 		return make(map[string]string)
 	}
 
-	flashes := *flashesEntry.Value
+	flashes := flashesEntry.Value
 	return flashes.(map[string]string)
 }

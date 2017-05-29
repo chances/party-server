@@ -4,33 +4,28 @@ import (
 	"encoding/gob"
 	"net/http"
 
-	"github.com/chances/chances-party/cache"
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
 	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
-	"github.com/zmb3/spotify"
 	"gopkg.in/nullbio/null.v6"
 )
 
 // Playlists controller
 type Playlists struct {
 	Controller
-	spotifyAuth spotify.Authenticator
 }
 
 // NewPlaylists creates a new Playlists controller
-func NewPlaylists(c cache.Store, auth spotify.Authenticator) Playlists {
+func NewPlaylists() Playlists {
 	gob.Register(models.CachedPlaylist{})
 	gob.Register(models.Playlists{})
 	gob.Register(models.Playlist{})
-  gob.Register([]models.Playlist{})
+	gob.Register([]models.Playlist{})
 
-	newPlaylists := Playlists{
-		spotifyAuth: auth,
-	}
-	newPlaylists.Cache = c
+	newPlaylists := Playlists{}
+	newPlaylists.Setup()
 	return newPlaylists
 }
 
@@ -52,7 +47,7 @@ func (cr *Playlists) Patch() gin.HandlerFunc {
 		id := patchPlaylist.Data.ID
 		currentUser := session.CurrentUser(c)
 
-		spotifyClient, err := s.ClientFromSession(c, cr.spotifyAuth)
+		spotifyClient, err := cr.ClientFromSession(c)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()
@@ -66,7 +61,7 @@ func (cr *Playlists) Patch() gin.HandlerFunc {
 			return
 		}
 
-		for _, playlist := range *playlists {
+		for _, playlist := range playlists {
 			if id == playlist.ID {
 				currentUser.SpotifyPlaylistID = null.StringFrom(id)
 				err := currentUser.UpdateG("spotify_playlist_id")

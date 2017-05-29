@@ -15,7 +15,7 @@ type Store struct {
 
 // Entry stores a cache line given a value and expiry time
 type Entry struct {
-	Value  *interface{}
+	Value  interface{}
 	Expiry time.Time
 }
 
@@ -28,7 +28,7 @@ func (e *Entry) IsExpired() bool {
 // Value creates a plain cache entry given a value
 func Value(value interface{}) Entry {
 	return Entry{
-		Value: &value,
+		Value: value,
 	}
 }
 
@@ -36,7 +36,7 @@ func Value(value interface{}) Entry {
 func Expires(expiry time.Time, value interface{}) Entry {
 	return Entry{
 		Expiry: expiry,
-		Value:  &value,
+		Value:  value,
 	}
 }
 
@@ -44,7 +44,7 @@ func Expires(expiry time.Time, value interface{}) Entry {
 func Forever(value interface{}) Entry {
 	return Entry{
 		Expiry: time.Unix(0, 0).UTC(),
-		Value:  &value,
+		Value:  value,
 	}
 }
 

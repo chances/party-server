@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chances/chances-party/cache"
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
@@ -24,14 +23,12 @@ import (
 // Auth controller for Party authentication
 type Auth struct {
 	Controller
-	SpotifyAuth        spotify.Authenticator
-	SpotifyDefaultAuth clientcredentials.Config
-	spotifyScopes      string
-	jwtSigningKey      []byte
+	spotifyScopes string
+	jwtSigningKey []byte
 }
 
 // NewAuth creates a new Auth controller
-func NewAuth(c cache.Store, spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth {
+func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth {
 	gob.Register(oauth2.Token{})
 
 	// TODO: Refactor out "auth" Spotify client factories
@@ -43,22 +40,25 @@ func NewAuth(c cache.Store, spotifyKey, spotifySecret, spotifyCallback, jwtSecre
 	)
 	spotifyAuth.SetAuthInfo(spotifyKey, spotifySecret)
 
+	SetSpotifyAuth(
+		spotifyAuth,
+		clientcredentials.Config{
+			ClientID:     spotifyKey,
+			ClientSecret: spotifySecret,
+			TokenURL:     "https://accounts.spotify.com/api/token",
+		},
+	)
+
 	spotifyScopes := make([]string, 3)
 	spotifyScopes[0] = spotify.ScopeUserReadPrivate
 	spotifyScopes[1] = spotify.ScopePlaylistReadPrivate
 	spotifyScopes[2] = spotify.ScopePlaylistReadCollaborative
 
 	newAuth := Auth{
-		SpotifyAuth: spotifyAuth,
-		SpotifyDefaultAuth: clientcredentials.Config{
-			ClientID:     spotifyKey,
-			ClientSecret: spotifySecret,
-			TokenURL:     "https://accounts.spotify.com/api/token",
-		},
 		spotifyScopes: strings.Join(spotifyScopes, " "),
 		jwtSigningKey: []byte(jwtSecret),
 	}
-	newAuth.Cache = c
+	newAuth.Setup()
 	return newAuth
 }
 

@@ -38,7 +38,7 @@ func (s *Session) Get(key string) (string, error) {
 		return "", err
 	}
 
-	value := (*entry.Value).(string)
+	value := entry.Value.(string)
 	return value, nil
 }
 
