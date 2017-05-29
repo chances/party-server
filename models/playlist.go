@@ -12,7 +12,7 @@ type Playlist struct {
 
 type CachedPlaylist struct {
 	Playlist Playlist `json:"playlist"`
-	Tracks   []Track
+	Tracks   []Track  `json:"tracks"`
 }
 
 func NewPlaylist(p spotify.SimplePlaylist) Playlist {
