@@ -78,6 +78,7 @@ func main() {
 	{
 		parties.GET("", party.Get())
 		parties.POST("/start", party.Start())
+		parties.POST("/end", party.End())
 	}
 
 	playlist := g.Group("/playlist")
