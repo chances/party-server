@@ -70,8 +70,8 @@ _Note: The Android client app authenticates with Spotify directly._
 
 - [x] Add a Party Model
   - Fields:
-    - Host name
     - Location JSON blob:
+      - Host name
       - Location/address string
       - Scheduled time?
       - _Facebook inegration?_
@@ -124,7 +124,7 @@ _Note: The Android client app authenticates with Spotify directly._
 - [ ] Playback future (Queue) endpoint _(As TrackList)_
   - [ ] With SSE support
 - [ ] Add Party endpoints
-  - [ ] Create
+  - [x] Create (Start?)
   - [ ] End (Stop/Quit?)
   - [ ] Join a party
     - Via _pseudo-authenticated_ room code, delivering JWT, or

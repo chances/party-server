@@ -46,6 +46,7 @@ func main() {
 		getenvOrFatal("JWT_SECRET"),
 	)
 	index := controllers.NewIndex()
+	party := controllers.NewParty()
 	playlists := controllers.NewPlaylists()
 	search := controllers.NewSearch()
 
@@ -71,6 +72,12 @@ func main() {
 
 	// Application routes
 	g.GET("/", index.Get())
+
+	parties := g.Group("/party")
+	parties.Use(m.AuthRequired())
+	{
+		parties.POST("/start", party.Start())
+	}
 
 	playlist := g.Group("/playlist")
 	playlist.Use(m.AuthRequired())

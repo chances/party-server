@@ -25,6 +25,11 @@
   <p>Current playlist: <span id="currentPlaylist">
     {{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}
   </span></p>
+  {{ if .currentPlaylist }}
+  <p>
+    <a id="startParty" data-id="{{ urlquery .currentPlaylist.ID }}" data-host="{{ urlquery .user.DisplayName }}" href="#party/start">Start Party</a>
+  </p>
+  {{ end }}
   <div style="clear: both;"></div>
   {{ if .playlists }}
   <h2>Pick a playlist for the party</h2>
@@ -45,9 +50,44 @@
   <p>Error:</p>
   <p>{{ .error }}</p>
   {{ end }}
-  <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch"></script>
+  <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch@2.0.3"></script>
   <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function domContentLoaded() {
+      let startPartyLink = document.querySelector('#startParty');
+      if (startPartyLink) {
+        startPartyLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let hostName = e.target.getAttribute('data-host');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let startParty = window.fetch(new Request('/party/start', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              data: {
+                host: decodeURIComponent(hostName),
+                playlist_id: decodeURIComponent(playlistId)
+              }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (newPartyOrErrors) {
+            if (newPartyOrErrors.errors !== undefined) {
+              console.log(newPartyOrErrors);
+              throw new Error(newPartyOrErrors.errors);
+            }
+
+            return newPartyOrErrors.data;
+          });
+
+          startParty.then(function (party) {
+            console.log('Started party:', party)
+          });
+        })
+      }
+
       let playlistLinks = [].slice.call(document.querySelectorAll('a.playlist'));
       playlistLinks.forEach(function (playlistLink) {
         playlistLink.addEventListener('click', function (e) {
@@ -58,7 +98,7 @@
             method: 'PATCH',
             headers: headers,
             body: JSON.stringify({
-              data: { id: playlistId }
+              data: { id: decodeURIComponent(playlistId) }
             }),
             credentials: 'include',
             cache: 'no-store'
