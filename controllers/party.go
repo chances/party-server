@@ -16,6 +16,7 @@ import (
 	"github.com/chances/chances-party/session"
 	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
+	"github.com/vattle/sqlboiler/types"
 )
 
 // Party controller
@@ -37,6 +38,14 @@ func NewParty() Party {
 	return newParty
 }
 
+type publicParty struct {
+	Location     types.JSON    `json:"location"`
+	RoomCode     string        `json:"room_code"`
+	Ended        bool          `json:"ended"`
+	Guests       *types.JSON   `json:"guests,omitempty"`
+	CurrentTrack *models.Track `json:"current_track,omitempty"`
+}
+
 // Get the curren't user's party
 func (cr *Party) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -54,9 +63,33 @@ func (cr *Party) Get() gin.HandlerFunc {
 				Data: gin.H{},
 			})
 		}
+		partyGuests, err := currentParty.GuestG().One()
+		if err != nil {
+			if err != sql.ErrNoRows {
+				c.Error(e.Internal.CausedBy(err))
+				c.Abort()
+				return
+			}
+		}
+
+		response := publicParty{
+			Location: currentParty.Location,
+			RoomCode: currentParty.RoomCode,
+			Ended:    currentParty.Ended,
+		}
+		if partyGuests != nil {
+			response.Guests = &partyGuests.Data
+		}
+		if currentParty.CurrentTrack.Valid {
+			var track models.Track
+			err = currentParty.CurrentTrack.Unmarshal(&track)
+			if err == nil {
+				response.CurrentTrack = &track
+			}
+		}
 
 		c.JSON(http.StatusOK, models.Response{
-			Data: currentParty,
+			Data: response,
 		})
 	}
 }
