@@ -41,6 +41,7 @@ func initDatabase() *sqlx.DB {
 	newDb.SetMaxOpenConns(10)
 
 	boil.SetDB(newDb)
+	boil.SetLocation(time.UTC)
 
 	return newDb
 }

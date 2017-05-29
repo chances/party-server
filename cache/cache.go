@@ -21,8 +21,8 @@ type Entry struct {
 
 // IsExpired returns true if entry is expired
 func (e *Entry) IsExpired() bool {
-	isForever := e.Expiry.Equal(time.Unix(0, 0))
-	return !isForever && e.Expiry.Before(time.Now())
+	isForever := e.Expiry.Equal(time.Unix(0, 0).UTC())
+	return !isForever && e.Expiry.Before(time.Now().UTC())
 }
 
 // Value creates a plain cache entry given a value
@@ -43,7 +43,7 @@ func Expires(expiry time.Time, value interface{}) Entry {
 // Forever creates a cache entry that shall never expire
 func Forever(value interface{}) Entry {
 	return Entry{
-		Expiry: time.Unix(0, 0),
+		Expiry: time.Unix(0, 0).UTC(),
 		Value:  &value,
 	}
 }
@@ -93,9 +93,9 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 			return nil, err
 		}
 		err = s.Set(key, *entry)
-    if err != nil {
-      return nil, err
-    }
+		if err != nil {
+			return nil, err
+		}
 		return entry, nil
 	}
 
@@ -109,10 +109,10 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		if err != nil {
 			return nil, err
 		}
-    err = s.Set(key, *entry)
-    if err != nil {
-      return nil, err
-    }
+		err = s.Set(key, *entry)
+		if err != nil {
+			return nil, err
+		}
 		return entry, nil
 	}
 	return entry, nil

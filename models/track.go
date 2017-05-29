@@ -28,6 +28,7 @@ func NewTrack(t spotify.FullTrack) Track {
 		Name:          t.Name,
 		Images:        t.Album.Images,
 		Artists:       make([]TrackArtist, len(t.Artists)),
+		BeganPlaying:  time.Unix(0, 0).UTC(),
 		Duration:      uint(t.Duration / 1000),
 		ContributorID: -1,
 	}
