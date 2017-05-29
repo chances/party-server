@@ -11,6 +11,11 @@ body {
   margin: 0;
 }
 
+#currentParty {
+  font-family: monospace;
+  font-size: 11pt;
+}
+
 ul {
   display: inline-block;
   min-width: 35%;

@@ -27,7 +27,7 @@
   </span></p>
   {{ if .currentParty }}
   <div class="details">
-    <p>Current party: {{ .currentParty.RoomCode }}</p>
+    <p>Current party: <span id="currentParty">{{ .currentParty.RoomCode }}</span></p>
   </div>
   {{ else }}
   <p>
