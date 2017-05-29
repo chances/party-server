@@ -11,6 +11,7 @@ type Track struct {
 	Name          string          `json:"name"`
 	Artists       []TrackArtist   `json:"artists"`
 	Images        []spotify.Image `json:"images"`
+	Endpoint      string          `json:"endpoint"`
 	BeganPlaying  time.Time       `json:"began_playing"`
 	Duration      uint            `json:"duration"`
 	Contributor   string          `json:"contributor"`
@@ -26,8 +27,9 @@ func NewTrack(t spotify.FullTrack) Track {
 	track := Track{
 		ID:            t.ID.String(),
 		Name:          t.Name,
-		Images:        t.Album.Images,
 		Artists:       make([]TrackArtist, len(t.Artists)),
+		Images:        t.Album.Images,
+		Endpoint:      t.Endpoint,
 		BeganPlaying:  time.Unix(0, 0).UTC(),
 		Duration:      uint(t.Duration / 1000),
 		ContributorID: -1,
