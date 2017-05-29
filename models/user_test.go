@@ -325,6 +325,166 @@ func testUsersInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testUserToOnePartyUsingParty(t *testing.T) {
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var local User
+	var foreign Party
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, partyDBTypes, true, partyColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Party struct: %s", err)
+	}
+
+	local.PartyID.Valid = true
+
+	if err := foreign.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	local.PartyID.Int = foreign.ID
+	if err := local.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Party(tx).One()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.ID != foreign.ID {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	slice := UserSlice{&local}
+	if err = local.L.LoadParty(tx, false, (*[]*User)(&slice)); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Party == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Party = nil
+	if err = local.L.LoadParty(tx, true, &local); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Party == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testUserToOneSetOpPartyUsingParty(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a User
+	var b, c Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Party{&b, &c} {
+		err = a.SetParty(tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Party != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.User != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.PartyID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PartyID.Int)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.PartyID.Int))
+		reflect.Indirect(reflect.ValueOf(&a.PartyID.Int)).Set(zero)
+
+		if err = a.Reload(tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.PartyID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PartyID.Int, x.ID)
+		}
+	}
+}
+
+func testUserToOneRemoveOpPartyUsingParty(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a User
+	var b Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetParty(tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemoveParty(tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.Party(tx).Count()
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.Party != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if a.PartyID.Valid {
+		t.Error("foreign key value should be nil")
+	}
+
+	if b.R.User != nil {
+		t.Error("failed to remove a from b's relationships")
+	}
+
+}
+
 func testUsersReload(t *testing.T) {
 	t.Parallel()
 
@@ -395,7 +555,7 @@ func testUsersSelect(t *testing.T) {
 }
 
 var (
-	userDBTypes = map[string]string{`AccessToken`: `character varying`, `CreatedAt`: `timestamp with time zone`, `ID`: `bigint`, `RefreshToken`: `character varying`, `SpotifyPlaylistID`: `character varying`, `SpotifyUser`: `json`, `TokenExpiryDate`: `timestamp with time zone`, `TokenScope`: `character varying`, `UpdatedAt`: `timestamp with time zone`, `Username`: `character varying`}
+	userDBTypes = map[string]string{`AccessToken`: `character varying`, `CreatedAt`: `timestamp with time zone`, `ID`: `bigint`, `PartyID`: `integer`, `RefreshToken`: `character varying`, `SpotifyPlaylistID`: `character varying`, `SpotifyUser`: `json`, `TokenExpiryDate`: `timestamp with time zone`, `TokenScope`: `character varying`, `UpdatedAt`: `timestamp with time zone`, `Username`: `character varying`}
 	_           = bytes.MinRead
 )
 

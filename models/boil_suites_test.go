@@ -99,11 +99,14 @@ func TestToOne(t *testing.T) {
 	t.Run("PartyToTrackListUsingQueue", testPartyToOneTrackListUsingQueue)
 	t.Run("PartyToTrackListUsingHistory", testPartyToOneTrackListUsingHistory)
 	t.Run("PartyToGuestListUsingGuest", testPartyToOneGuestListUsingGuest)
+	t.Run("UserToPartyUsingParty", testUserToOnePartyUsingParty)
 }
 
 // TestOneToOne tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOne(t *testing.T) {}
+func TestOneToOne(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneUserUsingUser)
+}
 
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
@@ -119,19 +122,26 @@ func TestToOneSet(t *testing.T) {
 	t.Run("PartyToTrackListUsingQueue", testPartyToOneSetOpTrackListUsingQueue)
 	t.Run("PartyToTrackListUsingHistory", testPartyToOneSetOpTrackListUsingHistory)
 	t.Run("PartyToGuestListUsingGuest", testPartyToOneSetOpGuestListUsingGuest)
+	t.Run("UserToPartyUsingParty", testUserToOneSetOpPartyUsingParty)
 }
 
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToOneRemove(t *testing.T) {}
+func TestToOneRemove(t *testing.T) {
+	t.Run("UserToPartyUsingParty", testUserToOneRemoveOpPartyUsingParty)
+}
 
 // TestOneToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOneSet(t *testing.T) {}
+func TestOneToOneSet(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneSetOpUserUsingUser)
+}
 
 // TestOneToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOneRemove(t *testing.T) {}
+func TestOneToOneRemove(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneRemoveOpUserUsingUser)
+}
 
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.

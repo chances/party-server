@@ -34,6 +34,7 @@ type User struct {
 	TokenScope        string      `boil:"token_scope" json:"token_scope" toml:"token_scope" yaml:"token_scope"`
 	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	PartyID           null.Int    `boil:"party_id" json:"party_id,omitempty" toml:"party_id" yaml:"party_id,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,14 +42,15 @@ type User struct {
 
 // userR is where relationships are stored.
 type userR struct {
+	Party *Party
 }
 
 // userL is where Load methods for each relationship are stored.
 type userL struct{}
 
 var (
-	userColumns               = []string{"id", "username", "spotify_user", "spotify_playlist_id", "access_token", "refresh_token", "token_expiry_date", "token_scope", "created_at", "updated_at"}
-	userColumnsWithoutDefault = []string{"username", "spotify_user", "spotify_playlist_id", "access_token", "refresh_token", "token_expiry_date", "token_scope", "created_at", "updated_at"}
+	userColumns               = []string{"id", "username", "spotify_user", "spotify_playlist_id", "access_token", "refresh_token", "token_expiry_date", "token_scope", "created_at", "updated_at", "party_id"}
+	userColumnsWithoutDefault = []string{"username", "spotify_user", "spotify_playlist_id", "access_token", "refresh_token", "token_expiry_date", "token_scope", "created_at", "updated_at", "party_id"}
 	userColumnsWithDefault    = []string{"id"}
 	userPrimaryKeyColumns     = []string{"id"}
 )
@@ -180,6 +182,219 @@ func (q userQuery) Exists() (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// PartyG pointed to by the foreign key.
+func (o *User) PartyG(mods ...qm.QueryMod) partyQuery {
+	return o.Party(boil.GetDB(), mods...)
+}
+
+// Party pointed to by the foreign key.
+func (o *User) Party(exec boil.Executor, mods ...qm.QueryMod) partyQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("id=?", o.PartyID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := Parties(exec, queryMods...)
+	queries.SetFrom(query.Query, "\"party\"")
+
+	return query
+} // LoadParty allows an eager lookup of values, cached into the
+// loaded structs of the objects.
+func (userL) LoadParty(e boil.Executor, singular bool, maybeUser interface{}) error {
+	var slice []*User
+	var object *User
+
+	count := 1
+	if singular {
+		object = maybeUser.(*User)
+	} else {
+		slice = *maybeUser.(*[]*User)
+		count = len(slice)
+	}
+
+	args := make([]interface{}, count)
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[0] = object.PartyID
+	} else {
+		for i, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[i] = obj.PartyID
+		}
+	}
+
+	query := fmt.Sprintf(
+		"select * from \"party\" where \"id\" in (%s)",
+		strmangle.Placeholders(dialect.IndexPlaceholders, count, 1, 1),
+	)
+
+	if boil.DebugMode {
+		fmt.Fprintf(boil.DebugWriter, "%s\n%v\n", query, args)
+	}
+
+	results, err := e.Query(query, args...)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Party")
+	}
+	defer results.Close()
+
+	var resultSlice []*Party
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Party")
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		object.R.Party = resultSlice[0]
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.PartyID.Int == foreign.ID {
+				local.R.Party = foreign
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetPartyG of the user to the related item.
+// Sets o.R.Party to related.
+// Adds o to related.R.User.
+// Uses the global database handle.
+func (o *User) SetPartyG(insert bool, related *Party) error {
+	return o.SetParty(boil.GetDB(), insert, related)
+}
+
+// SetPartyP of the user to the related item.
+// Sets o.R.Party to related.
+// Adds o to related.R.User.
+// Panics on error.
+func (o *User) SetPartyP(exec boil.Executor, insert bool, related *Party) {
+	if err := o.SetParty(exec, insert, related); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// SetPartyGP of the user to the related item.
+// Sets o.R.Party to related.
+// Adds o to related.R.User.
+// Uses the global database handle and panics on error.
+func (o *User) SetPartyGP(insert bool, related *Party) {
+	if err := o.SetParty(boil.GetDB(), insert, related); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// SetParty of the user to the related item.
+// Sets o.R.Party to related.
+// Adds o to related.R.User.
+func (o *User) SetParty(exec boil.Executor, insert bool, related *Party) error {
+	var err error
+	if insert {
+		if err = related.Insert(exec); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"user\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"party_id"}),
+		strmangle.WhereClause("\"", "\"", 2, userPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.DebugMode {
+		fmt.Fprintln(boil.DebugWriter, updateQuery)
+		fmt.Fprintln(boil.DebugWriter, values)
+	}
+
+	if _, err = exec.Exec(updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.PartyID.Int = related.ID
+	o.PartyID.Valid = true
+
+	if o.R == nil {
+		o.R = &userR{
+			Party: related,
+		}
+	} else {
+		o.R.Party = related
+	}
+
+	if related.R == nil {
+		related.R = &partyR{
+			User: o,
+		}
+	} else {
+		related.R.User = o
+	}
+
+	return nil
+}
+
+// RemovePartyG relationship.
+// Sets o.R.Party to nil.
+// Removes o from all passed in related items' relationships struct (Optional).
+// Uses the global database handle.
+func (o *User) RemovePartyG(related *Party) error {
+	return o.RemoveParty(boil.GetDB(), related)
+}
+
+// RemovePartyP relationship.
+// Sets o.R.Party to nil.
+// Removes o from all passed in related items' relationships struct (Optional).
+// Panics on error.
+func (o *User) RemovePartyP(exec boil.Executor, related *Party) {
+	if err := o.RemoveParty(exec, related); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// RemovePartyGP relationship.
+// Sets o.R.Party to nil.
+// Removes o from all passed in related items' relationships struct (Optional).
+// Uses the global database handle and panics on error.
+func (o *User) RemovePartyGP(related *Party) {
+	if err := o.RemoveParty(boil.GetDB(), related); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// RemoveParty relationship.
+// Sets o.R.Party to nil.
+// Removes o from all passed in related items' relationships struct (Optional).
+func (o *User) RemoveParty(exec boil.Executor, related *Party) error {
+	var err error
+
+	o.PartyID.Valid = false
+	if err = o.Update(exec, "party_id"); err != nil {
+		o.PartyID.Valid = true
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.R.Party = nil
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	related.R.User = nil
+	return nil
 }
 
 // UsersG retrieves all records.

@@ -325,6 +325,169 @@ func testPartiesInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testPartyOneToOneUserUsingUser(t *testing.T) {
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var foreign User
+	var local Party
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &foreign, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &local, partyDBTypes, true, partyColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Party struct: %s", err)
+	}
+
+	foreign.PartyID.Valid = true
+
+	if err := local.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	foreign.PartyID.Int = local.ID
+	if err := foreign.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.User(tx).One()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.PartyID.Int != foreign.PartyID.Int {
+		t.Errorf("want: %v, got %v", foreign.PartyID.Int, check.PartyID.Int)
+	}
+
+	slice := PartySlice{&local}
+	if err = local.L.LoadUser(tx, false, (*[]*Party)(&slice)); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.User = nil
+	if err = local.L.LoadUser(tx, true, &local); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testPartyOneToOneSetOpUserUsingUser(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a Party
+	var b, c User
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*User{&b, &c} {
+		err = a.SetUser(tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.User != x {
+			t.Error("relationship struct not set to correct value")
+		}
+		if x.R.Party != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+
+		if a.ID != x.PartyID.Int {
+			t.Error("foreign key was wrong value", a.ID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(x.PartyID.Int))
+		reflect.Indirect(reflect.ValueOf(&x.PartyID.Int)).Set(zero)
+
+		if err = x.Reload(tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.ID != x.PartyID.Int {
+			t.Error("foreign key was wrong value", a.ID, x.PartyID.Int)
+		}
+
+		if err = x.Delete(tx); err != nil {
+			t.Fatal("failed to delete x", err)
+		}
+	}
+}
+
+func testPartyOneToOneRemoveOpUserUsingUser(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a Party
+	var b User
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetUser(tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemoveUser(tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.User(tx).Count()
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.User != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if b.PartyID.Valid {
+		t.Error("foreign key column should be nil")
+	}
+
+	if b.R.Party != nil {
+		t.Error("failed to remove a from b's relationships")
+	}
+}
+
 func testPartyToOneTrackListUsingQueue(t *testing.T) {
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
