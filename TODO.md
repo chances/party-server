@@ -91,6 +91,8 @@ _Note: The Android client app authenticates with Spotify directly._
 
 ### JSON Web Tokens
 
+Apparently, JWTs are [terribly insecure](https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid), an may be unnecessary for Party...
+
 - [ ] Add JSON Web Token delivery
   - [ ] Store tokens in Redis
     - No persistence necessary, parties are ephemeral
