@@ -31,7 +31,7 @@
   </div>
   {{ else }}
   <p>
-    <a id="startParty" data-id="{{ urlquery .currentPlaylist.ID }}" data-host="{{ urlquery .user.DisplayName }}" href="#party/start">Start Party</a>
+    <a id="startParty" data-id="{{ .currentPlaylist.ID }}" data-host="{{ .user.DisplayName }}" href="#party/start">Start Party</a>
   </p>
   {{ end }}
   <div style="clear: both;"></div>
