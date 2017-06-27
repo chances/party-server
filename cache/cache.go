@@ -35,7 +35,7 @@ func Value(value interface{}) Entry {
 // Expires creates a cache entry that expires at the given time
 func Expires(expiry time.Time, value interface{}) Entry {
 	return Entry{
-		Expiry: expiry,
+		Expiry: expiry.UTC(),
 		Value:  value,
 	}
 }
