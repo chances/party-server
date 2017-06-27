@@ -89,19 +89,21 @@ _Note: The Android client app authenticates with Spotify directly._
     - History foreign key (_To TrackList_)
     - Guests foreign key
 
-### JSON Web Tokens
+### Party Access Tokens
 
-Apparently, JWTs are [terribly insecure](https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid), an may be unnecessary for Party...
+_Party Access Tokens_ authenticate API access for party guests. (Party hosts authenticate separately with Spotify.)
 
-- [ ] Add JSON Web Token delivery
+- [ ] Add access token delivery
+  - [ ] Sign generated tokens using a strong signature (token secret, cryptographic hash)
   - [ ] Store tokens in Redis
-    - No persistence necessary, parties are ephemeral
-  - [ ] Deliver token serialized as a [JWT](https://github.com/auth0/node-jsonwebtoken) (And from [Go](https://github.com/dgrijalva/jwt-go))
-  - [ ] Deliver JWT with a _Party Access Token_ to pseudo-authenticated guests
+    - No persistence necessary for guest tokens, parties are ephemeral
+  - [ ] Deliver token inside a secure cookie
+  - [ ] Deliver a _Party Access Token_ to pseudo-authenticated guests
     - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
-  - [ ] Recurring job to clean expired tokens
-    - Token expires after 30 minutes of disuse
-  - [ ] Automatically refresh token via ping/pong
+    - Store originating Origin and validate subsequent requests given the request's _Party Access Token_
+  - [ ] Recurring job to expire and clean expired tokens
+    - Party access tokens expire after 30 minutes of disuse
+  - [ ] Automatically refresh token expiration time via ping/pong
 
 ### Server Events
 
