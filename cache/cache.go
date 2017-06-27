@@ -77,6 +77,11 @@ func (s *Store) Get(key string) (*Entry, error) {
 		return nil, err
 	}
 
+	// Delete the entry from the cache if it's expired
+	if value.IsExpired() {
+		s.Delete(key)
+	}
+
 	return &value, nil
 }
 
