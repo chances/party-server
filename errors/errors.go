@@ -15,6 +15,8 @@ import (
 var (
 	// Auth provides a new Authentication error builder
 	Auth = newPartyError(http.StatusSeeOther, "Authentication Error", "Could not login via Spotify.")
+	// Forbidden provides a new Forbidden error builder
+	Forbidden = newPartyError(http.StatusForbidden, "Forbidden", "Forbidden request made to Party")
 	// Unauthorized provides a new Unauthorized error builder
 	Unauthorized = newPartyError(http.StatusUnauthorized, "Unauthorized", "Unauthorized request made to Party")
 	// BadRequest provides a new Bad Request error builder
@@ -50,11 +52,11 @@ func (e *partyError) Error() string {
 			return fmt.Sprintf("%d: %s\n%s\n\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause, string(trace[:n]))
 		}
 
-    if e.HasDetail() {
-      return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause)
-    }
+		if e.HasDetail() {
+			return fmt.Sprintf("%d: %s\n%s\n", e.Code, *e.Meta.Detail, e.Meta.Cause)
+		}
 
-    return fmt.Sprintf("%d: %s\n", e.Code, e.Meta.Cause)
+		return fmt.Sprintf("%d: %s\n", e.Code, e.Meta.Cause)
 	}
 
 	if e.HasDetail() {
