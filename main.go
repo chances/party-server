@@ -79,6 +79,7 @@ func main() {
 		parties.GET("", party.Get())
 		parties.POST("/start", party.Start())
 	}
+	g.POST("/party/join", party.Join())
 
 	playlist := g.Group("/playlist")
 	playlist.Use(m.AuthRequired())

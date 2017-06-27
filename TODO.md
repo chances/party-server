@@ -95,10 +95,10 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 - [ ] Add access token delivery
   - [ ] Sign generated tokens using a strong signature (token secret, cryptographic hash)
-  - [ ] Store tokens in Redis
+  - [x] Store tokens in Redis
     - No persistence necessary for guest tokens, parties are ephemeral
-  - [ ] Deliver token inside a secure cookie
-  - [ ] Deliver a _Party Access Token_ to pseudo-authenticated guests
+  - [x] Deliver token inside a secure cookie
+  - [x] Deliver a _Party Access Token_ to pseudo-authenticated guests
     - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
     - Store originating Origin and validate subsequent requests given the request's _Party Access Token_
   - [ ] Recurring job to expire and clean expired tokens

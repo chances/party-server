@@ -7,15 +7,19 @@ import (
 	"fmt"
 	pseudoRand "math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	null "gopkg.in/nullbio/null.v6"
 
+	"github.com/chances/chances-party/cache"
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
 	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
+	"github.com/twinj/uuid"
+	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/vattle/sqlboiler/types"
 )
 
@@ -62,6 +66,7 @@ func (cr *Party) Get() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, models.Response{
 				Data: gin.H{},
 			})
+			return
 		}
 		partyGuests, err := currentParty.GuestG().One()
 		if err != nil {
@@ -83,6 +88,93 @@ func (cr *Party) Get() gin.HandlerFunc {
 		if currentParty.CurrentTrack.Valid {
 			var track models.Track
 			err = currentParty.CurrentTrack.Unmarshal(&track)
+			if err == nil {
+				response.CurrentTrack = &track
+			}
+		}
+
+		c.JSON(http.StatusOK, models.Response{
+			Data: response,
+		})
+	}
+}
+
+// Join a party as a guest
+func (cr *Party) Join() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sesh := session.DefaultSession(c)
+
+		if session.IsLoggedIn(c) {
+			c.Error(e.BadRequest.WithDetail("Already authenticated"))
+			c.Abort()
+			return
+		}
+
+		origin := c.Request.Header.Get("Origin")
+		if strings.Compare(origin, "") == 0 {
+			c.Error(e.Forbidden.WithDetail("Missing CORS origin"))
+			c.Abort()
+			return
+		}
+		if !gin.IsDebugging() && !strings.Contains(origin, "chancesnow.me") {
+			c.Error(e.Forbidden)
+			c.Abort()
+			return
+		}
+
+		var joinParty struct {
+			RoomCode string `json:"room_code" binding:"required"`
+		}
+
+		if err := c.Bind(&joinParty); err != nil {
+			c.Error(e.BadRequest.WithDetail("Unexpected request body").CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		party, err := models.PartiesG(qm.Where("room_code=?", joinParty.RoomCode)).One()
+		if err != nil {
+			if err != sql.ErrNoRows {
+				c.Error(e.Internal.CausedBy(err))
+				c.Abort()
+				return
+			}
+
+			c.JSON(http.StatusNotFound, models.Response{
+				Data: gin.H{},
+			})
+			return
+		}
+		partyGuests, err := party.GuestG().One()
+		if err != nil {
+			if err != sql.ErrNoRows {
+				c.Error(e.Internal.CausedBy(err))
+				c.Abort()
+				return
+			}
+		}
+
+		guestToken := uuid.NewV4().String()
+		sesh.Set("GUEST", guestToken)
+		cr.Cache.Set(guestToken, cache.Expires(
+			time.Now().Add(time.Minute*time.Duration(30)),
+			gin.H{
+				"Origin": origin,
+			},
+		))
+		// TODO: Goroutine to clean expired tokens
+
+		response := publicParty{
+			Location: party.Location,
+			RoomCode: party.RoomCode,
+			Ended:    party.Ended,
+		}
+		if partyGuests != nil {
+			response.Guests = &partyGuests.Data
+		}
+		if party.CurrentTrack.Valid {
+			var track models.Track
+			err = party.CurrentTrack.Unmarshal(&track)
 			if err == nil {
 				response.CurrentTrack = &track
 			}
