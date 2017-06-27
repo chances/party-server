@@ -6,14 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var authDisabled = false
-
 // AuthRequired guards against unauthenticated sessions
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Check for JWT, if available, otherwise...
 
-		if !authDisabled && !gin.IsDebugging() && !session.IsLoggedIn(c) {
+		if !session.IsLoggedIn(c) {
 			c.Error(e.Unauthorized)
 			c.Abort()
 			return
@@ -21,9 +19,4 @@ func AuthRequired() gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-// SetAuthDisabled sets whether or not authentication is checked
-func SetAuthDisabled(disabled bool) {
-	authDisabled = disabled
 }
