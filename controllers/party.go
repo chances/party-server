@@ -46,7 +46,7 @@ type publicParty struct {
 	CurrentTrack *models.Track `json:"current_track,omitempty"`
 }
 
-// Get the curren't user's party
+// Get the current user's party
 func (cr *Party) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		currentUser := session.CurrentUser(c)
