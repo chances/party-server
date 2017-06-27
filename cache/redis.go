@@ -61,3 +61,17 @@ func (s *Store) redisDelete(key string) error {
 	_, err := c.Do("DEL", key)
 	return err
 }
+
+func (s *Store) redisDeleteKeys(keys []string) error {
+	c := s.pool.Get()
+	defer c.Close()
+
+	for _, key := range keys {
+		_, err := c.Do("DEL", key)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

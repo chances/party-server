@@ -134,3 +134,8 @@ func (s *Store) Set(key string, e Entry) error {
 func (s *Store) Delete(key string) error {
 	return s.redisDelete(key)
 }
+
+// DeleteKeys deletes all given keys
+func (s *Store) DeleteKeys(keys []string) error {
+	return s.redisDeleteKeys(keys)
+}

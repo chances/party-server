@@ -91,17 +91,14 @@ _Note: The Android client app authenticates with Spotify directly._
 
 ### JSON Web Tokens
 
+Apparently, JWTs are [terribly insecure](https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid), an may be unnecessary for Party...
+
 - [ ] Add JSON Web Token delivery
   - [ ] Store tokens in Redis
     - No persistence necessary, parties are ephemeral
   - [ ] Deliver token serialized as a [JWT](https://github.com/auth0/node-jsonwebtoken) (And from [Go](https://github.com/dgrijalva/jwt-go))
-  - [ ] Deliver token to authenticated sessions
-    - Supplements session cookie (Which is really only used for OAuth at this point)
-    - Deliver **_only_** to
-      - Authenticated Android client users, or
-      - Sessions on same root domain **_with_** CORS Origin validation
   - [ ] Deliver JWT with a _Party Access Token_ to pseudo-authenticated guests
-    - Those who have joined a party with valid party ID **and** over SSL
+    - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
   - [ ] Recurring job to clean expired tokens
     - Token expires after 30 minutes of disuse
   - [ ] Automatically refresh token via ping/pong
