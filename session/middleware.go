@@ -1,6 +1,10 @@
 package session
 
 import (
+	"errors"
+	"strings"
+	"time"
+
 	"github.com/chances/chances-party/cache"
 	"github.com/chances/chances-party/models"
 	"github.com/getsentry/raven-go"
@@ -24,7 +28,14 @@ func Middleware(store cache.Store) gin.HandlerFunc {
 			}
 		}
 
-		// TODO: Check for Party Access Token, if available, otherwise...
+		// Try to get the session's guest Party Access Token
+		currentGuestToken, err := s.Get("GUEST")
+		if err == nil {
+			err = validateGuestSession(currentGuestToken, c, store, s)
+			if err == nil {
+				c.Set("guest", currentGuestToken)
+			}
+		}
 
 		// If the session has a user, associate it with Sentry
 		if IsLoggedIn(c) {
@@ -79,6 +90,47 @@ func loadSession(c *gin.Context, store cache.Store) *Session {
 
 	flashes := loadFlashes(cookie, store)
 	return &Session{"cpSESSION", cookie, flashes, store}
+}
+
+// Validate the guest's session hasn't expired and this request's
+//  Origin matches the guest's originating origin
+func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Session) error {
+	// A guest's session ends when one of the following conditions are met:
+	//  - the guest's session is expired
+	//  - the guest's origin entry is nil, or
+	//  - this request is invalid
+	origin := c.Request.Header.Get("Origin")
+	guestEntry, err := store.Get(token)
+	if strings.Compare(origin, "") == 0 || err != nil {
+		s.Delete("GUEST")
+		if err == nil {
+			store.Delete(token)
+		}
+
+		return errors.New("Guest session is invalid")
+	}
+
+	var guestMetadata gin.H
+	guestMetadata = guestEntry.Value.(gin.H)
+	guestOrigin, originKeyExists := guestMetadata["Origin"]
+
+	if guestEntry.IsExpired() || !originKeyExists ||
+		strings.Compare(origin, guestOrigin.(string)) != 0 {
+		s.Delete("GUEST")
+		store.Delete(token)
+
+		return errors.New("Guest session is invalid")
+	}
+
+	// The guest session is valid, refresh the guest's cache entry
+	store.Set(token, cache.Expires(
+		time.Now().Add(time.Minute*time.Duration(30)),
+		gin.H{
+			"Origin": origin,
+		},
+	))
+
+	return nil
 }
 
 func loadFlashes(id string, store cache.Store) map[string]string {
