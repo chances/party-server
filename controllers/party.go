@@ -123,7 +123,9 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 
 		var joinParty struct {
-			RoomCode string `json:"room_code" binding:"required"`
+			Data struct {
+				RoomCode string `json:"room_code" binding:"required"`
+			} `json:"data" binding:"required"`
 		}
 
 		if err := c.Bind(&joinParty); err != nil {
@@ -132,7 +134,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 			return
 		}
 
-		party, err := models.PartiesG(qm.Where("room_code=?", joinParty.RoomCode)).One()
+		party, err := models.PartiesG(qm.Where("room_code=?", joinParty.Data.RoomCode)).One()
 		if err != nil {
 			if err != sql.ErrNoRows {
 				c.Error(e.Internal.CausedBy(err))
