@@ -18,3 +18,16 @@ func AuthRequired() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// GuestsOnly guards against unauthorized guest sessions
+func GuestsOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !session.IsGuest(c) {
+			c.Error(e.Unauthorized)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
