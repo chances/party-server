@@ -24,6 +24,8 @@ func Middleware(store cache.Store) gin.HandlerFunc {
 			}
 		}
 
+		// TODO: Check for Party Access Token, if available, otherwise...
+
 		// If the session has a user, associate it with Sentry
 		if IsLoggedIn(c) {
 			user := CurrentUser(c)
