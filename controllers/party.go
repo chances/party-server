@@ -157,6 +157,8 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 
 		guestToken := uuid.NewV4().String()
+
+		c.Set("guest", guestToken)
 		sesh.Set("GUEST", guestToken)
 		cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),

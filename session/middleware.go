@@ -57,6 +57,12 @@ func IsLoggedIn(c *gin.Context) bool {
 	return hasUser
 }
 
+// IsGuest checks if a user is authenticated as a guest to the session
+func IsGuest(c *gin.Context) bool {
+	_, hasGuest := c.Get("guest")
+	return hasGuest
+}
+
 // CurrentUser shortcut to get the current session's user
 func CurrentUser(c *gin.Context) *models.User {
 	return c.MustGet("user").(*models.User)
