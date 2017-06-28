@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -11,7 +10,6 @@ import (
 	e "github.com/chances/chances-party/errors"
 	"github.com/chances/chances-party/models"
 	"github.com/chances/chances-party/session"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/boil"
@@ -163,55 +161,14 @@ func (cr *Auth) Logout() gin.HandlerFunc {
 	}
 }
 
-// Guest authorizes a new guest user
-func (cr *Auth) Guest() gin.HandlerFunc {
+// GuestPing replies to a guest's ping request with "pong"
+func (cr *Auth) GuestPing() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token, err := cr.authGuest()
-		if err != nil {
-			c.Error(e.Unauthorized.WithDetail("Could not create JWT").CausedBy(err))
-			c.Abort()
-			return
-		}
+		// QUESTION: Should guest pinging return anything else?
+		// NOTE: This tiny amount of work keeps the request blazing fast...
 
 		c.JSON(http.StatusOK, models.Response{
-			Data: token,
+			Data: "pong",
 		})
 	}
-}
-
-func (cr *Auth) authGuest() (string, error) {
-	// TODO: Auth a guest session given a party "room" or after OAuth
-
-	jwtSessionID := uuid.NewV4().String()
-	// TODO: Store token ID is Redis with expiration
-	// TODO: Goroutine to clean expired JWTs
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id": jwtSessionID,
-	})
-
-	tokenString, err := token.SignedString(cr.jwtSigningKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
-}
-
-// ValidateJwt validates a given JWT token
-func (cr *Auth) ValidateJwt(tokenString string) (string, bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if token.Header["alg"] != jwt.SigningMethodHS256.Alg() {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-
-		return cr.jwtSigningKey, nil
-	})
-	if err != nil {
-		return "", false, err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["id"].(string), token.Valid, nil
-	}
-
-	return "", token.Valid, nil
 }

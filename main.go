@@ -44,7 +44,7 @@ func main() {
 		getenvOrFatal("SPOTIFY_APP_KEY"),
 		getenvOrFatal("SPOTIFY_APP_SECRET"),
 		getenvOrFatal("SPOTIFY_CALLBACK"),
-		getenvOrFatal("JWT_SECRET"),
+		getenvOrFatal("GUEST_SECRET"),
 	)
 	index := controllers.NewIndex()
 	party := controllers.NewParty()
@@ -97,7 +97,10 @@ func main() {
 		Use(m.AuthRequired()).
 		GET("", search.SearchTracks())
 
-	g.GET("/auth/guest", auth.Guest())
+	// Authentication routes
+	g.Group("/auth/ping").
+		Use(m.GuestsOnly()).
+		GET("", auth.GuestPing())
 
 	g.GET("/auth/login", auth.Login())
 	g.GET("/auth/callback", auth.SpotifyCallback())
