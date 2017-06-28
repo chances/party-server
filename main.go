@@ -68,11 +68,13 @@ func main() {
 	// Static files
 	g.Static("/css/", "./public")
 
+	// Templates
 	g.LoadHTMLGlob("views/*")
 
-	// Application routes
+	// === Application routes ===
 	g.GET("/", index.Get())
 
+	// Party routes
 	parties := g.Group("/party")
 	parties.Use(m.AuthRequired())
 	{
@@ -81,6 +83,7 @@ func main() {
 	}
 	g.POST("/party/join", party.Join())
 
+	// Playlist routes
 	playlist := g.Group("/playlist")
 	playlist.Use(m.AuthRequired())
 	{
@@ -88,6 +91,7 @@ func main() {
 		playlist.PATCH("", playlists.Patch())
 	}
 
+	// Search routes
 	g.Group("/search").
 		Use(m.AuthRequired()).
 		GET("", search.SearchTracks())
