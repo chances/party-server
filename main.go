@@ -37,6 +37,7 @@ func main() {
 	gob.Register(models.TrackArtist{})
 
 	s.SetCache(partyCache)
+	controllers.SetCache(partyCache)
 
 	// App controllers
 	auth := controllers.NewAuth(

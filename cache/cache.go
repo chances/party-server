@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/gin-gonic/gin"
 )
 
 // Store Party cache entries
@@ -52,6 +53,7 @@ func Forever(value interface{}) Entry {
 func NewStore(p *redis.Pool) Store {
 	gob.Register(map[string]string{})
 	gob.Register(Entry{})
+	gob.Register(gin.H{})
 	return Store{
 		pool: p,
 	}

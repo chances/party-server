@@ -156,16 +156,28 @@ func (cr *Party) Join() gin.HandlerFunc {
 			}
 		}
 
+		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
+
 		guestToken := uuid.NewV4().String()
 
 		c.Set("guest", guestToken)
-		sesh.Set("GUEST", guestToken)
-		cr.Cache.Set(guestToken, cache.Expires(
+		err = sesh.Set("GUEST", guestToken)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
 				"Origin": origin,
 			},
 		))
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 		// TODO: Goroutine to clean expired tokens
 
 		response := publicParty{
