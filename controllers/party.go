@@ -171,6 +171,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
 				"Origin": origin,
+				"Party":  party.ID,
 			},
 		))
 		if err != nil {

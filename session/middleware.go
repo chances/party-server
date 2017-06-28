@@ -123,11 +123,10 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 	}
 
 	// The guest session is valid, refresh the guest's cache entry
+	guestMetadata["Origin"] = origin
 	store.Set(token, cache.Expires(
 		time.Now().Add(time.Minute*time.Duration(30)),
-		gin.H{
-			"Origin": origin,
-		},
+		guestMetadata,
 	))
 
 	return nil
