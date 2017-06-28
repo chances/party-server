@@ -13,6 +13,7 @@ pids
 
 # Built binaries
 chances-party
+debug
 
 sqlboiler.toml
 
