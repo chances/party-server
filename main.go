@@ -104,7 +104,9 @@ func main() {
 
 	g.GET("/auth/login", auth.Login())
 	g.GET("/auth/callback", auth.SpotifyCallback())
-	g.GET("/auth/logout", auth.Logout())
+	g.Group("/auth/logout").
+		Use(m.AuthRequired()).
+		GET("", auth.Logout())
 
 	g.Run()
 }
