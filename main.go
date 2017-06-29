@@ -79,9 +79,12 @@ func main() {
 	parties := g.Group("/party")
 	parties.Use(m.AuthenticationRequired())
 	{
-		parties.GET("", party.Get())
 		parties.POST("/start", party.Start())
+		// parties.POST("/end", party.End())
 	}
+	g.Group("/party").
+		Use(m.AuthorizationRequired()).
+		GET("", party.Get())
 	g.POST("/party/join", party.Join())
 
 	// Playlist routes
