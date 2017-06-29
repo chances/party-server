@@ -11,7 +11,7 @@
 
 ## Security
 
-- [ ] Improve CSP support
+- [x] Improve CSP support
 - [x] Add HTTPOnly or SecureOnly support to cookies
 - [ ] Add CSRF token support?
 
@@ -101,9 +101,9 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Deliver a _Party Access Token_ to pseudo-authenticated guests
     - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
     - Store originating Origin and validate subsequent requests given the request's _Party Access Token_
-  - [ ] Recurring job to expire and clean expired tokens
+  - [ ] Recurring job to clean expired tokens
     - Party access tokens expire after 30 minutes of disuse
-  - [ ] Automatically refresh token expiration time via ping/pong
+  - [x] Automatically refresh token expiration time via ping/pong
 
 ### Server Events
 
@@ -127,8 +127,8 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] End (Stop/Quit?)
   - [x] Get current party
   - [ ] Join a party
-    - Via _pseudo-authenticated_ room code, delivering JWT, or
-    - Check-In via OAuth provider
+    - [x] Via _authorized_ room code
+    - [ ] Check-In via OAuth provider
     - [ ] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
@@ -145,18 +145,18 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 ### Party Guest Features
 
-- [ ] Add _Join Party_ endpoint
+- [x] Add _Join Party_ endpoint
   - With Party foreign key
   - Should there be a party list? **No**
-  - User facing "room" code for guests to enter (Like Jackbox. _456,976 combinations with 4 letters_)
+  - User facing "room" code for guests to enter (Like Jackbox. _456,976 combinations with 4 letters_, but I'm using any alpha-numeric combination of four characters, _13,845,841 possible combinations_)
   - Facebook integration (_Future_)
 - [ ] Contribution
   - [ ] Add (suggest) a song
-    - [ ] Limit to a maximum limit per timeframe (hour?)
+    - [ ] Limit maximum number of suggestions per timeframe (hour?)
   - [ ] Suggest that a song should be skipped
     - [ ] Require a minimum number of votes (5? fraction of party attendants?)
-- [ ] Join a party
-  - _unauthenticated_ ⇒ _pseudo-authenticated_ (Via JWT)
+- [x] Join a party given its room code
+  - _unauthenticated_ ⇒ _pseudo-authenticated_ (Via room code authorization)
 - [ ] Check-In to a Party (_authenticated_)
   - [ ] OAuth2 third-party authentication schemes
     - [ ] Facebook
