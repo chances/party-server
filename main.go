@@ -77,7 +77,7 @@ func main() {
 
 	// Party routes
 	parties := g.Group("/party")
-	parties.Use(m.AuthRequired())
+	parties.Use(m.AuthenticationRequired())
 	{
 		parties.GET("", party.Get())
 		parties.POST("/start", party.Start())
@@ -86,7 +86,7 @@ func main() {
 
 	// Playlist routes
 	playlist := g.Group("/playlist")
-	playlist.Use(m.AuthRequired())
+	playlist.Use(m.AuthenticationRequired())
 	{
 		playlist.GET("", playlists.Get())
 		playlist.PATCH("", playlists.Patch())
@@ -94,7 +94,7 @@ func main() {
 
 	// Search routes
 	g.Group("/search").
-		Use(m.AuthRequired()).
+		Use(m.AuthorizationRequired()).
 		GET("", search.SearchTracks())
 
 	// Authentication routes
@@ -105,7 +105,7 @@ func main() {
 	g.GET("/auth/login", auth.Login())
 	g.GET("/auth/callback", auth.SpotifyCallback())
 	g.Group("/auth/logout").
-		Use(m.AuthRequired()).
+		Use(m.AuthenticationRequired()).
 		GET("", auth.Logout())
 
 	g.Run()

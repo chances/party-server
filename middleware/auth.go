@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthRequired guards against unauthenticated sessions
-func AuthRequired() gin.HandlerFunc {
+// AuthenticationRequired guards against unauthenticated sessions
+func AuthenticationRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !session.IsLoggedIn(c) {
 			c.Error(e.Unauthorized)
@@ -23,6 +23,21 @@ func AuthRequired() gin.HandlerFunc {
 func GuestsOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !session.IsGuest(c) {
+			c.Error(e.Unauthorized)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// AuthorizationRequired guards against any unauthorized session
+//
+// A user must either be a guest or authenticated via OAuth
+func AuthorizationRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !session.IsLoggedIn(c) || !session.IsGuest(c) {
 			c.Error(e.Unauthorized)
 			c.Abort()
 			return
