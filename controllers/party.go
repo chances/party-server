@@ -170,6 +170,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
+				"Token":  guestToken,
 				"Origin": origin,
 				"Party":  party.ID,
 			},
