@@ -31,9 +31,9 @@ func Middleware(store cache.Store) gin.HandlerFunc {
 		// Try to get the session's guest Party Access Token
 		currentGuestToken, err := s.Get("GUEST")
 		if err == nil {
-			err = validateGuestSession(currentGuestToken, c, store, s)
+			guestMetadata, err := validateGuestSession(currentGuestToken, c, store, s)
 			if err == nil {
-				c.Set("guest", currentGuestToken)
+				c.Set("guest", guestMetadata)
 			}
 		}
 
@@ -79,6 +79,11 @@ func CurrentUser(c *gin.Context) *models.User {
 	return c.MustGet("user").(*models.User)
 }
 
+// CurrentGuest shortcut to get the current session's guest
+func CurrentGuest(c *gin.Context) *gin.H {
+	return c.MustGet("guest").(*gin.H)
+}
+
 func loadSession(c *gin.Context, store cache.Store) *Session {
 	cookie, err := c.Cookie("cpSESSION")
 
@@ -94,7 +99,7 @@ func loadSession(c *gin.Context, store cache.Store) *Session {
 
 // Validate the guest's session hasn't expired and this request's
 //  Origin matches the guest's originating origin
-func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Session) error {
+func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Session) (*gin.H, error) {
 	// A guest's session ends when one of the following conditions are met:
 	//  - the guest's session is expired
 	//  - the guest's origin entry is nil, or
@@ -107,7 +112,7 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 			store.Delete(token)
 		}
 
-		return errors.New("Guest session is invalid")
+		return nil, errors.New("Guest session is invalid")
 	}
 
 	var guestMetadata gin.H
@@ -119,7 +124,7 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 		s.Delete("GUEST")
 		store.Delete(token)
 
-		return errors.New("Guest session is invalid")
+		return nil, errors.New("Guest session is invalid")
 	}
 
 	// The guest session is valid, refresh the guest's cache entry
@@ -129,7 +134,7 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 		guestMetadata,
 	))
 
-	return nil
+	return &guestMetadata, nil
 }
 
 func loadFlashes(id string, store cache.Store) map[string]string {
