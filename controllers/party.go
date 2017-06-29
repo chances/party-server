@@ -53,9 +53,16 @@ type publicParty struct {
 // Get the current user's party
 func (cr *Party) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currentUser := session.CurrentUser(c)
+		var party *models.Party
+		var err error
 
-		currentParty, err := currentUser.PartyG().One()
+		if session.IsGuest(c) {
+			currentGuest := *session.CurrentGuest(c)
+			party, err = models.FindPartyG(currentGuest["Party"].(int))
+		} else if session.IsLoggedIn(c) {
+			currentUser := session.CurrentUser(c)
+			party, err = currentUser.PartyG().One()
+		}
 		if err != nil {
 			if err != sql.ErrNoRows {
 				c.Error(e.Internal.CausedBy(err))
@@ -68,6 +75,9 @@ func (cr *Party) Get() gin.HandlerFunc {
 			})
 			return
 		}
+
+		currentParty := *party
+
 		partyGuests, err := currentParty.GuestG().One()
 		if err != nil {
 			if err != sql.ErrNoRows {
