@@ -37,7 +37,7 @@ func GuestsOnly() gin.HandlerFunc {
 // A user must either be a guest or authenticated via OAuth
 func AuthorizationRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !session.IsLoggedIn(c) || !session.IsGuest(c) {
+		if (!session.IsLoggedIn(c)) && (!session.IsGuest(c)) {
 			c.Error(e.Unauthorized)
 			c.Abort()
 			return
