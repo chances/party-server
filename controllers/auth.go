@@ -167,8 +167,10 @@ func (cr *Auth) GuestPing() gin.HandlerFunc {
 		// QUESTION: Should guest pinging return anything else?
 		// NOTE: This tiny amount of work keeps the request blazing fast...
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: "pong",
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			"pong", "pong",
+			cr.RequestURI(c),
+			"pong",
+		))
 	}
 }

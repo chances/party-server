@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/chances/chances-party/cache"
 	s "github.com/chances/chances-party/spotify"
 	"github.com/gin-gonic/gin"
@@ -37,6 +39,15 @@ func (cr *Controller) Setup() {
 	cr.Cache = partyCache
 	cr.SpotifyAuth = auth
 	cr.SpotifyDefaultAuth = defaultAuth
+}
+
+// RequestURI gets the full request URI given a Gin request context
+func (cr *Controller) RequestURI(c *gin.Context) string {
+	if c.Request.URL.IsAbs() {
+		return c.Request.URL.RequestURI()
+	}
+
+	return fmt.Sprintf("http://%s%s", c.Request.Host, c.Request.RequestURI)
 }
 
 // ClientFromSession gets a Spotify client from the session's user

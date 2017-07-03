@@ -35,9 +35,8 @@ func (cr *Playlists) Get() gin.HandlerFunc {
 		currentUser := session.CurrentUser(c)
 
 		if !currentUser.SpotifyPlaylistID.Valid {
-			c.JSON(http.StatusNotFound, models.Response{
-				Data: gin.H{},
-			})
+			c.JSON(http.StatusNotFound, models.EmptyRespose)
+			return
 		}
 
 		spotifyClient, err := cr.ClientFromSession(c)
@@ -54,9 +53,11 @@ func (cr *Playlists) Get() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: currentPlaylist,
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			currentPlaylist.Playlist.ID, "playlist-full",
+			cr.RequestURI(c),
+			currentPlaylist,
+		))
 	}
 }
 
@@ -102,9 +103,11 @@ func (cr *Playlists) Patch() gin.HandlerFunc {
 					return
 				}
 
-				c.JSON(http.StatusOK, models.Response{
-					Data: playlist,
-				})
+				c.JSON(http.StatusOK, models.NewResponse(
+					playlist.ID, "playlist",
+					cr.RequestURI(c),
+					playlist,
+				))
 				return
 			}
 		}

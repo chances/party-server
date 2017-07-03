@@ -70,9 +70,7 @@ func (cr *Party) Get() gin.HandlerFunc {
 				return
 			}
 
-			c.JSON(http.StatusNotFound, models.Response{
-				Data: gin.H{},
-			})
+			c.JSON(http.StatusNotFound, models.EmptyRespose)
 			return
 		}
 
@@ -103,9 +101,11 @@ func (cr *Party) Get() gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: response,
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			response.RoomCode, "party",
+			cr.RequestURI(c),
+			response,
+		))
 	}
 }
 
@@ -152,9 +152,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 				return
 			}
 
-			c.JSON(http.StatusNotFound, models.Response{
-				Data: gin.H{},
-			})
+			c.JSON(http.StatusNotFound, models.EmptyRespose)
 			return
 		}
 		partyGuests, err := party.GuestG().One()
@@ -208,9 +206,11 @@ func (cr *Party) Join() gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: response,
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			response.RoomCode, "party",
+			cr.RequestURI(c),
+			response,
+		))
 	}
 }
 
@@ -318,9 +318,11 @@ func (cr *Party) Start() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: party,
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			party.RoomCode, "party",
+			cr.RequestURI(c),
+			party,
+		))
 	}
 }
 
