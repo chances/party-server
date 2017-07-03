@@ -65,36 +65,7 @@ func (cr *Party) Get() gin.HandlerFunc {
 			return
 		}
 
-		partyGuests, err := currentParty.GuestG().One()
-		if err != nil {
-			if err != sql.ErrNoRows {
-				c.Error(e.Internal.CausedBy(err))
-				c.Abort()
-				return
-			}
-		}
-
-		response := publicParty{
-			Location: currentParty.Location,
-			RoomCode: currentParty.RoomCode,
-			Ended:    currentParty.Ended,
-		}
-		if partyGuests != nil {
-			response.Guests = &partyGuests.Data
-		}
-		if currentParty.CurrentTrack.Valid {
-			var track models.Track
-			err = currentParty.CurrentTrack.Unmarshal(&track)
-			if err == nil {
-				response.CurrentTrack = &track
-			}
-		}
-
-		c.JSON(http.StatusOK, models.NewResponse(
-			response.RoomCode, "party",
-			cr.RequestURI(c),
-			response,
-		))
+		cr.augmentAndRespondWithParty(c, currentParty)
 	}
 }
 
@@ -102,12 +73,6 @@ func (cr *Party) Get() gin.HandlerFunc {
 func (cr *Party) Join() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sesh := session.DefaultSession(c)
-
-		if session.IsLoggedIn(c) {
-			c.Error(e.BadRequest.WithDetail("Already authenticated"))
-			c.Abort()
-			return
-		}
 
 		origin := c.Request.Header.Get("Origin")
 		if strings.Compare(origin, "") == 0 {
@@ -144,13 +109,12 @@ func (cr *Party) Join() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, models.EmptyRespose)
 			return
 		}
-		partyGuests, err := party.GuestG().One()
-		if err != nil {
-			if err != sql.ErrNoRows {
-				c.Error(e.Internal.CausedBy(err))
-				c.Abort()
-				return
-			}
+
+		// If the user is fully authenticated skip guest initialization and
+		//  respond with augmented party
+		if session.IsLoggedIn(c) {
+			cr.augmentAndRespondWithParty(c, party)
+			return
 		}
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
@@ -179,28 +143,41 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 		// TODO: Goroutine to clean expired tokens
 
-		response := publicParty{
-			Location: party.Location,
-			RoomCode: party.RoomCode,
-			Ended:    party.Ended,
-		}
-		if partyGuests != nil {
-			response.Guests = &partyGuests.Data
-		}
-		if party.CurrentTrack.Valid {
-			var track models.Track
-			err = party.CurrentTrack.Unmarshal(&track)
-			if err == nil {
-				response.CurrentTrack = &track
-			}
-		}
-
-		c.JSON(http.StatusOK, models.NewResponse(
-			response.RoomCode, "party",
-			cr.RequestURI(c),
-			response,
-		))
+		cr.augmentAndRespondWithParty(c, party)
 	}
+}
+
+func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party) {
+	partyGuests, err := party.GuestG().One()
+	if err != nil {
+		if err != sql.ErrNoRows {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+	}
+
+	response := publicParty{
+		Location: party.Location,
+		RoomCode: party.RoomCode,
+		Ended:    party.Ended,
+	}
+	if partyGuests != nil {
+		response.Guests = &partyGuests.Data
+	}
+	if party.CurrentTrack.Valid {
+		var track models.Track
+		err = party.CurrentTrack.Unmarshal(&track)
+		if err == nil {
+			response.CurrentTrack = &track
+		}
+	}
+
+	c.JSON(http.StatusOK, models.NewResponse(
+		response.RoomCode, "party",
+		cr.RequestURI(c),
+		response,
+	))
 }
 
 // Start a new party for the current user
