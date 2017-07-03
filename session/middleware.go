@@ -84,6 +84,25 @@ func CurrentGuest(c *gin.Context) *gin.H {
 	return c.MustGet("guest").(*gin.H)
 }
 
+// CurrentParty shortcut to get the current session's party
+func CurrentParty(c *gin.Context) (*models.Party, error) {
+	var party *models.Party
+	var err error
+
+	if IsGuest(c) {
+		currentGuest := *CurrentGuest(c)
+		party, err = models.FindPartyG(currentGuest["Party"].(int))
+	} else if IsLoggedIn(c) {
+		currentUser := CurrentUser(c)
+		party, err = currentUser.PartyG().One()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return party, nil
+}
+
 func loadSession(c *gin.Context, store cache.Store) *Session {
 	cookie, err := c.Cookie("cpSESSION")
 
