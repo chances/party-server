@@ -1,8 +1,8 @@
 SOURCES := $(shell find . -name '*.go')
 
-all: chances-party
+all: party-server
 
-chances-party: $(SOURCES)
+party-server: $(SOURCES)
 	go get -v ./...
 	go build
 

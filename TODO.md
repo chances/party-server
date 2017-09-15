@@ -17,17 +17,17 @@
 
 ## Parity with original JS prototype
 
-- [x] Parity with [index (unauthenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
+- [x] Parity with [index (unauthenticated)](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
 - [x] Spotify OAuth2 integration
-- [x] Parity with [auth routes](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
-- [x] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
+- [x] Parity with [auth routes](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
+- [x] Parity with [index (authenticated)](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
   - [x] Get user data
   - [x] Get user's own playlists
   - [x] Render user data
   - [x] Render user playlists
   - [x] Log Out
-- [x] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
-- [x] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
+- [x] Parity with [playlist endpoint](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
+- [x] Parity with [search endpoint](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
 
 _Note: The Android client app authenticates with Spotify directly._
 

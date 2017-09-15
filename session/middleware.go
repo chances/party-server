@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chances/chances-party/cache"
-	"github.com/chances/chances-party/models"
+	"github.com/chances/party-server/cache"
+	"github.com/chances/party-server/models"
 	"github.com/getsentry/raven-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/chances/chances-party/cache"
-	"github.com/chances/chances-party/session"
+	"github.com/chances/party-server/cache"
+	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2"

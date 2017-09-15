@@ -4,14 +4,14 @@ import (
 	"errors"
 	"log"
 
-	"github.com/chances/chances-party/cache"
+	"github.com/chances/party-server/cache"
 )
 
 const (
-	sessionDefaultKey = "github.com/chances/chances-party/session"
+	sessionDefaultKey = "github.com/chances/party-server/session"
 )
 
-// Session is a hella simple string value session store for chances-party
+// Session is a hella simple string value session store for party-server
 type Session struct {
 	name    string
 	ID      string

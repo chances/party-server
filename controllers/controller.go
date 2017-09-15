@@ -3,8 +3,8 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/chances/chances-party/cache"
-	s "github.com/chances/chances-party/spotify"
+	"github.com/chances/party-server/cache"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
 	"golang.org/x/oauth2/clientcredentials"

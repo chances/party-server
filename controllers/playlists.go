@@ -4,10 +4,10 @@ import (
 	"encoding/gob"
 	"net/http"
 
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/models"
-	"github.com/chances/chances-party/session"
-	s "github.com/chances/chances-party/spotify"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/models"
+	"github.com/chances/party-server/session"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/nullbio/null.v6"
 )

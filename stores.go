@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/chances/chances-party/cache"
+	"github.com/chances/party-server/cache"
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/lib/pq"
 	"github.com/vattle/sqlboiler/boil"

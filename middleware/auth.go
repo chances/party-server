@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/session"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
 )
 

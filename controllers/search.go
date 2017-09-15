@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/models"
-	s "github.com/chances/chances-party/spotify"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/models"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
 )

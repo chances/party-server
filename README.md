@@ -1,6 +1,6 @@
 # [Chance's Party App](http://chancesnow.me/party)
 
-[![Build Status](https://travis-ci.org/chances/chances-party.svg)](https://travis-ci.org/chances/chances-party)
+[![Build Status](https://travis-ci.org/chances/party-server.svg)](https://travis-ci.org/chances/party-server)
 
 A party web app to facilitate guest interaction at your parties.
 

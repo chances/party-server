@@ -12,11 +12,11 @@ import (
 
 	null "gopkg.in/nullbio/null.v6"
 
-	"github.com/chances/chances-party/cache"
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/models"
-	"github.com/chances/chances-party/session"
-	s "github.com/chances/chances-party/spotify"
+	"github.com/chances/party-server/cache"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/models"
+	"github.com/chances/party-server/session"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/queries/qm"

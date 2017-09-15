@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/chances/chances-party/session"
+	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
 )
 
