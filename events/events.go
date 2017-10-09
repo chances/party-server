@@ -13,20 +13,16 @@ var heartbeatTickers = make(map[*chan interface{}]*time.Ticker)
 func Listen(channel string) chan interface{} {
 	listener := make(chan interface{})
 	broadcaster := Event(channel)
-	// Send heartbeat messages to listeners in production
-	if !gin.IsDebugging() {
-    heartbeat(listener, broadcaster)
-  }
   broadcaster.Register(listener)
+	// Send heartbeat messages to listeners in production
+	heartbeat(listener, broadcaster)
 	return listener
 }
 
 // StopListening to a broadcast channel
 func StopListening(channel string, listener chan interface{}) {
 	broadcaster := Event(channel)
-  if !gin.IsDebugging() {
-    heartbeat(listener, broadcaster).Stop()
-  }
+  heartbeat(listener, broadcaster).Stop()
 	broadcaster.Unregister(listener)
 	close(listener)
 }
