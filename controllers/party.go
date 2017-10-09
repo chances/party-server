@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	pseudoRand "math/rand"
 	"net/http"
@@ -65,7 +66,14 @@ func (cr *Party) Get() gin.HandlerFunc {
 			return
 		}
 
-		cr.augmentAndRespondWithParty(c, currentParty)
+    guests, err := currentParty.Guests()
+    if err != nil {
+      c.Error(e.Internal.CausedBy(err))
+      c.Abort()
+      return
+    }
+
+		cr.augmentAndRespondWithParty(c, currentParty, guests)
 	}
 }
 
@@ -120,7 +128,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 		// If the user is fully authenticated skip guest initialization and
 		//  respond with augmented party
 		if session.IsLoggedIn(c) {
-			cr.augmentAndRespondWithParty(c, party)
+			cr.augmentAndRespondWithParty(c, party, guests)
 			return
 		}
 
@@ -161,31 +169,24 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 		// TODO: Goroutine to clean expired tokens
 
-		cr.augmentAndRespondWithParty(c, party)
+		cr.augmentAndRespondWithParty(c, party, guests)
 	}
 }
 
-func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party) {
-	partyGuests, err := party.GuestG().One()
-	if err != nil {
-		if err != sql.ErrNoRows {
-			c.Error(e.Internal.CausedBy(err))
-			c.Abort()
-			return
-		}
-	}
-
+func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party, guests []models.Guest) {
 	response := publicParty{
 		Location: party.Location,
 		RoomCode: party.RoomCode,
 		Ended:    party.Ended,
 	}
-	if partyGuests != nil {
-		response.Guests = &partyGuests.Data
+	if len(guests) > 0 {
+	  guestsJsonRaw, _ := json.Marshal(guests)
+	  guestsJson := types.JSON(guestsJsonRaw)
+		response.Guests = &guestsJson
 	}
 	if party.CurrentTrack.Valid {
 		var track models.Track
-		err = party.CurrentTrack.Unmarshal(&track)
+		err := party.CurrentTrack.Unmarshal(&track)
 		if err == nil {
 			response.CurrentTrack = &track
 		}
