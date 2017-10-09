@@ -67,12 +67,12 @@ func (cr *Party) Get() gin.HandlerFunc {
 			return
 		}
 
-    guests, err := currentParty.Guests()
-    if err != nil {
-      c.Error(e.Internal.CausedBy(err))
-      c.Abort()
-      return
-    }
+		guests, err := currentParty.Guests()
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 
 		cr.augmentAndRespondWithParty(c, currentParty, guests)
 	}
@@ -119,12 +119,12 @@ func (cr *Party) Join() gin.HandlerFunc {
 			return
 		}
 
-    guests, err := party.Guests()
-    if err != nil {
-      c.Error(e.Internal.CausedBy(err))
-      c.Abort()
-      return
-    }
+		guests, err := party.Guests()
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 
 		// If the user is fully authenticated skip guest initialization and
 		//  respond with augmented party
@@ -135,15 +135,15 @@ func (cr *Party) Join() gin.HandlerFunc {
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
 
-    // TODO: Return early (bad request?) if already joined
+		// TODO: Return early (bad request?) if already joined
 
 		guests = append(guests, models.NewGuest(""))
-    err = party.UpdateGuestList(guests)
-    if err != nil {
-      c.Error(e.Internal.CausedBy(err))
-      c.Abort()
-      return
-    }
+		err = party.UpdateGuestList(guests)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 
 		guestToken := uuid.NewV4().String()
 
@@ -157,10 +157,10 @@ func (cr *Party) Join() gin.HandlerFunc {
 		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
-				"Token":      guestToken,
-				"Origin":     origin,
-				"Party":      party.ID,
-				"Index":      len(guests) - 1,
+				"Token":  guestToken,
+				"Origin": origin,
+				"Party":  party.ID,
+				"Index":  len(guests) - 1,
 			},
 		))
 		if err != nil {
@@ -181,8 +181,8 @@ func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party,
 		Ended:    party.Ended,
 	}
 	if len(guests) > 0 {
-	  guestsJsonRaw, _ := json.Marshal(guests)
-	  guestsJson := types.JSON(guestsJsonRaw)
+		guestsJsonRaw, _ := json.Marshal(guests)
+		guestsJson := types.JSON(guestsJsonRaw)
 		response.Guests = &guestsJson
 	}
 	if party.CurrentTrack.Valid {

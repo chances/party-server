@@ -1,7 +1,7 @@
 package main
 
 import (
-  "database/sql"
+	"database/sql"
 	"log"
 	"time"
 
@@ -35,10 +35,10 @@ func initDatabase() *sql.DB {
 	if err != nil {
 		log.Fatalf("Could not connect to database: %s\n", err)
 	}
-  err = newDb.Ping()
-  if err != nil {
-    log.Fatalf("Could not ping database: %s\n", err)
-  }
+	err = newDb.Ping()
+	if err != nil {
+		log.Fatalf("Could not ping database: %s\n", err)
+	}
 
 	newDb.SetMaxIdleConns(3)
 	newDb.SetMaxOpenConns(10)
