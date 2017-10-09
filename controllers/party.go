@@ -15,6 +15,7 @@ import (
 
 	"github.com/chances/party-server/cache"
 	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/events"
 	"github.com/chances/party-server/models"
 	"github.com/chances/party-server/session"
 	s "github.com/chances/party-server/spotify"
@@ -191,6 +192,9 @@ func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party,
 			response.CurrentTrack = &track
 		}
 	}
+
+	partyJson, _ := json.Marshal(response)
+	events.Event(party.RoomCode + "party").Submit(string(partyJson))
 
 	c.JSON(http.StatusOK, models.NewResponse(
 		response.RoomCode, "party",

@@ -50,6 +50,7 @@ func main() {
 	party := controllers.NewParty()
 	playlists := controllers.NewPlaylists()
 	search := controllers.NewSearch()
+	events := controllers.NewEvents()
 
 	// === Initialize Gin ===
 	g := gin.New()
@@ -99,6 +100,13 @@ func main() {
 	g.Group("/search").
 		Use(m.AuthorizationRequired()).
 		GET("", search.SearchTracks())
+
+  // Events routes
+  event := g.Group("/events")
+  event.Use(m.AuthorizationRequired())
+  {
+    event.GET("/party", events.Stream("party"))
+  }
 
 	// Authentication routes
 	g.Group("/auth/ping").
