@@ -27,7 +27,7 @@ func (cr *Events) Stream(ch string) gin.HandlerFunc {
 	return func(c *gin.Context) {
     currentParty, err := session.CurrentParty(c)
     if err != nil {
-      c.Error(e.BadRequest)
+      c.Error(e.BadRequest.WithDetail("User has not joined a party"))
       c.Abort()
     }
 
