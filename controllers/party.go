@@ -110,6 +110,13 @@ func (cr *Party) Join() gin.HandlerFunc {
 			return
 		}
 
+    guests, err := party.Guests()
+    if err != nil {
+      c.Error(e.Internal.CausedBy(err))
+      c.Abort()
+      return
+    }
+
 		// If the user is fully authenticated skip guest initialization and
 		//  respond with augmented party
 		if session.IsLoggedIn(c) {
@@ -118,6 +125,16 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
+
+    // TODO: Return early (bad request?) if already joined
+
+		guests = append(guests, models.NewGuest(""))
+    err = party.UpdateGuestList(guests)
+    if err != nil {
+      c.Error(e.Internal.CausedBy(err))
+      c.Abort()
+      return
+    }
 
 		guestToken := uuid.NewV4().String()
 
@@ -131,9 +148,10 @@ func (cr *Party) Join() gin.HandlerFunc {
 		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
-				"Token":  guestToken,
-				"Origin": origin,
-				"Party":  party.ID,
+				"Token":      guestToken,
+				"Origin":     origin,
+				"Party":      party.ID,
+				"Index":      len(guests) - 1,
 			},
 		))
 		if err != nil {
