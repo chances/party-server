@@ -81,7 +81,7 @@ func (cr *Party) Get() gin.HandlerFunc {
 // Join a party as a guest
 func (cr *Party) Join() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sesh := session.DefaultSession(c)
+	  sesh := session.DefaultSession(c)
 
 		origin := c.Request.Header.Get("Origin")
 		if strings.Compare(origin, "") == 0 {
@@ -129,13 +129,30 @@ func (cr *Party) Join() gin.HandlerFunc {
 		// If the user is fully authenticated skip guest initialization and
 		//  respond with augmented party
 		if session.IsLoggedIn(c) {
+		  // TODO: Make sure this auth'd user started _this_ party
 			cr.augmentAndRespondWithParty(c, party, guests)
 			return
 		}
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
 
-		// TODO: Return early (bad request?) if already joined
+		// It is a bad request to try to join a party the guest has already joined
+    // If the user is already a guest and they've joined _this_ party then
+    //  respond with augmented party
+    //
+    // Otherwise it is a bad request if they are a guest and have NOT joined
+    //  _this_ party
+    if session.IsGuest(c) {
+      guest := *session.CurrentGuest(c)
+      if guest["Party"] == party.ID {
+        cr.augmentAndRespondWithParty(c, party, guests)
+        return
+      } else {
+        c.Error(e.BadRequest.WithDetail("Already joined a party"))
+        c.Abort()
+        return
+      }
+    }
 
 		guests = append(guests, models.NewGuest(""))
 		err = party.UpdateGuestList(guests)
