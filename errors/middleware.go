@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// HandleErrors returns Gin midleware that collates and reports reported errors
+// HandleErrors returns Gin middleware that collates and reports reported errors
 func HandleErrors() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next() // Run through all handlers
