@@ -7,6 +7,8 @@ import (
 	"github.com/chances/party-server/events"
 	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
+  "strings"
+  "fmt"
 )
 
 // Events controller
@@ -37,8 +39,20 @@ func (cr *Events) Stream(ch string) gin.HandlerFunc {
 		defer events.StopListening(channel, listener)
 
 		c.Stream(func(w io.Writer) bool {
-			c.SSEvent("message", <-listener)
+		  message, _ := (<-listener).(string)
+		  if message == "heartbeat" {
+		    sseComment(c, message)
+		    return true
+      }
+
+      // TODO: Provide some way to parameterize the event type? (name param, here)
+
+			c.SSEvent(ch, message)
 			return true
 		})
 	}
+}
+
+func sseComment(c *gin.Context, comment string) {
+  c.Writer.WriteString(fmt.Sprintf(":%s\n", comment))
 }
