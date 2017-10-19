@@ -8,7 +8,6 @@ import (
 	"fmt"
 	pseudoRand "math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	null "gopkg.in/nullbio/null.v6"
@@ -83,19 +82,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 	return func(c *gin.Context) {
 	  sesh := session.DefaultSession(c)
 
-		origin := c.Request.Header.Get("Origin")
-		if strings.Compare(origin, "") == 0 {
-			c.Error(e.Forbidden.WithDetail("Missing CORS origin"))
-			c.Abort()
-			return
-		}
-		if !gin.IsDebugging() && !strings.Contains(origin, "chancesnow.me") {
-			c.Error(e.Forbidden)
-			c.Abort()
-			return
-		}
-
-		var joinParty struct {
+	  var joinParty struct {
 			Data struct {
 				RoomCode string `json:"room_code" binding:"required"`
 			} `json:"data" binding:"required"`
@@ -175,7 +162,6 @@ func (cr *Party) Join() gin.HandlerFunc {
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
 				"Token":  guestToken,
-				"Origin": origin,
 				"Party":  party.ID,
 				"Index":  len(guests) - 1,
 			},
