@@ -185,7 +185,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// TODO: Goroutine to clean expired tokens
+		// TODO: Goroutine to clean expired tokens (also removes guest from party)
 
 		cr.augmentAndRespondWithParty(c, party, guests)
 	}
