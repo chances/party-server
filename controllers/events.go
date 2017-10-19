@@ -2,13 +2,12 @@ package controllers
 
 import (
 	"io"
+  "fmt"
 
 	e "github.com/chances/party-server/errors"
 	"github.com/chances/party-server/events"
 	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
-  "strings"
-  "fmt"
 )
 
 // Events controller
