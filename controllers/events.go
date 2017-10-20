@@ -53,5 +53,7 @@ func (cr *Events) Stream(ch string) gin.HandlerFunc {
 }
 
 func sseComment(c *gin.Context, comment string) {
+  header := c.Writer.Header()
+  header["Content-Type"] = []string{"text/event-stream"}
   c.Writer.WriteString(fmt.Sprintf(":%s\n", comment))
 }
