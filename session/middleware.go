@@ -2,7 +2,6 @@ package session
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/chances/party-server/cache"
@@ -125,7 +124,7 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 	//  - this request is invalid
 	origin := c.Request.Header.Get("Origin")
 	guestEntry, err := store.Get(token)
-	if strings.Compare(origin, "") == 0 || err != nil {
+	if origin == "" || err != nil {
 		s.Delete("GUEST")
 		if err == nil {
 			store.Delete(token)
@@ -139,8 +138,8 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 	guestOrigin, originKeyExists := guestMetadata["Origin"]
 
 	if guestEntry.IsExpired() || !originKeyExists ||
-		strings.Compare(origin, guestOrigin.(string)) != 0 {
-		s.Delete("GUEST")
+		origin == guestOrigin.(string) {
+    s.Delete("GUEST")
 		store.Delete(token)
 
 		return nil, errors.New("Guest session is invalid")
