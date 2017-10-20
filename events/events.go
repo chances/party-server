@@ -53,12 +53,14 @@ func heartbeat(listener chan interface{}, broadcaster broadcast.Broadcaster) *ti
 	//  55 second rolling request timeout window open
 	ticker, ok := heartbeatTickers[&listener]
 	if !ok {
-		ticker = time.NewTicker(time.Second * 40)
+		ticker = time.NewTicker(time.Second * 30)
 		heartbeatTickers[&listener] = ticker
 
-		go func() {
-			broadcaster.Submit("heartbeat")
-			<-ticker.C
+    go func() {
+      broadcaster.Submit("heartbeat")
+      for range ticker.C {
+        broadcaster.Submit("heartbeat")
+      }
 		}()
 	}
 	return ticker
