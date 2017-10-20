@@ -138,7 +138,7 @@ func validateGuestSession(token string, c *gin.Context, store cache.Store, s *Se
 	guestOrigin, originKeyExists := guestMetadata["Origin"]
 
 	if guestEntry.IsExpired() || !originKeyExists ||
-		origin == guestOrigin.(string) {
+		origin != guestOrigin.(string) {
     s.Delete("GUEST")
 		store.Delete(token)
 

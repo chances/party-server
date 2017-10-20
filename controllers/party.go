@@ -141,6 +141,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 			}
 		}
 
+		origin := c.Request.Header.Get("Origin")
 		guestToken := uuid.NewV4().String()
 
 		guests = append(guests, models.NewGuest("", guestToken))
@@ -161,8 +162,9 @@ func (cr *Party) Join() gin.HandlerFunc {
 		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
-				"Token": guestToken,
-				"Party": party.ID,
+				"Origin": origin,
+				"Token":  guestToken,
+				"Party":  party.ID,
 			},
 		))
 		if err != nil {
