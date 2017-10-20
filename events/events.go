@@ -40,7 +40,7 @@ func DeleteBroadcast(channel string) {
 func Event(channel string) broadcast.Broadcaster {
 	b, ok := eventChannels[channel]
 	if !ok {
-		b = broadcast.NewBroadcaster(10)
+		b = broadcast.NewBroadcaster(1)
 		eventChannels[channel] = b
 	}
 	return b
