@@ -61,3 +61,26 @@ func (o *Party) UpdateGuestList(guests []Guest) error {
 	}
 	return guestList.UpdateG()
 }
+
+func GetGuestByToken(db *sql.DB, token string) (uint32, *Guest, error) {
+  query := "SELECT guests.id, guests.guest FROM " +
+    "(SELECT id, json_array_elements(data) AS guest FROM guest_list)" +
+      " AS guests WHERE guest->>'token'=?"
+  var (
+    id uint32
+    guestJson []byte
+  )
+  row := db.QueryRow(query, token)
+  err := row.Scan(&id, &guestJson)
+  if err != nil {
+    return 0, nil, err
+  }
+
+  var guest Guest
+  err = json.Unmarshal(guestJson, &guest)
+  if err != nil {
+    return 0, nil, err
+  }
+
+  return id, &guest, nil
+}
