@@ -80,9 +80,9 @@ func (cr *Party) Get() gin.HandlerFunc {
 // Join a party as a guest
 func (cr *Party) Join() gin.HandlerFunc {
 	return func(c *gin.Context) {
-	  sesh := session.DefaultSession(c)
+		sesh := session.DefaultSession(c)
 
-	  var joinParty struct {
+		var joinParty struct {
 			Data struct {
 				RoomCode string `json:"room_code" binding:"required"`
 			} `json:"data" binding:"required"`
@@ -116,7 +116,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 		// If the user is fully authenticated skip guest initialization and
 		//  respond with augmented party
 		if session.IsLoggedIn(c) {
-		  // TODO: Make sure this auth'd user started _this_ party
+			// TODO: Make sure this auth'd user started _this_ party
 			cr.augmentAndRespondWithParty(c, party, guests)
 			return
 		}
@@ -124,32 +124,32 @@ func (cr *Party) Join() gin.HandlerFunc {
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
 
 		// It is a bad request to try to join a party the guest has already joined
-    // If the user is already a guest and they've joined _this_ party then
-    //  respond with augmented party
-    //
-    // Otherwise it is a bad request if they are a guest and have NOT joined
-    //  _this_ party
-    if session.IsGuest(c) {
-      guest := *session.CurrentGuest(c)
-      if guest["Party"] == party.ID {
-        cr.augmentAndRespondWithParty(c, party, guests)
-        return
-      } else {
-        c.Error(e.BadRequest.WithDetail("Already joined a party"))
-        c.Abort()
-        return
-      }
-    }
+		// If the user is already a guest and they've joined _this_ party then
+		//  respond with augmented party
+		//
+		// Otherwise it is a bad request if they are a guest and have NOT joined
+		//  _this_ party
+		if session.IsGuest(c) {
+			guest := *session.CurrentGuest(c)
+			if guest["Party"] == party.ID {
+				cr.augmentAndRespondWithParty(c, party, guests)
+				return
+			} else {
+				c.Error(e.BadRequest.WithDetail("Already joined a party"))
+				c.Abort()
+				return
+			}
+		}
 
-		guests = append(guests, models.NewGuest(""))
+		guestToken := uuid.NewV4().String()
+
+		guests = append(guests, models.NewGuest("", guestToken))
 		err = party.UpdateGuestList(guests)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()
 			return
 		}
-
-		guestToken := uuid.NewV4().String()
 
 		c.Set("guest", guestToken)
 		err = sesh.Set("GUEST", guestToken)
@@ -161,9 +161,8 @@ func (cr *Party) Join() gin.HandlerFunc {
 		err = cr.Cache.Set(guestToken, cache.Expires(
 			time.Now().Add(time.Minute*time.Duration(30)),
 			gin.H{
-				"Token":  guestToken,
-				"Party":  party.ID,
-				"Index":  len(guests) - 1,
+				"Token": guestToken,
+				"Party": party.ID,
 			},
 		))
 		if err != nil {
@@ -183,11 +182,17 @@ func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party,
 		RoomCode: party.RoomCode,
 		Ended:    party.Ended,
 	}
+
 	if len(guests) > 0 {
-		guestsJsonRaw, _ := json.Marshal(guests)
+		guestsPublic := make([]models.PublicGuest, 0)
+		for _, guest := range guests {
+			guestsPublic = append(guestsPublic, guest.Public())
+		}
+		guestsJsonRaw, _ := json.Marshal(guestsPublic)
 		guestsJson := types.JSON(guestsJsonRaw)
 		response.Guests = &guestsJson
 	}
+
 	if party.CurrentTrack.Valid {
 		var track models.Track
 		err := party.CurrentTrack.Unmarshal(&track)

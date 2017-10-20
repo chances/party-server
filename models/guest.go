@@ -11,13 +11,29 @@ type Guest struct {
 	Name      string `json:"name"`
 	Alias     string `json:"alias"`
 	CheckedIn bool   `json:"checked_in"`
+	Token     string `json:"token"`
 }
 
-func NewGuest(name string) Guest {
+type PublicGuest struct {
+	Name      string `json:"name"`
+	Alias     string `json:"alias"`
+	CheckedIn bool   `json:"checked_in"`
+}
+
+func NewGuest(name, token string) Guest {
 	return Guest{
 		Name:      name,
 		Alias:     "",
 		CheckedIn: false,
+		Token:     token,
+	}
+}
+
+func (g Guest) Public() PublicGuest {
+	return PublicGuest{
+		Name:      g.Name,
+		Alias:     g.Alias,
+		CheckedIn: g.CheckedIn,
 	}
 }
 
