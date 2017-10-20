@@ -144,14 +144,6 @@ func (cr *Party) Join() gin.HandlerFunc {
 		origin := c.Request.Header.Get("Origin")
 		guestToken := uuid.NewV4().String()
 
-		guests = append(guests, models.NewGuest("", guestToken))
-		err = party.UpdateGuestList(guests)
-		if err != nil {
-			c.Error(e.Internal.CausedBy(err))
-			c.Abort()
-			return
-		}
-
 		c.Set("guest", guestToken)
 		err = sesh.Set("GUEST", guestToken)
 		if err != nil {
@@ -174,11 +166,25 @@ func (cr *Party) Join() gin.HandlerFunc {
 		}
 		// TODO: Goroutine to clean expired tokens (also removes guest from party)
 
-		cr.augmentAndRespondWithParty(c, party, guests)
+		guests = append(guests, models.NewGuest("", guestToken))
+		err = party.UpdateGuestList(guests)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		publicParty := cr.augmentAndRespondWithParty(c, party, guests)
+
+		go func() {
+      partyJson, _ := json.Marshal(publicParty)
+      events.Event(party.RoomCode + "party").Submit(string(partyJson))
+    }()
 	}
 }
 
-func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party, guests []models.Guest) {
+func (cr *Party) augmentAndRespondWithParty(
+	c *gin.Context, party *models.Party, guests []models.Guest) publicParty {
 	response := publicParty{
 		Location: party.Location,
 		RoomCode: party.RoomCode,
@@ -203,14 +209,13 @@ func (cr *Party) augmentAndRespondWithParty(c *gin.Context, party *models.Party,
 		}
 	}
 
-	partyJson, _ := json.Marshal(response)
-	events.Event(party.RoomCode + "party").Submit(string(partyJson))
-
 	c.JSON(http.StatusOK, models.NewResponse(
 		response.RoomCode, "party",
 		cr.RequestURI(c),
 		response,
 	))
+
+	return response
 }
 
 // Start a new party for the current user
