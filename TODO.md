@@ -1,9 +1,6 @@
 - [x] Implement custom server session backend, see [gin-contrib/sessions](https://github.com/gin-contrib/sessions)
 - [x] Find/implement OAuth2 solution for Spotify authentication
 - [ ] Add tests with go [testing](https://golang.org/pkg/testing/) tools
-- [ ] Add the Node.js buildpack to build Node.js assets
-
-  See: [Deploying Golang app with Bower on Heroku](http://stackoverflow.com/a/33387855/1363247)
 
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
@@ -107,11 +104,14 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 ### Server Events
 
-- [ ] Server-Sent Events data integration for party state updates sent to clients
+- [x] Server-Sent Events data integration for party state updates sent to clients
   - Push TrackList and Party model updates to guests
   - Gin comes [ready built for SSE](https://github.com/gin-gonic/gin/tree/2dae550eb5392006a4582ce9c90016a9b5a74e8b/examples/realtime-chat)
   - [go-broadcast](https://github.com/dustin/go-broadcast)
 
+- [ ] Scalable Server-Sent Events data integration via Redis PubSub
+  - Current implementation keeps connection info in memory
+  - This will not scale to multiple Heroku dynos
 
 - [ ] ~~WebSockets streaming data integration?~~
   - Do I need full duplex send/receive sockets? **Probably not in most cases**
@@ -119,22 +119,46 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 
 - [ ] Playback history (History) endpoint _(As TrackList)_
-  - [ ] With SSE support
+  - [ ] Pagination
+    - 20 tracks, by default, per page
+    - `limit` and `offset` query params
+  - [ ] With SSE support (Send this with party, `/events/party`, SSE?)
+    - Updates when current track changes
+  - Most recent track first
+  - Clients may use a track's `began_playing` timestamp to show timeago info
 - [ ] Playback future (Queue) endpoint _(As TrackList)_
-  - [ ] With SSE support
+  - [ ] Pagination
+    - 10 tracks, by default, per page
+    - `limit` and `offset` query params
+  - [ ] With SSE support (Send this with party, `/events/party`, SSE?)
+    - Updates when current track changes
+    - Updates when guests contribute tracks
+  - Server keeps track of whole Queue
+    - Hosts may view whole queue
+    - Guests may only see first page of queue (First page w/ default page size; ignore page query params)
 - [ ] Add Party endpoints
   - [x] Create (Start?)
   - [ ] End (Stop/Quit?)
   - [x] Get current party
-  - [ ] Join a party
+  - [x] Join a party
     - [x] Via _authorized_ room code
     - [ ] Check-In via OAuth provider
-    - [ ] With SSE support (Update clients with Guest-list)
+    - [x] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
   - _Maybe better with a WebSocket?_
 
 ### Party Host Features
+
+- [ ] Mobile app authentication
+  - [ ] Open `/auth/login` in a web view
+  - [ ] Redirect back to new `/auth/finished` endpoint
+    - Render: `Logged in as $name$ : <a href=/auth/logout>Logout</a>`
+    - Mobile app handles redirection back here
+  - [ ] Spotify access token delivery
+    - Only deliver access token, server manages refresh
+  - [ ] Spotify token refresh endpoint `/auth/refresh`
+    - Responds with refreshed token
 
 - [ ] Playback
   - [ ] Pick a playlist for a party
