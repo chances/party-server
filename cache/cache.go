@@ -20,9 +20,13 @@ type Entry struct {
 	Expiry time.Time
 }
 
+func (e *Entry) IsForever() bool {
+  return e.Expiry.Equal(time.Unix(0, 0).UTC())
+}
+
 // IsExpired returns true if entry is expired
 func (e *Entry) IsExpired() bool {
-	isForever := e.Expiry.Equal(time.Unix(0, 0).UTC())
+	isForever := e.IsForever()
 	return !isForever && e.Expiry.Before(time.Now().UTC())
 }
 
@@ -134,7 +138,17 @@ func (s *Store) Set(key string, e Entry) error {
 		return err
 	}
 
-	return s.redisSet(key, valueBuffer)
+	err = s.redisSet(key, valueBuffer)
+	if err != nil {
+	  return err
+  }
+  // If key is not forever then tell redis to expire it automagically
+  if !e.IsForever() {
+    lifetime := e.Expiry.Sub(time.Now())
+    return s.redisExpire(key, lifetime)
+  }
+
+  return nil
 }
 
 // Delete a cache entry

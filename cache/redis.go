@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/garyburd/redigo/redis"
+  "time"
+  "strings"
+  "strconv"
 )
 
 func (s *Store) redisGet(key string) (string, error) {
@@ -41,6 +44,44 @@ func (s *Store) redisSet(key string, value interface{}) error {
 	}
 
 	return nil
+}
+
+func (s *Store) redisExpire(key string, lifetime time.Duration) error {
+  c := s.pool.Get()
+  defer c.Close()
+
+  // Use PEXPIRE redis command when lifetime is less than 1 second
+  var keyWasExpired bool
+  if lifetime.Seconds() < 1.0 {
+    lifetimeMilliseconds := lifetime.Nanoseconds() / int64(time.Millisecond)
+    resp, err := redis.Bool(c.Do(
+      "PEXPIRE", int(lifetimeMilliseconds),
+    ))
+    if err != nil {
+      return fmt.Errorf(
+        "Could not PEXPIRE key %s in %d: %v",
+          key, int(lifetimeMilliseconds), err,
+      )
+    }
+    keyWasExpired = resp
+  } else {
+    resp, err := redis.Bool(c.Do(
+      "EXPIRE", int(lifetime.Seconds()),
+      ))
+    if err != nil {
+      return fmt.Errorf(
+        "Could not EXPIRE key %s in %d: %v",
+          key, int(lifetime.Seconds()), err,
+      )
+    }
+    keyWasExpired = resp
+  }
+
+  if !keyWasExpired {
+    return fmt.Errorf("Key %s does not exist", key)
+  }
+
+  return nil
 }
 
 func (s *Store) redisExists(key string) (bool, error) {
