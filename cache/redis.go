@@ -5,8 +5,6 @@ import (
 
 	"github.com/garyburd/redigo/redis"
   "time"
-  "strings"
-  "strconv"
 )
 
 func (s *Store) redisGet(key string) (string, error) {
