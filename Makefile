@@ -1,3 +1,12 @@
-chances-party: main.go spotify.go auth.go database.go session.go errors.go
+SOURCES := $(shell find . -name '*.go')
+
+all: party-server
+
+party-server: $(SOURCES)
 	go get -v ./...
 	go build
+
+models:
+	sqlboiler --wipe --no-hooks postgres
+
+.PHONY: models

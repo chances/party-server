@@ -29,7 +29,7 @@ func testUsersDelete(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	user := &User{}
-	if err = randomize.Struct(seed, user, userDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, user, userDBTypes, true, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
 	}
 
@@ -59,7 +59,7 @@ func testUsersQueryDeleteAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	user := &User{}
-	if err = randomize.Struct(seed, user, userDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, user, userDBTypes, true, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
 	}
 
@@ -89,7 +89,7 @@ func testUsersSliceDeleteAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	user := &User{}
-	if err = randomize.Struct(seed, user, userDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, user, userDBTypes, true, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
 	}
 
@@ -272,145 +272,7 @@ func testUsersCount(t *testing.T) {
 		t.Error("want 2 records, got:", count)
 	}
 }
-func userBeforeInsertHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
 
-func userAfterInsertHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userAfterSelectHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userBeforeUpdateHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userAfterUpdateHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userBeforeDeleteHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userAfterDeleteHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userBeforeUpsertHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func userAfterUpsertHook(e boil.Executor, o *User) error {
-	*o = User{}
-	return nil
-}
-
-func testUsersHooks(t *testing.T) {
-	t.Parallel()
-
-	var err error
-
-	empty := &User{}
-	o := &User{}
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, userDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize User object: %s", err)
-	}
-
-	AddUserHook(boil.BeforeInsertHook, userBeforeInsertHook)
-	if err = o.doBeforeInsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
-	}
-	userBeforeInsertHooks = []UserHook{}
-
-	AddUserHook(boil.AfterInsertHook, userAfterInsertHook)
-	if err = o.doAfterInsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
-	}
-	userAfterInsertHooks = []UserHook{}
-
-	AddUserHook(boil.AfterSelectHook, userAfterSelectHook)
-	if err = o.doAfterSelectHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
-	}
-	userAfterSelectHooks = []UserHook{}
-
-	AddUserHook(boil.BeforeUpdateHook, userBeforeUpdateHook)
-	if err = o.doBeforeUpdateHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
-	}
-	userBeforeUpdateHooks = []UserHook{}
-
-	AddUserHook(boil.AfterUpdateHook, userAfterUpdateHook)
-	if err = o.doAfterUpdateHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
-	}
-	userAfterUpdateHooks = []UserHook{}
-
-	AddUserHook(boil.BeforeDeleteHook, userBeforeDeleteHook)
-	if err = o.doBeforeDeleteHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
-	}
-	userBeforeDeleteHooks = []UserHook{}
-
-	AddUserHook(boil.AfterDeleteHook, userAfterDeleteHook)
-	if err = o.doAfterDeleteHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
-	}
-	userAfterDeleteHooks = []UserHook{}
-
-	AddUserHook(boil.BeforeUpsertHook, userBeforeUpsertHook)
-	if err = o.doBeforeUpsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
-	}
-	userBeforeUpsertHooks = []UserHook{}
-
-	AddUserHook(boil.AfterUpsertHook, userAfterUpsertHook)
-	if err = o.doAfterUpsertHooks(nil); err != nil {
-		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
-	}
-	if !reflect.DeepEqual(o, empty) {
-		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
-	}
-	userAfterUpsertHooks = []UserHook{}
-}
 func testUsersInsert(t *testing.T) {
 	t.Parallel()
 
@@ -449,7 +311,7 @@ func testUsersInsertWhitelist(t *testing.T) {
 
 	tx := MustTx(boil.Begin())
 	defer tx.Rollback()
-	if err = user.Insert(tx, userColumns...); err != nil {
+	if err = user.Insert(tx, userColumnsWithoutDefault...); err != nil {
 		t.Error(err)
 	}
 
@@ -461,6 +323,166 @@ func testUsersInsertWhitelist(t *testing.T) {
 	if count != 1 {
 		t.Error("want one record, got:", count)
 	}
+}
+
+func testUserToOnePartyUsingParty(t *testing.T) {
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var local User
+	var foreign Party
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, partyDBTypes, true, partyColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Party struct: %s", err)
+	}
+
+	local.PartyID.Valid = true
+
+	if err := foreign.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	local.PartyID.Int = foreign.ID
+	if err := local.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Party(tx).One()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.ID != foreign.ID {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	slice := UserSlice{&local}
+	if err = local.L.LoadParty(tx, false, (*[]*User)(&slice)); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Party == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Party = nil
+	if err = local.L.LoadParty(tx, true, &local); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Party == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testUserToOneSetOpPartyUsingParty(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a User
+	var b, c Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Party{&b, &c} {
+		err = a.SetParty(tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Party != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.User != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.PartyID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PartyID.Int)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.PartyID.Int))
+		reflect.Indirect(reflect.ValueOf(&a.PartyID.Int)).Set(zero)
+
+		if err = a.Reload(tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.PartyID.Int != x.ID {
+			t.Error("foreign key was wrong value", a.PartyID.Int, x.ID)
+		}
+	}
+}
+
+func testUserToOneRemoveOpPartyUsingParty(t *testing.T) {
+	var err error
+
+	tx := MustTx(boil.Begin())
+	defer tx.Rollback()
+
+	var a User
+	var b Party
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, partyDBTypes, false, strmangle.SetComplement(partyPrimaryKeyColumns, partyColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(tx); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetParty(tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemoveParty(tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.Party(tx).Count()
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.Party != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if a.PartyID.Valid {
+		t.Error("foreign key value should be nil")
+	}
+
+	if b.R.User != nil {
+		t.Error("failed to remove a from b's relationships")
+	}
+
 }
 
 func testUsersReload(t *testing.T) {
@@ -533,7 +555,7 @@ func testUsersSelect(t *testing.T) {
 }
 
 var (
-	userDBTypes = map[string]string{`AccessToken`: `character varying`, `CreatedAt`: `timestamp with time zone`, `ID`: `bigint`, `RefreshToken`: `character varying`, `SpotifyPlaylistID`: `character varying`, `SpotifyUser`: `json`, `TokenExpiryDate`: `timestamp with time zone`, `TokenScope`: `character varying`, `UpdatedAt`: `timestamp with time zone`, `Username`: `character varying`}
+	userDBTypes = map[string]string{`AccessToken`: `character varying`, `CreatedAt`: `timestamp with time zone`, `ID`: `bigint`, `PartyID`: `integer`, `RefreshToken`: `character varying`, `SpotifyPlaylistID`: `character varying`, `SpotifyUser`: `json`, `TokenExpiryDate`: `timestamp with time zone`, `TokenScope`: `character varying`, `UpdatedAt`: `timestamp with time zone`, `Username`: `character varying`}
 	_           = bytes.MinRead
 )
 
@@ -547,7 +569,7 @@ func testUsersUpdate(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	user := &User{}
-	if err = randomize.Struct(seed, user, userDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, user, userDBTypes, true, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
 	}
 
@@ -585,7 +607,7 @@ func testUsersSliceUpdateAll(t *testing.T) {
 	seed := randomize.NewSeed()
 	var err error
 	user := &User{}
-	if err = randomize.Struct(seed, user, userDBTypes, true); err != nil {
+	if err = randomize.Struct(seed, user, userDBTypes, true, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
 	}
 

@@ -2,7 +2,7 @@
 	"comment": "",
 	"ignore": "test",
 	"package": [],
-	"rootPath": "github.com/chances/chances-party",
+	"rootPath": "github.com/chances/party-server",
   "heroku": {
     "plain": true,
     "install" : [ "./..." ],

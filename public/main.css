@@ -7,8 +7,13 @@ body {
   float: left;
 }
 
-#user > p {
+.details > p {
   margin: 0;
+}
+
+#currentParty {
+  font-family: monospace;
+  font-size: 11pt;
 }
 
 ul {

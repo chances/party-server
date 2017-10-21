@@ -19,14 +19,16 @@ import (
 	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/vattle/sqlboiler/strmangle"
 	"github.com/vattle/sqlboiler/types"
+	"gopkg.in/nullbio/null.v6"
 )
 
 // TrackList is an object representing the database table.
 type TrackList struct {
-	ID        int        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Data      types.JSON `boil:"data" json:"data" toml:"data" yaml:"data"`
-	CreatedAt time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt time.Time  `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID                int         `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Data              types.JSON  `boil:"data" json:"data" toml:"data" yaml:"data"`
+	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	SpotifyPlaylistID null.String `boil:"spotify_playlist_id" json:"spotify_playlist_id,omitempty" toml:"spotify_playlist_id" yaml:"spotify_playlist_id,omitempty"`
 
 	R *trackListR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L trackListL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -34,14 +36,16 @@ type TrackList struct {
 
 // trackListR is where relationships are stored.
 type trackListR struct {
+	QueueParties   PartySlice
+	HistoryParties PartySlice
 }
 
 // trackListL is where Load methods for each relationship are stored.
 type trackListL struct{}
 
 var (
-	trackListColumns               = []string{"id", "data", "created_at", "updated_at"}
-	trackListColumnsWithoutDefault = []string{"data"}
+	trackListColumns               = []string{"id", "data", "created_at", "updated_at", "spotify_playlist_id"}
+	trackListColumnsWithoutDefault = []string{"data", "spotify_playlist_id"}
 	trackListColumnsWithDefault    = []string{"id", "created_at", "updated_at"}
 	trackListPrimaryKeyColumns     = []string{"id"}
 )
@@ -50,8 +54,6 @@ type (
 	// TrackListSlice is an alias for a slice of pointers to TrackList.
 	// This should generally be used opposed to []TrackList.
 	TrackListSlice []*TrackList
-	// TrackListHook is the signature for custom TrackList hook methods
-	TrackListHook func(boil.Executor, *TrackList) error
 
 	trackListQuery struct {
 		*queries.Query
@@ -77,139 +79,6 @@ var (
 	// Force bytes in case of primary key column that uses []byte (for relationship compares)
 	_ = bytes.MinRead
 )
-var trackListBeforeInsertHooks []TrackListHook
-var trackListBeforeUpdateHooks []TrackListHook
-var trackListBeforeDeleteHooks []TrackListHook
-var trackListBeforeUpsertHooks []TrackListHook
-
-var trackListAfterInsertHooks []TrackListHook
-var trackListAfterSelectHooks []TrackListHook
-var trackListAfterUpdateHooks []TrackListHook
-var trackListAfterDeleteHooks []TrackListHook
-var trackListAfterUpsertHooks []TrackListHook
-
-// doBeforeInsertHooks executes all "before insert" hooks.
-func (o *TrackList) doBeforeInsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListBeforeInsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeUpdateHooks executes all "before Update" hooks.
-func (o *TrackList) doBeforeUpdateHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListBeforeUpdateHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeDeleteHooks executes all "before Delete" hooks.
-func (o *TrackList) doBeforeDeleteHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListBeforeDeleteHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doBeforeUpsertHooks executes all "before Upsert" hooks.
-func (o *TrackList) doBeforeUpsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListBeforeUpsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterInsertHooks executes all "after Insert" hooks.
-func (o *TrackList) doAfterInsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListAfterInsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterSelectHooks executes all "after Select" hooks.
-func (o *TrackList) doAfterSelectHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListAfterSelectHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterUpdateHooks executes all "after Update" hooks.
-func (o *TrackList) doAfterUpdateHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListAfterUpdateHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterDeleteHooks executes all "after Delete" hooks.
-func (o *TrackList) doAfterDeleteHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListAfterDeleteHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// doAfterUpsertHooks executes all "after Upsert" hooks.
-func (o *TrackList) doAfterUpsertHooks(exec boil.Executor) (err error) {
-	for _, hook := range trackListAfterUpsertHooks {
-		if err := hook(exec, o); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// AddTrackListHook registers your hook function for all future operations.
-func AddTrackListHook(hookPoint boil.HookPoint, trackListHook TrackListHook) {
-	switch hookPoint {
-	case boil.BeforeInsertHook:
-		trackListBeforeInsertHooks = append(trackListBeforeInsertHooks, trackListHook)
-	case boil.BeforeUpdateHook:
-		trackListBeforeUpdateHooks = append(trackListBeforeUpdateHooks, trackListHook)
-	case boil.BeforeDeleteHook:
-		trackListBeforeDeleteHooks = append(trackListBeforeDeleteHooks, trackListHook)
-	case boil.BeforeUpsertHook:
-		trackListBeforeUpsertHooks = append(trackListBeforeUpsertHooks, trackListHook)
-	case boil.AfterInsertHook:
-		trackListAfterInsertHooks = append(trackListAfterInsertHooks, trackListHook)
-	case boil.AfterSelectHook:
-		trackListAfterSelectHooks = append(trackListAfterSelectHooks, trackListHook)
-	case boil.AfterUpdateHook:
-		trackListAfterUpdateHooks = append(trackListAfterUpdateHooks, trackListHook)
-	case boil.AfterDeleteHook:
-		trackListAfterDeleteHooks = append(trackListAfterDeleteHooks, trackListHook)
-	case boil.AfterUpsertHook:
-		trackListAfterUpsertHooks = append(trackListAfterUpsertHooks, trackListHook)
-	}
-}
 
 // OneP returns a single trackList record from the query, and panics on error.
 func (q trackListQuery) OneP() *TrackList {
@@ -235,10 +104,6 @@ func (q trackListQuery) One() (*TrackList, error) {
 		return nil, errors.Wrap(err, "models: failed to execute a one query for track_list")
 	}
 
-	if err := o.doAfterSelectHooks(queries.GetExecutor(q.Query)); err != nil {
-		return o, err
-	}
-
 	return o, nil
 }
 
@@ -254,19 +119,11 @@ func (q trackListQuery) AllP() TrackListSlice {
 
 // All returns all TrackList records from the query.
 func (q trackListQuery) All() (TrackListSlice, error) {
-	var o TrackListSlice
+	var o []*TrackList
 
 	err := q.Bind(&o)
 	if err != nil {
 		return nil, errors.Wrap(err, "models: failed to assign all query results to TrackList slice")
-	}
-
-	if len(trackListAfterSelectHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doAfterSelectHooks(queries.GetExecutor(q.Query)); err != nil {
-				return o, err
-			}
-		}
 	}
 
 	return o, nil
@@ -320,6 +177,352 @@ func (q trackListQuery) Exists() (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+// QueuePartiesG retrieves all the party's party via queue_id column.
+func (o *TrackList) QueuePartiesG(mods ...qm.QueryMod) partyQuery {
+	return o.QueueParties(boil.GetDB(), mods...)
+}
+
+// QueueParties retrieves all the party's party with an executor via queue_id column.
+func (o *TrackList) QueueParties(exec boil.Executor, mods ...qm.QueryMod) partyQuery {
+	queryMods := []qm.QueryMod{
+		qm.Select("\"a\".*"),
+	}
+
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"a\".\"queue_id\"=?", o.ID),
+	)
+
+	query := Parties(exec, queryMods...)
+	queries.SetFrom(query.Query, "\"party\" as \"a\"")
+	return query
+}
+
+// HistoryPartiesG retrieves all the party's party via history_id column.
+func (o *TrackList) HistoryPartiesG(mods ...qm.QueryMod) partyQuery {
+	return o.HistoryParties(boil.GetDB(), mods...)
+}
+
+// HistoryParties retrieves all the party's party with an executor via history_id column.
+func (o *TrackList) HistoryParties(exec boil.Executor, mods ...qm.QueryMod) partyQuery {
+	queryMods := []qm.QueryMod{
+		qm.Select("\"a\".*"),
+	}
+
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"a\".\"history_id\"=?", o.ID),
+	)
+
+	query := Parties(exec, queryMods...)
+	queries.SetFrom(query.Query, "\"party\" as \"a\"")
+	return query
+}
+
+// LoadQueueParties allows an eager lookup of values, cached into the
+// loaded structs of the objects.
+func (trackListL) LoadQueueParties(e boil.Executor, singular bool, maybeTrackList interface{}) error {
+	var slice []*TrackList
+	var object *TrackList
+
+	count := 1
+	if singular {
+		object = maybeTrackList.(*TrackList)
+	} else {
+		slice = *maybeTrackList.(*[]*TrackList)
+		count = len(slice)
+	}
+
+	args := make([]interface{}, count)
+	if singular {
+		if object.R == nil {
+			object.R = &trackListR{}
+		}
+		args[0] = object.ID
+	} else {
+		for i, obj := range slice {
+			if obj.R == nil {
+				obj.R = &trackListR{}
+			}
+			args[i] = obj.ID
+		}
+	}
+
+	query := fmt.Sprintf(
+		"select * from \"party\" where \"queue_id\" in (%s)",
+		strmangle.Placeholders(dialect.IndexPlaceholders, count, 1, 1),
+	)
+	if boil.DebugMode {
+		fmt.Fprintf(boil.DebugWriter, "%s\n%v\n", query, args)
+	}
+
+	results, err := e.Query(query, args...)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load party")
+	}
+	defer results.Close()
+
+	var resultSlice []*Party
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice party")
+	}
+
+	if singular {
+		object.R.QueueParties = resultSlice
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.QueueID {
+				local.R.QueueParties = append(local.R.QueueParties, foreign)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadHistoryParties allows an eager lookup of values, cached into the
+// loaded structs of the objects.
+func (trackListL) LoadHistoryParties(e boil.Executor, singular bool, maybeTrackList interface{}) error {
+	var slice []*TrackList
+	var object *TrackList
+
+	count := 1
+	if singular {
+		object = maybeTrackList.(*TrackList)
+	} else {
+		slice = *maybeTrackList.(*[]*TrackList)
+		count = len(slice)
+	}
+
+	args := make([]interface{}, count)
+	if singular {
+		if object.R == nil {
+			object.R = &trackListR{}
+		}
+		args[0] = object.ID
+	} else {
+		for i, obj := range slice {
+			if obj.R == nil {
+				obj.R = &trackListR{}
+			}
+			args[i] = obj.ID
+		}
+	}
+
+	query := fmt.Sprintf(
+		"select * from \"party\" where \"history_id\" in (%s)",
+		strmangle.Placeholders(dialect.IndexPlaceholders, count, 1, 1),
+	)
+	if boil.DebugMode {
+		fmt.Fprintf(boil.DebugWriter, "%s\n%v\n", query, args)
+	}
+
+	results, err := e.Query(query, args...)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load party")
+	}
+	defer results.Close()
+
+	var resultSlice []*Party
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice party")
+	}
+
+	if singular {
+		object.R.HistoryParties = resultSlice
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.HistoryID {
+				local.R.HistoryParties = append(local.R.HistoryParties, foreign)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// AddQueuePartiesG adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.QueueParties.
+// Sets related.R.Queue appropriately.
+// Uses the global database handle.
+func (o *TrackList) AddQueuePartiesG(insert bool, related ...*Party) error {
+	return o.AddQueueParties(boil.GetDB(), insert, related...)
+}
+
+// AddQueuePartiesP adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.QueueParties.
+// Sets related.R.Queue appropriately.
+// Panics on error.
+func (o *TrackList) AddQueuePartiesP(exec boil.Executor, insert bool, related ...*Party) {
+	if err := o.AddQueueParties(exec, insert, related...); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// AddQueuePartiesGP adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.QueueParties.
+// Sets related.R.Queue appropriately.
+// Uses the global database handle and panics on error.
+func (o *TrackList) AddQueuePartiesGP(insert bool, related ...*Party) {
+	if err := o.AddQueueParties(boil.GetDB(), insert, related...); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// AddQueueParties adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.QueueParties.
+// Sets related.R.Queue appropriately.
+func (o *TrackList) AddQueueParties(exec boil.Executor, insert bool, related ...*Party) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.QueueID = o.ID
+			if err = rel.Insert(exec); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"party\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"queue_id"}),
+				strmangle.WhereClause("\"", "\"", 2, partyPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.DebugMode {
+				fmt.Fprintln(boil.DebugWriter, updateQuery)
+				fmt.Fprintln(boil.DebugWriter, values)
+			}
+
+			if _, err = exec.Exec(updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.QueueID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &trackListR{
+			QueueParties: related,
+		}
+	} else {
+		o.R.QueueParties = append(o.R.QueueParties, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &partyR{
+				Queue: o,
+			}
+		} else {
+			rel.R.Queue = o
+		}
+	}
+	return nil
+}
+
+// AddHistoryPartiesG adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.HistoryParties.
+// Sets related.R.History appropriately.
+// Uses the global database handle.
+func (o *TrackList) AddHistoryPartiesG(insert bool, related ...*Party) error {
+	return o.AddHistoryParties(boil.GetDB(), insert, related...)
+}
+
+// AddHistoryPartiesP adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.HistoryParties.
+// Sets related.R.History appropriately.
+// Panics on error.
+func (o *TrackList) AddHistoryPartiesP(exec boil.Executor, insert bool, related ...*Party) {
+	if err := o.AddHistoryParties(exec, insert, related...); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// AddHistoryPartiesGP adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.HistoryParties.
+// Sets related.R.History appropriately.
+// Uses the global database handle and panics on error.
+func (o *TrackList) AddHistoryPartiesGP(insert bool, related ...*Party) {
+	if err := o.AddHistoryParties(boil.GetDB(), insert, related...); err != nil {
+		panic(boil.WrapErr(err))
+	}
+}
+
+// AddHistoryParties adds the given related objects to the existing relationships
+// of the track_list, optionally inserting them as new records.
+// Appends related to o.R.HistoryParties.
+// Sets related.R.History appropriately.
+func (o *TrackList) AddHistoryParties(exec boil.Executor, insert bool, related ...*Party) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.HistoryID = o.ID
+			if err = rel.Insert(exec); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"party\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"history_id"}),
+				strmangle.WhereClause("\"", "\"", 2, partyPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.DebugMode {
+				fmt.Fprintln(boil.DebugWriter, updateQuery)
+				fmt.Fprintln(boil.DebugWriter, values)
+			}
+
+			if _, err = exec.Exec(updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.HistoryID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &trackListR{
+			HistoryParties: related,
+		}
+	} else {
+		o.R.HistoryParties = append(o.R.HistoryParties, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &partyR{
+				History: o,
+			}
+		} else {
+			rel.R.History = o
+		}
+	}
+	return nil
 }
 
 // TrackListsG retrieves all records.
@@ -425,10 +628,6 @@ func (o *TrackList) Insert(exec boil.Executor, whitelist ...string) error {
 		o.UpdatedAt = currTime
 	}
 
-	if err := o.doBeforeInsertHooks(exec); err != nil {
-		return err
-	}
-
 	nzDefaults := queries.NonZeroDefaultSet(trackListColumnsWithDefault, o)
 
 	key := makeCacheKey(whitelist, nzDefaults)
@@ -454,13 +653,19 @@ func (o *TrackList) Insert(exec boil.Executor, whitelist ...string) error {
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"track_list\" (\"%s\") VALUES (%s)", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.IndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"track_list\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.IndexPlaceholders, len(wl), 1, 1))
 		} else {
 			cache.query = "INSERT INTO \"track_list\" DEFAULT VALUES"
 		}
 
+		var queryOutput, queryReturning string
+
 		if len(cache.retMapping) != 0 {
-			cache.query += fmt.Sprintf(" RETURNING \"%s\"", strings.Join(returnColumns, "\",\""))
+			queryReturning = fmt.Sprintf(" RETURNING \"%s\"", strings.Join(returnColumns, "\",\""))
+		}
+
+		if len(wl) != 0 {
+			cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
 		}
 	}
 
@@ -488,7 +693,7 @@ func (o *TrackList) Insert(exec boil.Executor, whitelist ...string) error {
 		trackListInsertCacheMut.Unlock()
 	}
 
-	return o.doAfterInsertHooks(exec)
+	return nil
 }
 
 // UpdateG a single TrackList record. See Update for
@@ -528,16 +733,18 @@ func (o *TrackList) Update(exec boil.Executor, whitelist ...string) error {
 	o.UpdatedAt = currTime
 
 	var err error
-	if err = o.doBeforeUpdateHooks(exec); err != nil {
-		return err
-	}
 	key := makeCacheKey(whitelist, nil)
 	trackListUpdateCacheMut.RLock()
 	cache, cached := trackListUpdateCache[key]
 	trackListUpdateCacheMut.RUnlock()
 
 	if !cached {
-		wl := strmangle.UpdateColumnSet(trackListColumns, trackListPrimaryKeyColumns, whitelist)
+		wl := strmangle.UpdateColumnSet(
+			trackListColumns,
+			trackListPrimaryKeyColumns,
+			whitelist,
+		)
+
 		if len(whitelist) == 0 {
 			wl = strmangle.SetComplement(wl, []string{"created_at"})
 		}
@@ -573,7 +780,7 @@ func (o *TrackList) Update(exec boil.Executor, whitelist ...string) error {
 		trackListUpdateCacheMut.Unlock()
 	}
 
-	return o.doAfterUpdateHooks(exec)
+	return nil
 }
 
 // UpdateAllP updates all rows with matching column names, and panics on error.
@@ -641,11 +848,9 @@ func (o TrackListSlice) UpdateAll(exec boil.Executor, cols M) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"UPDATE \"track_list\" SET %s WHERE (\"id\") IN (%s)",
+	sql := fmt.Sprintf("UPDATE \"track_list\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(o)*len(trackListPrimaryKeyColumns), len(colNames)+1, len(trackListPrimaryKeyColumns)),
-	)
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, trackListPrimaryKeyColumns, len(o)))
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -692,14 +897,11 @@ func (o *TrackList) Upsert(exec boil.Executor, updateOnConflict bool, conflictCo
 	}
 	o.UpdatedAt = currTime
 
-	if err := o.doBeforeUpsertHooks(exec); err != nil {
-		return err
-	}
-
 	nzDefaults := queries.NonZeroDefaultSet(trackListColumnsWithDefault, o)
 
 	// Build cache key in-line uglily - mysql vs postgres problems
 	buf := strmangle.GetBuffer()
+
 	if updateOnConflict {
 		buf.WriteByte('t')
 	} else {
@@ -731,14 +933,14 @@ func (o *TrackList) Upsert(exec boil.Executor, updateOnConflict bool, conflictCo
 	var err error
 
 	if !cached {
-		var ret []string
-		whitelist, ret = strmangle.InsertColumnSet(
+		insert, ret := strmangle.InsertColumnSet(
 			trackListColumns,
 			trackListColumnsWithDefault,
 			trackListColumnsWithoutDefault,
 			nzDefaults,
 			whitelist,
 		)
+
 		update := strmangle.UpdateColumnSet(
 			trackListColumns,
 			trackListPrimaryKeyColumns,
@@ -753,9 +955,9 @@ func (o *TrackList) Upsert(exec boil.Executor, updateOnConflict bool, conflictCo
 			conflict = make([]string, len(trackListPrimaryKeyColumns))
 			copy(conflict, trackListPrimaryKeyColumns)
 		}
-		cache.query = queries.BuildUpsertQueryPostgres(dialect, "\"track_list\"", updateOnConflict, ret, update, conflict, whitelist)
+		cache.query = queries.BuildUpsertQueryPostgres(dialect, "\"track_list\"", updateOnConflict, ret, update, conflict, insert)
 
-		cache.valueMapping, err = queries.BindMapping(trackListType, trackListMapping, whitelist)
+		cache.valueMapping, err = queries.BindMapping(trackListType, trackListMapping, insert)
 		if err != nil {
 			return err
 		}
@@ -797,7 +999,7 @@ func (o *TrackList) Upsert(exec boil.Executor, updateOnConflict bool, conflictCo
 		trackListUpsertCacheMut.Unlock()
 	}
 
-	return o.doAfterUpsertHooks(exec)
+	return nil
 }
 
 // DeleteP deletes a single TrackList record with an executor.
@@ -835,10 +1037,6 @@ func (o *TrackList) Delete(exec boil.Executor) error {
 		return errors.New("models: no TrackList provided for delete")
 	}
 
-	if err := o.doBeforeDeleteHooks(exec); err != nil {
-		return err
-	}
-
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), trackListPrimaryKeyMapping)
 	sql := "DELETE FROM \"track_list\" WHERE \"id\"=$1"
 
@@ -850,10 +1048,6 @@ func (o *TrackList) Delete(exec boil.Executor) error {
 	_, err := exec.Exec(sql, args...)
 	if err != nil {
 		return errors.Wrap(err, "models: unable to delete from track_list")
-	}
-
-	if err := o.doAfterDeleteHooks(exec); err != nil {
-		return err
 	}
 
 	return nil
@@ -914,25 +1108,14 @@ func (o TrackListSlice) DeleteAll(exec boil.Executor) error {
 		return nil
 	}
 
-	if len(trackListBeforeDeleteHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doBeforeDeleteHooks(exec); err != nil {
-				return err
-			}
-		}
-	}
-
 	var args []interface{}
 	for _, obj := range o {
 		pkeyArgs := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(obj)), trackListPrimaryKeyMapping)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"DELETE FROM \"track_list\" WHERE (%s) IN (%s)",
-		strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, trackListPrimaryKeyColumns), ","),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(o)*len(trackListPrimaryKeyColumns), 1, len(trackListPrimaryKeyColumns)),
-	)
+	sql := "DELETE FROM \"track_list\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, trackListPrimaryKeyColumns, len(o))
 
 	if boil.DebugMode {
 		fmt.Fprintln(boil.DebugWriter, sql)
@@ -942,14 +1125,6 @@ func (o TrackListSlice) DeleteAll(exec boil.Executor) error {
 	_, err := exec.Exec(sql, args...)
 	if err != nil {
 		return errors.Wrap(err, "models: unable to delete all from trackList slice")
-	}
-
-	if len(trackListAfterDeleteHooks) != 0 {
-		for _, obj := range o {
-			if err := obj.doAfterDeleteHooks(exec); err != nil {
-				return err
-			}
-		}
 	}
 
 	return nil
@@ -1032,11 +1207,8 @@ func (o *TrackListSlice) ReloadAll(exec boil.Executor) error {
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf(
-		"SELECT \"track_list\".* FROM \"track_list\" WHERE (%s) IN (%s)",
-		strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, trackListPrimaryKeyColumns), ","),
-		strmangle.Placeholders(dialect.IndexPlaceholders, len(*o)*len(trackListPrimaryKeyColumns), 1, len(trackListPrimaryKeyColumns)),
-	)
+	sql := "SELECT \"track_list\".* FROM \"track_list\" WHERE " +
+		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, trackListPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(exec, sql, args...)
 
@@ -1053,7 +1225,6 @@ func (o *TrackListSlice) ReloadAll(exec boil.Executor) error {
 // TrackListExists checks if the TrackList row exists.
 func TrackListExists(exec boil.Executor, id int) (bool, error) {
 	var exists bool
-
 	sql := "select exists(select 1 from \"track_list\" where \"id\"=$1 limit 1)"
 
 	if boil.DebugMode {

@@ -1,17 +1,20 @@
 package main
 
 import (
+	"encoding/gob"
 	"log"
-	"net/http"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/chances/chances-party/models"
+	"github.com/chances/party-server/cache"
+	"github.com/chances/party-server/controllers"
+	e "github.com/chances/party-server/errors"
+	m "github.com/chances/party-server/middleware"
+	"github.com/chances/party-server/models"
+	"github.com/chances/party-server/session"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/zmb3/spotify"
-	"gopkg.in/gin-contrib/cors.v1"
 )
 
 func main() {
@@ -20,116 +23,101 @@ func main() {
 		log.Println("Warning: .env file is not present. Using system provided environment variables")
 	}
 
-	setupAuth()
-
 	// === Data Stores ===
 	// Postgres
-	db = initDatabase()
+	db := initDatabase()
 	defer db.Close()
 	// Redis
 	pool = newRedisPool()
 	defer pool.Close()
+	// Cache
+	partyCache = cache.NewStore(pool)
 
+	gob.Register(models.Track{})
+	gob.Register(models.TrackArtist{})
+
+	s.SetCache(partyCache)
+	controllers.SetCache(partyCache)
+
+	// App controllers
+	auth := controllers.NewAuth(
+		getenvOrFatal("SPOTIFY_APP_KEY"),
+		getenvOrFatal("SPOTIFY_APP_SECRET"),
+		getenvOrFatal("SPOTIFY_CALLBACK"),
+		getenvOrFatal("GUEST_SECRET"),
+	)
+	index := controllers.NewIndex()
+	party := controllers.NewParty()
+	playlists := controllers.NewPlaylists()
+	search := controllers.NewSearch()
+	events := controllers.NewEvents()
+
+	// === Initialize Gin ===
 	g := gin.New()
-	g.Use(gin.Logger())
 
 	// === Middleware ===
+	g.Use(gin.Logger())
 	// CORS
 	corsOrigins :=
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
-	g.Use(cors.New(cors.Config{
-		AllowOrigins:     corsOrigins,
-		AllowMethods:     []string{"GET", "PUT", "POST", "PATCH", "DELETE"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	g.Use(m.CORS(corsOrigins))
 	// Session
-	g.Use(partySession())
+	g.Use(session.Middleware(partyCache))
 
-	g.Use(handleErrors())
+	g.Use(e.HandleErrors())
 	g.Use(gin.Recovery())
 
 	// Static files
 	g.Static("/css/", "./public")
 
+	// Templates
 	g.LoadHTMLGlob("views/*")
 
-	// Application routes
-	g.GET("/", func(c *gin.Context) {
-		session := DefaultSession(c)
-		flashedError, err := session.Error()
-		if err != nil {
-			c.Error(errInternal.CausedBy(err))
-		}
-		if IsLoggedIn(c) {
-			currentUser := CurrentUser(c)
-			var spotifyUser spotify.PrivateUser
-			err := currentUser.SpotifyUser.Unmarshal(&spotifyUser)
-			if err != nil {
-				c.Error(errInternal.CausedBy(err))
-				c.Abort()
-				return
-			}
+	// === Application routes ===
+	g.GET("/", index.Get())
 
-			spotifyClient, err := ClientFromSession(c)
-			if err != nil {
-				c.Error(errInternal.CausedBy(err))
-				c.Abort()
-				return
-			}
-
-			var currentPlaylist *spotify.SimplePlaylist
-			currentPlaylist = nil
-			playlists := Playlists(*spotifyClient) // TODO: Cache these?
-			for _, playlist := range playlists {
-				if currentUser.SpotifyPlaylistID.String == playlist.ID.String() {
-					currentPlaylist = &playlist
-					break
-				}
-			}
-			c.HTML(http.StatusOK, "index.html", gin.H{
-				"user":            spotifyUser,
-				"currentPlaylist": currentPlaylist,
-				"playlists":       playlists,
-				"error":           flashedError,
-			})
-		} else {
-			c.HTML(http.StatusOK, "index.html", gin.H{
-				"error": flashedError,
-			})
-		}
-	})
-
-	playlist := g.Group("/playlist")
-	playlist.Use(AuthRequired())
+	// Party routes
+	parties := g.Group("/party")
+	parties.Use(m.AuthenticationRequired())
 	{
-		playlist.PATCH("/", patchPlaylist)
+		parties.POST("/start", party.Start())
+		// parties.POST("/end", party.End())
+	}
+	g.Group("/party").
+		Use(m.AuthorizationRequired()).
+		GET("", party.Get())
+	g.POST("/party/join", party.Join())
+
+	// Playlist routes
+	playlist := g.Group("/playlist")
+	playlist.Use(m.AuthenticationRequired())
+	{
+		playlist.GET("", playlists.Get())
+		playlist.PATCH("", playlists.Patch())
 	}
 
-	g.GET("/auth/guest", func(c *gin.Context) {
-		token, err := authGuest()
-		if err != nil {
-			c.Error(errUnauthorized.WithDetail("Could not create JWT").CausedBy(err))
-			c.Abort()
-			return
-		}
+	// Search routes
+	g.Group("/search").
+		Use(m.AuthorizationRequired()).
+		GET("", search.SearchTracks())
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: token,
-		})
-	})
+	// Events routes
+	event := g.Group("/events")
+	event.Use(m.AuthorizationRequired())
+	{
+		event.GET("/party", events.Stream("party"))
+	}
 
-	g.GET("/auth/login", login)
-	g.GET("/auth/callback", spotifyCallback)
-	g.GET("/auth/logout", func(c *gin.Context) {
-		if IsLoggedIn(c) {
-			session := DefaultSession(c)
-			session.Delete("USER")
-		}
+	// Authentication routes
+	g.Group("/auth/ping").
+		Use(m.GuestsOnly()).
+		GET("", auth.GuestPing())
 
-		c.Redirect(http.StatusSeeOther, "/")
-	})
+	g.GET("/auth/login", auth.Login())
+	g.GET("/auth/callback", auth.SpotifyCallback())
+	g.Group("/auth/logout").
+		Use(m.AuthenticationRequired()).
+		GET("", auth.Logout())
 
 	g.Run()
 }

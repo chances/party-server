@@ -12,7 +12,8 @@ pids
 .env
 
 # Built binaries
-chances-party
+party-server
+debug
 
 sqlboiler.toml
 

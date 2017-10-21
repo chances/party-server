@@ -13,111 +13,143 @@ import "testing"
 // It does NOT run each operation group in parallel.
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
-	t.Run("Users", testUsers)
+	t.Run("GuestLists", testGuestLists)
+	t.Run("Parties", testParties)
 	t.Run("TrackLists", testTrackLists)
-	t.Run("Guests", testGuests)
+	t.Run("Users", testUsers)
 }
 
 func TestDelete(t *testing.T) {
-	t.Run("Users", testUsersDelete)
+	t.Run("GuestLists", testGuestListsDelete)
+	t.Run("Parties", testPartiesDelete)
 	t.Run("TrackLists", testTrackListsDelete)
-	t.Run("Guests", testGuestsDelete)
+	t.Run("Users", testUsersDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
-	t.Run("Users", testUsersQueryDeleteAll)
+	t.Run("GuestLists", testGuestListsQueryDeleteAll)
+	t.Run("Parties", testPartiesQueryDeleteAll)
 	t.Run("TrackLists", testTrackListsQueryDeleteAll)
-	t.Run("Guests", testGuestsQueryDeleteAll)
+	t.Run("Users", testUsersQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
-	t.Run("Users", testUsersSliceDeleteAll)
+	t.Run("GuestLists", testGuestListsSliceDeleteAll)
+	t.Run("Parties", testPartiesSliceDeleteAll)
 	t.Run("TrackLists", testTrackListsSliceDeleteAll)
-	t.Run("Guests", testGuestsSliceDeleteAll)
+	t.Run("Users", testUsersSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
-	t.Run("Users", testUsersExists)
+	t.Run("GuestLists", testGuestListsExists)
+	t.Run("Parties", testPartiesExists)
 	t.Run("TrackLists", testTrackListsExists)
-	t.Run("Guests", testGuestsExists)
+	t.Run("Users", testUsersExists)
 }
 
 func TestFind(t *testing.T) {
-	t.Run("Users", testUsersFind)
+	t.Run("GuestLists", testGuestListsFind)
+	t.Run("Parties", testPartiesFind)
 	t.Run("TrackLists", testTrackListsFind)
-	t.Run("Guests", testGuestsFind)
+	t.Run("Users", testUsersFind)
 }
 
 func TestBind(t *testing.T) {
-	t.Run("Users", testUsersBind)
+	t.Run("GuestLists", testGuestListsBind)
+	t.Run("Parties", testPartiesBind)
 	t.Run("TrackLists", testTrackListsBind)
-	t.Run("Guests", testGuestsBind)
+	t.Run("Users", testUsersBind)
 }
 
 func TestOne(t *testing.T) {
-	t.Run("Users", testUsersOne)
+	t.Run("GuestLists", testGuestListsOne)
+	t.Run("Parties", testPartiesOne)
 	t.Run("TrackLists", testTrackListsOne)
-	t.Run("Guests", testGuestsOne)
+	t.Run("Users", testUsersOne)
 }
 
 func TestAll(t *testing.T) {
-	t.Run("Users", testUsersAll)
+	t.Run("GuestLists", testGuestListsAll)
+	t.Run("Parties", testPartiesAll)
 	t.Run("TrackLists", testTrackListsAll)
-	t.Run("Guests", testGuestsAll)
+	t.Run("Users", testUsersAll)
 }
 
 func TestCount(t *testing.T) {
-	t.Run("Users", testUsersCount)
+	t.Run("GuestLists", testGuestListsCount)
+	t.Run("Parties", testPartiesCount)
 	t.Run("TrackLists", testTrackListsCount)
-	t.Run("Guests", testGuestsCount)
-}
-
-func TestHooks(t *testing.T) {
-	t.Run("Users", testUsersHooks)
-	t.Run("TrackLists", testTrackListsHooks)
-	t.Run("Guests", testGuestsHooks)
+	t.Run("Users", testUsersCount)
 }
 
 func TestInsert(t *testing.T) {
-	t.Run("Users", testUsersInsert)
-	t.Run("Users", testUsersInsertWhitelist)
+	t.Run("GuestLists", testGuestListsInsert)
+	t.Run("GuestLists", testGuestListsInsertWhitelist)
+	t.Run("Parties", testPartiesInsert)
+	t.Run("Parties", testPartiesInsertWhitelist)
 	t.Run("TrackLists", testTrackListsInsert)
 	t.Run("TrackLists", testTrackListsInsertWhitelist)
-	t.Run("Guests", testGuestsInsert)
-	t.Run("Guests", testGuestsInsertWhitelist)
+	t.Run("Users", testUsersInsert)
+	t.Run("Users", testUsersInsertWhitelist)
 }
 
 // TestToOne tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToOne(t *testing.T) {}
+func TestToOne(t *testing.T) {
+	t.Run("PartyToTrackListUsingQueue", testPartyToOneTrackListUsingQueue)
+	t.Run("PartyToTrackListUsingHistory", testPartyToOneTrackListUsingHistory)
+	t.Run("PartyToGuestListUsingGuest", testPartyToOneGuestListUsingGuest)
+	t.Run("UserToPartyUsingParty", testUserToOnePartyUsingParty)
+}
 
 // TestOneToOne tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOne(t *testing.T) {}
+func TestOneToOne(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneUserUsingUser)
+}
 
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToMany(t *testing.T) {}
+func TestToMany(t *testing.T) {
+	t.Run("GuestListToGuestParties", testGuestListToManyGuestParties)
+	t.Run("TrackListToQueueParties", testTrackListToManyQueueParties)
+	t.Run("TrackListToHistoryParties", testTrackListToManyHistoryParties)
+}
 
 // TestToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToOneSet(t *testing.T) {}
+func TestToOneSet(t *testing.T) {
+	t.Run("PartyToTrackListUsingQueue", testPartyToOneSetOpTrackListUsingQueue)
+	t.Run("PartyToTrackListUsingHistory", testPartyToOneSetOpTrackListUsingHistory)
+	t.Run("PartyToGuestListUsingGuest", testPartyToOneSetOpGuestListUsingGuest)
+	t.Run("UserToPartyUsingParty", testUserToOneSetOpPartyUsingParty)
+}
 
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToOneRemove(t *testing.T) {}
+func TestToOneRemove(t *testing.T) {
+	t.Run("UserToPartyUsingParty", testUserToOneRemoveOpPartyUsingParty)
+}
 
 // TestOneToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOneSet(t *testing.T) {}
+func TestOneToOneSet(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneSetOpUserUsingUser)
+}
 
 // TestOneToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOneRemove(t *testing.T) {}
+func TestOneToOneRemove(t *testing.T) {
+	t.Run("PartyToUserUsingUser", testPartyOneToOneRemoveOpUserUsingUser)
+}
 
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.
-func TestToManyAdd(t *testing.T) {}
+func TestToManyAdd(t *testing.T) {
+	t.Run("GuestListToGuestParties", testGuestListToManyAddOpGuestParties)
+	t.Run("TrackListToQueueParties", testTrackListToManyAddOpQueueParties)
+	t.Run("TrackListToHistoryParties", testTrackListToManyAddOpHistoryParties)
+}
 
 // TestToManySet tests cannot be run in parallel
 // or deadlocks can occur.
@@ -128,37 +160,43 @@ func TestToManySet(t *testing.T) {}
 func TestToManyRemove(t *testing.T) {}
 
 func TestReload(t *testing.T) {
-	t.Run("Users", testUsersReload)
+	t.Run("GuestLists", testGuestListsReload)
+	t.Run("Parties", testPartiesReload)
 	t.Run("TrackLists", testTrackListsReload)
-	t.Run("Guests", testGuestsReload)
+	t.Run("Users", testUsersReload)
 }
 
 func TestReloadAll(t *testing.T) {
-	t.Run("Users", testUsersReloadAll)
+	t.Run("GuestLists", testGuestListsReloadAll)
+	t.Run("Parties", testPartiesReloadAll)
 	t.Run("TrackLists", testTrackListsReloadAll)
-	t.Run("Guests", testGuestsReloadAll)
+	t.Run("Users", testUsersReloadAll)
 }
 
 func TestSelect(t *testing.T) {
-	t.Run("Users", testUsersSelect)
+	t.Run("GuestLists", testGuestListsSelect)
+	t.Run("Parties", testPartiesSelect)
 	t.Run("TrackLists", testTrackListsSelect)
-	t.Run("Guests", testGuestsSelect)
+	t.Run("Users", testUsersSelect)
 }
 
 func TestUpdate(t *testing.T) {
-	t.Run("Users", testUsersUpdate)
+	t.Run("GuestLists", testGuestListsUpdate)
+	t.Run("Parties", testPartiesUpdate)
 	t.Run("TrackLists", testTrackListsUpdate)
-	t.Run("Guests", testGuestsUpdate)
+	t.Run("Users", testUsersUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
-	t.Run("Users", testUsersSliceUpdateAll)
+	t.Run("GuestLists", testGuestListsSliceUpdateAll)
+	t.Run("Parties", testPartiesSliceUpdateAll)
 	t.Run("TrackLists", testTrackListsSliceUpdateAll)
-	t.Run("Guests", testGuestsSliceUpdateAll)
+	t.Run("Users", testUsersSliceUpdateAll)
 }
 
 func TestUpsert(t *testing.T) {
-	t.Run("Users", testUsersUpsert)
+	t.Run("GuestLists", testGuestListsUpsert)
+	t.Run("Parties", testPartiesUpsert)
 	t.Run("TrackLists", testTrackListsUpsert)
-	t.Run("Guests", testGuestsUpsert)
+	t.Run("Users", testUsersUpsert)
 }
