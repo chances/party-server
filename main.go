@@ -52,6 +52,8 @@ func main() {
 	search := controllers.NewSearch()
 	events := controllers.NewEvents()
 
+	go party.PruneExpiredGuests()
+
 	// === Initialize Gin ===
 	g := gin.New()
 
