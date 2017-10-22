@@ -53,7 +53,7 @@ func (s *Store) redisExpire(key string, lifetime time.Duration) error {
   if lifetime.Seconds() < 1.0 {
     lifetimeMilliseconds := lifetime.Nanoseconds() / int64(time.Millisecond)
     resp, err := redis.Bool(c.Do(
-      "PEXPIRE", int(lifetimeMilliseconds),
+      "PEXPIRE", key, int(lifetimeMilliseconds),
     ))
     if err != nil {
       return fmt.Errorf(
@@ -64,7 +64,7 @@ func (s *Store) redisExpire(key string, lifetime time.Duration) error {
     keyWasExpired = resp
   } else {
     resp, err := redis.Bool(c.Do(
-      "EXPIRE", int(lifetime.Seconds()),
+      "EXPIRE", key, int(lifetime.Seconds()),
       ))
     if err != nil {
       return fmt.Errorf(
