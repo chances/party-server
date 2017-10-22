@@ -39,6 +39,20 @@ func (cr *Events) Stream(ch string) gin.HandlerFunc {
 
 		c.Stream(func(w io.Writer) bool {
 		  message, _ := (<-listener).(string)
+
+      // End the stream if this is a guest session and it has expired
+      // TODO: Abstract this out into a StreamConditionally method
+      if session.IsGuest(c) {
+        guest := *session.CurrentGuest(c)
+        if token, ok := guest["Token"]; ok {
+          if exists, _ := cr.Cache.Exists(token.(string)); !exists {
+            return false
+          }
+        } else {
+          return false
+        }
+      }
+
 		  if message == "heartbeat" {
 		    sseComment(c, message)
 		    return true
