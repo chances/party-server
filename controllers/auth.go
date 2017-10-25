@@ -63,6 +63,8 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth 
 // Login ot Party via Spotify's Authorization Grant OAuth flow
 func (cr *Auth) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		redirect, _ := c.GetQuery("return_to")
+
 		state := uuid.NewV4().String()
 
 		sesh := session.DefaultSession(c)
@@ -71,6 +73,14 @@ func (cr *Auth) Login() gin.HandlerFunc {
 			c.Error(e.Auth.WithDetail("Couldn't save session").CausedBy(err))
 			c.Abort()
 			return
+		}
+		if redirect != "" {
+			err := sesh.Set("RETURN_TO", redirect)
+			if err != nil {
+				c.Error(e.Auth.WithDetail("Couldn't save session").CausedBy(err))
+				c.Abort()
+				return
+			}
 		}
 
 		c.Redirect(http.StatusSeeOther, cr.SpotifyAuth.AuthURL(state))
@@ -144,7 +154,27 @@ func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 		c.Set("user", user)
 		sesh.Set("USER", user.Username)
 
+		redirectTo := "/auth/finished"
+		redirect, err := sesh.Get("RETURN_TO")
+		if err == nil {
+			sesh.Delete("RETURN_TO")
+			redirectTo = redirect
+		}
+
 		// Successfully logged in
+		c.Redirect(http.StatusSeeOther, redirectTo)
+	}
+}
+
+func (cr *Auth) Finished() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if session.IsLoggedIn(c) {
+			user := session.CurrentUser(c)
+
+			c.String(http.StatusOK, "Logged in as %s", user.Username)
+			return
+		}
+
 		c.Redirect(http.StatusSeeOther, "/")
 	}
 }

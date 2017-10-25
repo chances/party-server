@@ -117,6 +117,7 @@ func main() {
 
 	g.GET("/auth/login", auth.Login())
 	g.GET("/auth/callback", auth.SpotifyCallback())
+	g.GET("/auth/finished", auth.Finished())
 	g.Group("/auth/logout").
 		Use(m.AuthenticationRequired()).
 		GET("", auth.Logout())
