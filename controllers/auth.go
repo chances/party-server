@@ -88,7 +88,6 @@ func (cr *Auth) Login() gin.HandlerFunc {
 }
 
 // SpotifyCallback completes Spotify's Authorization Grant OAuth flow
-// IDEA: Convert error handling shenanigans to Observable chain
 func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sesh := session.DefaultSession(c)
@@ -166,6 +165,7 @@ func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	}
 }
 
+// Finished displays a success message and is suitable for detection in mobile app
 func (cr *Auth) Finished() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if session.IsLoggedIn(c) {
@@ -176,6 +176,20 @@ func (cr *Auth) Finished() gin.HandlerFunc {
 		}
 
 		c.Redirect(http.StatusSeeOther, "/")
+	}
+}
+
+// GetToken retreives the Spotify access token for the current user
+func (cr *Auth) GetToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := session.CurrentUser(c)
+
+		response := models.SpotifyToken{
+			AccessToken: user.AccessToken,
+			TokenExpiry: user.TokenExpiryDate.UTC(),
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
