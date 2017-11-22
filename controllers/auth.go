@@ -60,9 +60,11 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth 
 	return newAuth
 }
 
-// Login ot Party via Spotify's Authorization Grant OAuth flow
+// Login to Party via Spotify's Authorization Grant OAuth flow
 func (cr *Auth) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		redirect, _ := c.GetQuery("return_to")
+
 		state := uuid.NewV4().String()
 
 		sesh := session.DefaultSession(c)
@@ -72,13 +74,29 @@ func (cr *Auth) Login() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		if redirect != "" {
+			err := sesh.Set("RETURN_TO", redirect)
+			if err != nil {
+				c.Error(e.Auth.WithDetail("Couldn't save session").CausedBy(err))
+				c.Abort()
+				return
+			}
+		}
 
 		c.Redirect(http.StatusSeeOther, cr.SpotifyAuth.AuthURL(state))
 	}
 }
 
+// Mobile responds with a pretty spinner for mobile client users
+func (cr *Auth) Mobile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "auth.html", gin.H{
+			"host": c.Request.Host,
+		})
+	}
+}
+
 // SpotifyCallback completes Spotify's Authorization Grant OAuth flow
-// IDEA: Convert error handling shenanigans to Observable chain
 func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sesh := session.DefaultSession(c)
@@ -144,8 +162,45 @@ func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 		c.Set("user", user)
 		sesh.Set("USER", user.Username)
 
+		redirectTo := "/auth/finished"
+		redirect, err := sesh.Get("RETURN_TO")
+		if err == nil {
+			sesh.Delete("RETURN_TO")
+			redirectTo = redirect
+		}
+
 		// Successfully logged in
+		c.Redirect(http.StatusSeeOther, redirectTo)
+	}
+}
+
+// Finished displays a success message and is suitable for detection in mobile app
+func (cr *Auth) Finished() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if session.IsLoggedIn(c) {
+			user := session.CurrentUser(c)
+
+			c.HTML(http.StatusOK, "auth.html", gin.H{
+				"username": user.Username,
+			})
+			return
+		}
+
 		c.Redirect(http.StatusSeeOther, "/")
+	}
+}
+
+// GetToken retreives the Spotify access token for the current user
+func (cr *Auth) GetToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := session.CurrentUser(c)
+
+		response := models.SpotifyToken{
+			AccessToken: user.AccessToken,
+			TokenExpiry: user.TokenExpiryDate.UTC(),
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 

@@ -114,9 +114,14 @@ func main() {
 	g.Group("/auth/ping").
 		Use(m.GuestsOnly()).
 		GET("", auth.GuestPing())
+	g.Group("/auth/token").
+		Use(m.AuthenticationRequired()).
+		GET("", auth.GetToken())
 
 	g.GET("/auth/login", auth.Login())
+	g.GET("/auth/mobile", auth.Mobile())
 	g.GET("/auth/callback", auth.SpotifyCallback())
+	g.GET("/auth/finished", auth.Finished())
 	g.Group("/auth/logout").
 		Use(m.AuthenticationRequired()).
 		GET("", auth.Logout())
