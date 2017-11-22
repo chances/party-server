@@ -90,7 +90,9 @@ func (cr *Auth) Login() gin.HandlerFunc {
 // Mobile responds with a pretty spinner for mobile client users
 func (cr *Auth) Mobile() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.HTML(http.StatusOK, "auth.html", gin.H{})
+		c.HTML(http.StatusOK, "auth.html", gin.H{
+			"host": c.Request.Host,
+		})
 	}
 }
 
