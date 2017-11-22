@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	pseudoRand "math/rand"
 	"net/http"
 	"time"
@@ -22,7 +23,6 @@ import (
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/vattle/sqlboiler/types"
-  "log"
 )
 
 // Party controller
@@ -128,7 +128,7 @@ func (cr *Party) Join() gin.HandlerFunc {
 			guest := *session.CurrentGuest(c)
 			if guest["Party"] == party.ID {
 				publicParty := cr.augmentParty(party, guests)
-        cr.respondWithParty(c, publicParty)
+				cr.respondWithParty(c, publicParty)
 				return
 			} else {
 				c.Error(e.BadRequest.WithDetail("Already joined a party"))
@@ -172,55 +172,55 @@ func (cr *Party) Join() gin.HandlerFunc {
 		publicParty := cr.augmentParty(party, guests)
 		cr.respondWithParty(c, publicParty)
 
-    go events.UpdateParty(publicParty)
+		go events.UpdateParty(publicParty)
 	}
 }
 
 // PruneExpiredGuests from active parties every five seconds
 func (cr *Party) PruneExpiredGuests() {
-  for {
-    time.Sleep(time.Second * time.Duration(5))
+	for {
+		time.Sleep(time.Second * time.Duration(5))
 
-    prunedGuests := 0
-    // Get all parties that haven't ended
-    parties := models.PartiesG(qm.Where("ended=false")).AllP()
-    for _, party := range parties {
-      guests, err := party.Guests()
-      if err != nil {
-        continue
-      }
+		prunedGuests := 0
+		// Get all parties that haven't ended
+		parties := models.PartiesG(qm.Where("ended=false")).AllP()
+		for _, party := range parties {
+			guests, err := party.Guests()
+			if err != nil {
+				continue
+			}
 
-      numGuests := len(guests)
+			numGuests := len(guests)
 
-      // Remove expired guests
-      for i := 0; i < len(guests); i += 1 {
-        guest := guests[i]
-        exists, err := cr.Cache.Exists(guest.Token)
-        if err != nil {
-          continue
-        }
+			// Remove expired guests
+			for i := 0; i < len(guests); i += 1 {
+				guest := guests[i]
+				exists, err := cr.Cache.Exists(guest.Token)
+				if err != nil {
+					continue
+				}
 
-        if !exists {
-          // Cut out this guest from the slice of guests
-          guests = append(guests[:i], guests[i+1:]...)
-          i -= 1
-          prunedGuests += 1
-        }
-      }
+				if !exists {
+					// Cut out this guest from the slice of guests
+					guests = append(guests[:i], guests[i+1:]...)
+					i -= 1
+					prunedGuests += 1
+				}
+			}
 
-      // If the guest list changed then update the party's guest list and
-      //  broadcast changed party
-      if numGuests != len(guests) {
-        party.UpdateGuestList(guests)
-        publicParty := cr.augmentParty(party, guests)
-        go events.UpdateParty(publicParty)
-      }
-    }
+			// If the guest list changed then update the party's guest list and
+			//  broadcast changed party
+			if numGuests != len(guests) {
+				party.UpdateGuestList(guests)
+				publicParty := cr.augmentParty(party, guests)
+				go events.UpdateParty(publicParty)
+			}
+		}
 
-    if prunedGuests > 0 {
-      log.Printf("Pruned %d expired guests\n", prunedGuests)
-    }
-  }
+		if prunedGuests > 0 {
+			log.Printf("Pruned %d expired guests\n", prunedGuests)
+		}
+	}
 }
 
 func (cr *Party) augmentParty(
@@ -253,11 +253,11 @@ func (cr *Party) augmentParty(
 }
 
 func (cr *Party) respondWithParty(c *gin.Context, party models.PublicParty) {
-  c.JSON(http.StatusOK, models.NewResponse(
-    party.RoomCode, "party",
-    cr.RequestURI(c),
-    party,
-  ))
+	c.JSON(http.StatusOK, models.NewResponse(
+		party.RoomCode, "party",
+		cr.RequestURI(c),
+		party,
+	))
 }
 
 // Start a new party for the current user
