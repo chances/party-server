@@ -10,3 +10,8 @@ models:
 	sqlboiler --wipe --no-hooks postgres
 
 .PHONY: models
+
+redis-start:
+	redis-server &> /dev/null &
+
+.PHONY: redis-start
