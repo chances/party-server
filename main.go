@@ -119,6 +119,7 @@ func main() {
 		GET("", auth.GetToken())
 
 	g.GET("/auth/login", auth.Login())
+	g.GET("/auth/mobile", auth.Mobile())
 	g.GET("/auth/callback", auth.SpotifyCallback())
 	g.GET("/auth/finished", auth.Finished())
 	g.Group("/auth/logout").

@@ -60,7 +60,7 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth 
 	return newAuth
 }
 
-// Login ot Party via Spotify's Authorization Grant OAuth flow
+// Login to Party via Spotify's Authorization Grant OAuth flow
 func (cr *Auth) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		redirect, _ := c.GetQuery("return_to")
@@ -84,6 +84,13 @@ func (cr *Auth) Login() gin.HandlerFunc {
 		}
 
 		c.Redirect(http.StatusSeeOther, cr.SpotifyAuth.AuthURL(state))
+	}
+}
+
+// Mobile responds with a pretty spinner for mobile client users
+func (cr *Auth) Mobile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "auth.html", gin.H{})
 	}
 }
 
@@ -171,7 +178,9 @@ func (cr *Auth) Finished() gin.HandlerFunc {
 		if session.IsLoggedIn(c) {
 			user := session.CurrentUser(c)
 
-			c.String(http.StatusOK, "Logged in as %s", user.Username)
+			c.HTML(http.StatusOK, "auth.html", gin.H{
+				"username": user.Username,
+			})
 			return
 		}
 
