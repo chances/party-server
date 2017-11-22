@@ -119,18 +119,20 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 
 - [ ] Playback history (History) endpoint _(As TrackList)_
+  - [x] History endpoint
   - [ ] Pagination
     - 20 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Send this with party, `/events/party`, SSE?)
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
     - Updates when current track changes
   - Most recent track first
   - Clients may use a track's `began_playing` timestamp to show timeago info
 - [ ] Playback future (Queue) endpoint _(As TrackList)_
+  - [x] Queue endpoint
   - [ ] Pagination
     - 10 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Send this with party, `/events/party`, SSE?)
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
     - Updates when current track changes
     - Updates when guests contribute tracks
   - Server keeps track of whole Queue
@@ -176,7 +178,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - Facebook integration (_Future_)
 - [ ] Contribution
   - [ ] Add (suggest) a song
-    - [ ] Limit maximum number of suggestions per timeframe (hour?)
+  - [ ] Limit maximum number of suggestions per timeframe (hour?)
   - [ ] Suggest that a song should be skipped
     - [ ] Require a minimum number of votes (5? fraction of party attendants?)
 - [x] Join a party given its room code

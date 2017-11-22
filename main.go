@@ -49,6 +49,8 @@ func main() {
 	index := controllers.NewIndex()
 	party := controllers.NewParty()
 	playlists := controllers.NewPlaylists()
+	queue := controllers.NewQueue()
+	history := controllers.NewHistory()
 	search := controllers.NewSearch()
 	events := controllers.NewEvents()
 
@@ -79,16 +81,18 @@ func main() {
 	g.GET("/", index.Get())
 
 	// Party routes
-	parties := g.Group("/party")
-	parties.Use(m.AuthenticationRequired())
-	{
-		parties.POST("/start", party.Start())
-		// parties.POST("/end", party.End())
-	}
-	g.Group("/party").
-		Use(m.AuthorizationRequired()).
-		GET("", party.Get())
 	g.POST("/party/join", party.Join())
+	partyAdmin := g.Group("/party").Use(m.AuthenticationRequired())
+	{
+		partyAdmin.POST("/start", party.Start())
+		// partyAdmin.POST("/end", party.End())
+	}
+	partyUser := g.Group("/party").Use(m.AuthorizationRequired())
+	{
+		partyUser.GET("", party.Get())
+		partyUser.GET("/queue", queue.Get())
+		partyUser.GET("/history", history.Get())
+	}
 
 	// Playlist routes
 	playlist := g.Group("/playlist")
