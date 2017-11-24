@@ -29,7 +29,7 @@ func NewPlaylists() Playlists {
 	return newPlaylists
 }
 
-// Get the current user's current playlist
+// Get the user's (host's) current playlist
 func (cr *Playlists) Get() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		currentUser := session.CurrentUser(c)
@@ -102,6 +102,8 @@ func (cr *Playlists) Patch() gin.HandlerFunc {
 					c.Abort()
 					return
 				}
+
+				// TODO: Update the user's current party somehow? Add the new playlists's tracks or replace the queue?
 
 				c.JSON(http.StatusOK, models.NewResponse(
 					playlist.ID, "playlist",
