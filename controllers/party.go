@@ -9,6 +9,7 @@ import (
 	"log"
 	pseudoRand "math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	null "gopkg.in/nullbio/null.v6"
@@ -118,23 +119,23 @@ func (cr *Party) Join() gin.HandlerFunc {
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
 
-		// It is a bad request to try to join a party the guest has already joined
+		// It is a bad request to try to join a party if the guest has already
+		//  joined a different party
+		//
 		// If the user is already a guest and they've joined _this_ party then
 		//  respond with augmented party
-		//
-		// Otherwise it is a bad request if they are a guest and have NOT joined
-		//  _this_ party
+		// Otherwise, it is a bad request if they have NOT joined _this_ party
 		if session.IsGuest(c) {
 			guest := *session.CurrentGuest(c)
 			if guest["Party"] == party.ID {
 				publicParty := cr.augmentParty(party, guests)
 				cr.respondWithParty(c, publicParty)
 				return
-			} else {
-				c.Error(e.BadRequest.WithDetail("Already joined a party"))
-				c.Abort()
-				return
 			}
+
+			c.Error(e.BadRequest.WithDetail("Already joined a party"))
+			c.Abort()
+			return
 		}
 
 		origin := c.Request.Header.Get("Origin")
@@ -193,7 +194,7 @@ func (cr *Party) PruneExpiredGuests() {
 			numGuests := len(guests)
 
 			// Remove expired guests
-			for i := 0; i < len(guests); i += 1 {
+			for i := 0; i < len(guests); i++ {
 				guest := guests[i]
 				exists, err := cr.Cache.Exists(guest.Token)
 				if err != nil {
@@ -279,6 +280,8 @@ func (cr *Party) Start() gin.HandlerFunc {
 		playlistID := newParty.Data.PlaylistID
 		currentUser := session.CurrentUser(c)
 
+		// TODO: End the user's current party (also broadcast party end event)
+
 		spotifyClient, err := cr.ClientFromSession(c)
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
@@ -304,14 +307,23 @@ func (cr *Party) Start() gin.HandlerFunc {
 		if currentPlaylist == nil {
 			errMessage := fmt.Sprintf("Invalid playlist id %v. User '%s' does not own or subscribe to given playlist", playlistID, currentUser.Username)
 			c.Error(e.BadRequest.WithDetail(errMessage))
+			c.Abort()
+			return
 		}
 
 		location := gin.H{
 			"host_name": newParty.Data.Host,
 		}
 
+		roomCode := generateRoomCode(roomCodeLength)
+		if roomCode == "" {
+			c.Error(e.Internal.WithDetail("Could not generate room code"))
+			c.Abort()
+			return
+		}
+
 		party := models.Party{
-			RoomCode:     generateRoomCode(roomCodeLength),
+			RoomCode:     roomCode,
 			CurrentTrack: null.JSONFrom(nil),
 		}
 		party.Location.Marshal(location)
@@ -380,5 +392,6 @@ func generateRoomCode(s int) string {
 	if err != nil {
 		return ""
 	}
-	return base64.URLEncoding.EncodeToString(b)
+	roomCode := base64.URLEncoding.EncodeToString(b)
+	return strings.ToUpper(roomCode)
 }
