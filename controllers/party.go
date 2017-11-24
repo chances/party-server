@@ -280,7 +280,11 @@ func (cr *Party) Start() gin.HandlerFunc {
 		playlistID := newParty.Data.PlaylistID
 		currentUser := session.CurrentUser(c)
 
-		// TODO: End the user's current party (also broadcast party end event)
+		// End the user's current party if they've already started one
+		currentParty, err := currentUser.PartyG().One()
+		if currentParty != nil {
+			cr.endParty(c, currentUser, currentParty)
+		}
 
 		spotifyClient, err := cr.ClientFromSession(c)
 		if err != nil {
@@ -401,25 +405,37 @@ func (cr *Party) End() gin.HandlerFunc {
 			return
 		}
 
-		currentParty.Ended = true
-		err = currentParty.UpdateG()
-		if err != nil {
-			c.Error(e.Internal.WithDetail("Could not end party").CausedBy(err))
-			c.Abort()
-			return
-		}
+		cr.endParty(c, currentUser, currentParty)
 
-		currentUser.PartyID = null.NewInt(0, false)
-		currentUser.UpdateG()
-		if err != nil {
-			c.Error(e.Internal.WithDetail("Could not update user").CausedBy(err))
-			c.Abort()
-			return
-		}
+		c.JSON(http.StatusOK, models.EmptyRespose)
+	}
+}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: gin.H{},
-		})
+func (cr *Party) endParty(c *gin.Context, user *models.User, party *models.Party) {
+	party.Ended = true
+	err := party.UpdateG()
+	if err != nil {
+		c.Error(e.Internal.WithDetail("Could not end current party").CausedBy(err))
+		c.Abort()
+		return
+	}
+
+	// Broadcast to clients that the party has ended
+	guests, err := party.Guests()
+	if err != nil {
+		c.Error(e.Internal.CausedBy(err))
+		c.Abort()
+		return
+	}
+	publicParty := cr.augmentParty(party, guests)
+	go events.UpdateParty(publicParty)
+
+	user.PartyID = null.NewInt(0, false)
+	err = user.UpdateG()
+	if err != nil {
+		c.Error(e.Internal.WithDetail("Could not update user").CausedBy(err))
+		c.Abort()
+		return
 	}
 }
 
