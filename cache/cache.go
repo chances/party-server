@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/gin-gonic/gin"
 )
 
 // Store Party cache entries
@@ -19,9 +20,13 @@ type Entry struct {
 	Expiry time.Time
 }
 
+func (e *Entry) IsForever() bool {
+  return e.Expiry.Equal(time.Unix(0, 0).UTC())
+}
+
 // IsExpired returns true if entry is expired
 func (e *Entry) IsExpired() bool {
-	isForever := e.Expiry.Equal(time.Unix(0, 0).UTC())
+	isForever := e.IsForever()
 	return !isForever && e.Expiry.Before(time.Now().UTC())
 }
 
@@ -35,7 +40,7 @@ func Value(value interface{}) Entry {
 // Expires creates a cache entry that expires at the given time
 func Expires(expiry time.Time, value interface{}) Entry {
 	return Entry{
-		Expiry: expiry,
+		Expiry: expiry.UTC(),
 		Value:  value,
 	}
 }
@@ -52,6 +57,7 @@ func Forever(value interface{}) Entry {
 func NewStore(p *redis.Pool) Store {
 	gob.Register(map[string]string{})
 	gob.Register(Entry{})
+	gob.Register(gin.H{})
 	return Store{
 		pool: p,
 	}
@@ -75,6 +81,11 @@ func (s *Store) Get(key string) (*Entry, error) {
 	err = dec.Decode(&value)
 	if err != nil {
 		return nil, err
+	}
+
+	// Delete the entry from the cache if it's expired
+	if value.IsExpired() {
+		s.Delete(key)
 	}
 
 	return &value, nil
@@ -127,10 +138,25 @@ func (s *Store) Set(key string, e Entry) error {
 		return err
 	}
 
-	return s.redisSet(key, valueBuffer)
+	err = s.redisSet(key, valueBuffer)
+	if err != nil {
+	  return err
+  }
+  // If key is not forever then tell redis to expire it automagically
+  if !e.IsForever() {
+    lifetime := e.Expiry.Sub(time.Now())
+    return s.redisExpire(key, lifetime)
+  }
+
+  return nil
 }
 
 // Delete a cache entry
 func (s *Store) Delete(key string) error {
 	return s.redisDelete(key)
+}
+
+// DeleteKeys deletes all given keys
+func (s *Store) DeleteKeys(keys []string) error {
+	return s.redisDeleteKeys(keys)
 }

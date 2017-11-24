@@ -1,8 +1,8 @@
 package spotify
 
 import (
-	"github.com/chances/chances-party/cache"
-	"github.com/chances/chances-party/models"
+	"github.com/chances/party-server/cache"
+	"github.com/chances/party-server/models"
 	"github.com/vattle/sqlboiler/boil"
 	"github.com/vattle/sqlboiler/queries/qm"
 	"github.com/zmb3/spotify"
@@ -11,7 +11,7 @@ import (
 
 // Playlist gets a Spotify user's playlist given its username and playlist ID
 func Playlist(username string, playlistID string, client spotify.Client) (models.CachedPlaylist, error) {
-	playlistEntry, err := _playlist(username, playlistID, client)
+	playlistEntry, err := playlist(username, playlistID, client)
 	if err != nil {
 		return models.CachedPlaylist{}, err
 	}
@@ -19,7 +19,7 @@ func Playlist(username string, playlistID string, client spotify.Client) (models
 	return cachedPlaylist, nil
 }
 
-func _playlist(username string, playlistID string, client spotify.Client) (cache.Entry, error) {
+func playlist(username string, playlistID string, client spotify.Client) (cache.Entry, error) {
 	// Try to get CachedPlaylist, if not in cache try from DB, else get from Spotify API
 	playlistEntry, err := partyCache.GetOrDefer("playlist:"+playlistID, func() (*cache.Entry, error) {
 		trackList, err := models.TrackListsG(qm.Where("spotify_playlist_id=?", playlistID)).One()
@@ -68,7 +68,7 @@ func _playlist(username string, playlistID string, client spotify.Client) (cache
 // Playlists gets the current user's playlists
 func Playlists(username string, client spotify.Client) ([]models.Playlist, error) {
 	playlistsEntry, err := partyCache.GetOrDefer("playlists:"+username, func() (*cache.Entry, error) {
-		playlists, err := _playlists(client)
+		playlists, err := playlists(client)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +83,7 @@ func Playlists(username string, client spotify.Client) ([]models.Playlist, error
 	return playlists, nil
 }
 
-func _playlists(client spotify.Client) ([]models.Playlist, error) {
+func playlists(client spotify.Client) ([]models.Playlist, error) {
 	limit := 50
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,

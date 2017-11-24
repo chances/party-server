@@ -1,11 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/models"
-	s "github.com/chances/chances-party/spotify"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/models"
+	s "github.com/chances/party-server/spotify"
 	"github.com/gin-gonic/gin"
 	"github.com/zmb3/spotify"
 )
@@ -48,13 +49,16 @@ func (cr *Search) SearchTracks() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: gin.H{
+		c.JSON(http.StatusOK, models.NewResponse(
+			fmt.Sprintf("\"%s\":%d-%d", query, result.Tracks.Offset, result.Tracks.Total),
+			"search-tracks",
+			cr.RequestURI(c),
+			gin.H{
 				"tracks": result.Tracks.Tracks,
 				"limit":  result.Tracks.Limit,
 				"offset": result.Tracks.Offset,
 				"total":  result.Tracks.Total,
 			},
-		})
+		))
 	}
 }

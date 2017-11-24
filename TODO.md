@@ -1,9 +1,6 @@
 - [x] Implement custom server session backend, see [gin-contrib/sessions](https://github.com/gin-contrib/sessions)
 - [x] Find/implement OAuth2 solution for Spotify authentication
 - [ ] Add tests with go [testing](https://golang.org/pkg/testing/) tools
-- [ ] Add the Node.js buildpack to build Node.js assets
-
-  See: [Deploying Golang app with Bower on Heroku](http://stackoverflow.com/a/33387855/1363247)
 
 - [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
@@ -11,23 +8,23 @@
 
 ## Security
 
-- [ ] Improve CSP support
+- [x] Improve CSP support
 - [x] Add HTTPOnly or SecureOnly support to cookies
 - [ ] Add CSRF token support?
 
 ## Parity with original JS prototype
 
-- [x] Parity with [index (unauthenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
+- [x] Parity with [index (unauthenticated)](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L8)
 - [x] Spotify OAuth2 integration
-- [x] Parity with [auth routes](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
-- [x] Parity with [index (authenticated)](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
+- [x] Parity with [auth routes](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/auth.js)
+- [x] Parity with [index (authenticated)](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L14)
   - [x] Get user data
   - [x] Get user's own playlists
   - [x] Render user data
   - [x] Render user playlists
   - [x] Log Out
-- [x] Parity with [playlist endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
-- [x] Parity with [search endpoint](https://github.com/chances/chances-party/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
+- [x] Parity with [playlist endpoint](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L38)
+- [x] Parity with [search endpoint](https://github.com/chances/party-server/blob/94ce862cb8fc9ef94b3b8c73c404479c3d86e659/routes/index.js#L71)
 
 _Note: The Android client app authenticates with Spotify directly._
 
@@ -89,30 +86,32 @@ _Note: The Android client app authenticates with Spotify directly._
     - History foreign key (_To TrackList_)
     - Guests foreign key
 
-### JSON Web Tokens
+### Party Access Tokens
 
-- [ ] Add JSON Web Token delivery
-  - [ ] Store tokens in Redis
-    - No persistence necessary, parties are ephemeral
-  - [ ] Deliver token serialized as a [JWT](https://github.com/auth0/node-jsonwebtoken) (And from [Go](https://github.com/dgrijalva/jwt-go))
-  - [ ] Deliver token to authenticated sessions
-    - Supplements session cookie (Which is really only used for OAuth at this point)
-    - Deliver **_only_** to
-      - Authenticated Android client users, or
-      - Sessions on same root domain **_with_** CORS Origin validation
-  - [ ] Deliver JWT with a _Party Access Token_ to pseudo-authenticated guests
-    - Those who have joined a party with valid party ID **and** over SSL
+_Party Access Tokens_ authenticate API access for party guests. (Party hosts authenticate separately with Spotify.)
+
+- [ ] Add access token delivery
+  - [ ] Sign generated tokens using a strong signature (token secret, cryptographic hash)
+  - [x] Store tokens in Redis
+    - No persistence necessary for guest tokens, parties are ephemeral
+  - [x] Deliver token inside a secure cookie
+  - [x] Deliver a _Party Access Token_ to pseudo-authenticated guests
+    - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
+    - Store originating Origin and validate subsequent requests given the request's _Party Access Token_
   - [ ] Recurring job to clean expired tokens
-    - Token expires after 30 minutes of disuse
-  - [ ] Automatically refresh token via ping/pong
+    - Party access tokens expire after 30 minutes of disuse
+  - [x] Automatically refresh token expiration time via ping/pong
 
 ### Server Events
 
-- [ ] Server-Sent Events data integration for party state updates sent to clients
+- [x] Server-Sent Events data integration for party state updates sent to clients
   - Push TrackList and Party model updates to guests
   - Gin comes [ready built for SSE](https://github.com/gin-gonic/gin/tree/2dae550eb5392006a4582ce9c90016a9b5a74e8b/examples/realtime-chat)
   - [go-broadcast](https://github.com/dustin/go-broadcast)
 
+- [ ] Scalable Server-Sent Events data integration via Redis PubSub
+  - Current implementation keeps connection info in memory
+  - This will not scale to multiple Heroku dynos
 
 - [ ] ~~WebSockets streaming data integration?~~
   - Do I need full duplex send/receive sockets? **Probably not in most cases**
@@ -120,22 +119,48 @@ _Note: The Android client app authenticates with Spotify directly._
 
 
 - [ ] Playback history (History) endpoint _(As TrackList)_
-  - [ ] With SSE support
+  - [x] History endpoint
+  - [ ] Pagination
+    - 20 tracks, by default, per page
+    - `limit` and `offset` query params
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
+    - Updates when current track changes
+  - Most recent track first
+  - Clients may use a track's `began_playing` timestamp to show timeago info
 - [ ] Playback future (Queue) endpoint _(As TrackList)_
-  - [ ] With SSE support
+  - [x] Queue endpoint
+  - [ ] Pagination
+    - 10 tracks, by default, per page
+    - `limit` and `offset` query params
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
+    - Updates when current track changes
+    - Updates when guests contribute tracks
+  - Server keeps track of whole Queue
+    - Hosts may view whole queue
+    - Guests may only see first page of queue (First page w/ default page size; ignore page query params)
 - [ ] Add Party endpoints
   - [x] Create (Start?)
   - [ ] End (Stop/Quit?)
   - [x] Get current party
-  - [ ] Join a party
-    - Via _pseudo-authenticated_ room code, delivering JWT, or
-    - Check-In via OAuth provider
-    - [ ] With SSE support (Update clients with Guest-list)
+  - [x] Join a party
+    - [x] Via _authorized_ room code
+    - [ ] Check-In via OAuth provider
+    - [x] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
   - _Maybe better with a WebSocket?_
 
 ### Party Host Features
+
+- [ ] Mobile app authentication
+  - [x] Open `/auth/login` in a web view
+  - [x] Redirect back to new `/auth/finished` endpoint
+    - Render: `Logged in as $name$ : <a href=/auth/logout>Logout</a>`
+    - Mobile app handles redirection back here
+  - [x] Spotify access token delivery
+    - Only deliver access token, server manages refresh
+  - [ ] Spotify token refresh endpoint `/auth/refresh`
+    - Responds with refreshed token
 
 - [ ] Playback
   - [ ] Pick a playlist for a party
@@ -146,18 +171,18 @@ _Note: The Android client app authenticates with Spotify directly._
 
 ### Party Guest Features
 
-- [ ] Add _Join Party_ endpoint
+- [x] Add _Join Party_ endpoint
   - With Party foreign key
   - Should there be a party list? **No**
-  - User facing "room" code for guests to enter (Like Jackbox. _456,976 combinations with 4 letters_)
+  - User facing "room" code for guests to enter (Like Jackbox. _456,976 combinations with 4 letters_, but I'm using any alpha-numeric combination of four characters, _13,845,841 possible combinations_)
   - Facebook integration (_Future_)
 - [ ] Contribution
   - [ ] Add (suggest) a song
-    - [ ] Limit to a maximum limit per timeframe (hour?)
+  - [ ] Limit maximum number of suggestions per timeframe (hour?)
   - [ ] Suggest that a song should be skipped
     - [ ] Require a minimum number of votes (5? fraction of party attendants?)
-- [ ] Join a party
-  - _unauthenticated_ ⇒ _pseudo-authenticated_ (Via JWT)
+- [x] Join a party given its room code
+  - _unauthenticated_ ⇒ _pseudo-authenticated_ (Via room code authorization)
 - [ ] Check-In to a Party (_authenticated_)
   - [ ] OAuth2 third-party authentication schemes
     - [ ] Facebook

@@ -3,15 +3,13 @@ package controllers
 import (
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	e "github.com/chances/chances-party/errors"
-	"github.com/chances/chances-party/models"
-	"github.com/chances/chances-party/session"
-	"github.com/dgrijalva/jwt-go"
+	e "github.com/chances/party-server/errors"
+	"github.com/chances/party-server/models"
+	"github.com/chances/party-server/session"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"github.com/vattle/sqlboiler/boil"
@@ -62,9 +60,11 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth 
 	return newAuth
 }
 
-// Login ot Party via Spotify's Authorization Grant OAuth flow
+// Login to Party via Spotify's Authorization Grant OAuth flow
 func (cr *Auth) Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		redirect, _ := c.GetQuery("return_to")
+
 		state := uuid.NewV4().String()
 
 		sesh := session.DefaultSession(c)
@@ -74,13 +74,29 @@ func (cr *Auth) Login() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		if redirect != "" {
+			err := sesh.Set("RETURN_TO", redirect)
+			if err != nil {
+				c.Error(e.Auth.WithDetail("Couldn't save session").CausedBy(err))
+				c.Abort()
+				return
+			}
+		}
 
 		c.Redirect(http.StatusSeeOther, cr.SpotifyAuth.AuthURL(state))
 	}
 }
 
+// Mobile responds with a pretty spinner for mobile client users
+func (cr *Auth) Mobile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "auth.html", gin.H{
+			"host": c.Request.Host,
+		})
+	}
+}
+
 // SpotifyCallback completes Spotify's Authorization Grant OAuth flow
-// IDEA: Convert error handling shenanigans to Observable chain
 func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sesh := session.DefaultSession(c)
@@ -146,8 +162,45 @@ func (cr *Auth) SpotifyCallback() gin.HandlerFunc {
 		c.Set("user", user)
 		sesh.Set("USER", user.Username)
 
+		redirectTo := "/auth/finished"
+		redirect, err := sesh.Get("RETURN_TO")
+		if err == nil {
+			sesh.Delete("RETURN_TO")
+			redirectTo = redirect
+		}
+
 		// Successfully logged in
+		c.Redirect(http.StatusSeeOther, redirectTo)
+	}
+}
+
+// Finished displays a success message and is suitable for detection in mobile app
+func (cr *Auth) Finished() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if session.IsLoggedIn(c) {
+			user := session.CurrentUser(c)
+
+			c.HTML(http.StatusOK, "auth.html", gin.H{
+				"username": user.Username,
+			})
+			return
+		}
+
 		c.Redirect(http.StatusSeeOther, "/")
+	}
+}
+
+// GetToken retreives the Spotify access token for the current user
+func (cr *Auth) GetToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := session.CurrentUser(c)
+
+		response := models.SpotifyToken{
+			AccessToken: user.AccessToken,
+			TokenExpiry: user.TokenExpiryDate.UTC(),
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
@@ -163,55 +216,16 @@ func (cr *Auth) Logout() gin.HandlerFunc {
 	}
 }
 
-// Guest authorizes a new guest user
-func (cr *Auth) Guest() gin.HandlerFunc {
+// GuestPing replies to a guest's ping request with "pong"
+func (cr *Auth) GuestPing() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token, err := cr.authGuest()
-		if err != nil {
-			c.Error(e.Unauthorized.WithDetail("Could not create JWT").CausedBy(err))
-			c.Abort()
-			return
-		}
+		// QUESTION: Should guest pinging return anything else?
+		// NOTE: This tiny amount of work keeps the request blazing fast...
 
-		c.JSON(http.StatusOK, models.Response{
-			Data: token,
-		})
+		c.JSON(http.StatusOK, models.NewResponse(
+			"pong", "pong",
+			cr.RequestURI(c),
+			"pong",
+		))
 	}
-}
-
-func (cr *Auth) authGuest() (string, error) {
-	// TODO: Auth a guest session given a party "room" or after OAuth
-
-	jwtSessionID := uuid.NewV4().String()
-	// TODO: Store token ID is Redis with expiration
-	// TODO: Goroutine to clean expired JWTs
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id": jwtSessionID,
-	})
-
-	tokenString, err := token.SignedString(cr.jwtSigningKey)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
-}
-
-// ValidateJwt validates a given JWT token
-func (cr *Auth) ValidateJwt(tokenString string) (string, bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if token.Header["alg"] != jwt.SigningMethodHS256.Alg() {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-
-		return cr.jwtSigningKey, nil
-	})
-	if err != nil {
-		return "", false, err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["id"].(string), token.Valid, nil
-	}
-
-	return "", token.Valid, nil
 }

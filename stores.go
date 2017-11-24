@@ -1,12 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"time"
 
-	"github.com/chances/chances-party/cache"
+	"github.com/chances/party-server/cache"
 	"github.com/garyburd/redigo/redis"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/vattle/sqlboiler/boil"
 )
@@ -28,13 +28,16 @@ func newRedisPool() *redis.Pool {
 	return newPool
 }
 
-func initDatabase() *sqlx.DB {
-	driver := "postgres"
+func initDatabase() *sql.DB {
 	connString := getenvOrFatal("DATABASE_URL")
 
-	newDb, err := sqlx.Connect(driver, connString)
+	newDb, err := sql.Open("postgres", connString)
 	if err != nil {
-		log.Fatalf("Could not init and ping database: %s\n", err)
+		log.Fatalf("Could not connect to database: %s\n", err)
+	}
+	err = newDb.Ping()
+	if err != nil {
+		log.Fatalf("Could not ping database: %s\n", err)
 	}
 
 	newDb.SetMaxIdleConns(3)
