@@ -384,6 +384,45 @@ func (cr *Party) Start() gin.HandlerFunc {
 	}
 }
 
+// End the current user's party
+func (cr *Party) End() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		currentUser := session.CurrentUser(c)
+
+		currentParty, err := currentUser.PartyG().One()
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
+		if currentParty == nil {
+			c.Error(e.BadRequest.WithDetail("No party exists for current user"))
+			c.Abort()
+			return
+		}
+
+		currentParty.Ended = true
+		err = currentParty.UpdateG()
+		if err != nil {
+			c.Error(e.Internal.WithDetail("Could not end party").CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		currentUser.PartyID = null.NewInt(0, false)
+		currentUser.UpdateG()
+		if err != nil {
+			c.Error(e.Internal.WithDetail("Could not update user").CausedBy(err))
+			c.Abort()
+			return
+		}
+
+		c.JSON(http.StatusOK, models.Response{
+			Data: gin.H{},
+		})
+	}
+}
+
 const roomCodeLength = 3 // Generates string of length 4
 
 func generateRoomCode(s int) string {

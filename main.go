@@ -85,7 +85,7 @@ func main() {
 	partyAdmin := g.Group("/party").Use(m.AuthenticationRequired())
 	{
 		partyAdmin.POST("/start", party.Start())
-		// partyAdmin.POST("/end", party.End())
+		partyAdmin.POST("/end", party.End())
 	}
 	partyUser := g.Group("/party").Use(m.AuthorizationRequired())
 	{
