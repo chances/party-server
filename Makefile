@@ -12,6 +12,6 @@ models:
 .PHONY: models
 
 redis-start:
-	redis-server &> /dev/null &
+	@redis-server &> /dev/null &
 
 .PHONY: redis-start
