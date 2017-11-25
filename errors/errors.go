@@ -21,6 +21,8 @@ var (
 	Unauthorized = newPartyError(http.StatusUnauthorized, "Unauthorized", "Unauthorized request made to Party")
 	// BadRequest provides a new Bad Request error builder
 	BadRequest = newPartyError(http.StatusBadRequest, "Bad Request", "Bad request made to Party")
+	// NotFound provides a new Not Found error builder
+	NotFound = newPartyError(http.StatusNotFound, "Not Found", "Requested resource was not found")
 	// Internal provides a new Internal Server Error error builder
 	Internal = newPartyError(http.StatusInternalServerError, "Internal Error", "An unexpected error occurred with Party")
 )
@@ -66,13 +68,20 @@ func (e *partyError) Error() string {
 	return fmt.Sprintf("%d: %s", e.Code, e.Message)
 }
 
+func (e *partyError) WithMessage(message string) *partyError {
+	// Replace message in given partyError
+	augmentedError := *e
+	augmentedError.Message = message
+	return &augmentedError
+}
+
 func (e *partyError) WithDetail(detail string) *partyError {
 	// Send the error off to Sentry
 	raven.CaptureError(e, map[string]string{
 		"detail": detail,
 	})
 
-	// Add detail to provided partyError
+	// Add detail to given partyError
 	augmentedError := *e
 	augmentedError.Meta.Detail = &detail
 	return &augmentedError

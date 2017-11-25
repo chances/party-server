@@ -59,14 +59,13 @@ func (cr *Party) Get() gin.HandlerFunc {
 			return
 		}
 
-		guests, err := currentParty.Guests()
+		publicParty, err := currentParty.Public()
 		if err != nil {
 			c.Error(e.Internal.CausedBy(err))
 			c.Abort()
 			return
 		}
 
-		publicParty := cr.augmentParty(currentParty, guests)
 		cr.respondWithParty(c, publicParty)
 	}
 }
@@ -242,7 +241,7 @@ func (cr *Party) augmentParty(
 	}
 
 	if party.CurrentTrack.Valid {
-		var track models.Track
+		var track models.PlayingTrack
 		err := party.CurrentTrack.Unmarshal(&track)
 		if err == nil {
 			response.CurrentTrack = &track
@@ -421,13 +420,12 @@ func (cr *Party) endParty(c *gin.Context, user *models.User, party *models.Party
 	}
 
 	// Broadcast to clients that the party has ended
-	guests, err := party.Guests()
+	publicParty, err := party.Public()
 	if err != nil {
 		c.Error(e.Internal.CausedBy(err))
 		c.Abort()
 		return
 	}
-	publicParty := cr.augmentParty(party, guests)
 	go events.UpdateParty(publicParty)
 
 	user.PartyID = null.NewInt(0, false)

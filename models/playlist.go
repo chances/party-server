@@ -45,13 +45,46 @@ type Playlists struct {
 	Playlists []Playlist
 }
 
+// QueueTracks gets this party's queue track list
+func (p *Party) QueueTracks() (*[]Track, error) {
+	queueData, err := p.QueueG().One()
+	if err != nil {
+		return nil, err
+	}
+
+	var queue []Track
+	err = queueData.Data.Unmarshal(&queue)
+	if err != nil {
+		return nil, err
+	}
+
+	return &queue, nil
+}
+
+// HistoryTracks gets this party's history track list
+func (p *Party) HistoryTracks() (*[]Track, error) {
+	historyData, err := p.HistoryG().One()
+	if err != nil {
+		return nil, err
+	}
+
+	var history []Track
+	err = historyData.Data.Unmarshal(&history)
+	if err != nil {
+		return nil, err
+	}
+
+	return &history, nil
+}
+
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 // Shuffle a playlist distributing the same artist "evenly" throughout
-func Shuffle(playlist []Track) []Track {
-	artists, longestArtistListLength := artists(playlist)
+func Shuffle(playlist *[]Track) *[]Track {
+	shuffled := make([]Track, len(*playlist))
+	artists, longestArtistListLength := artists(*playlist)
 
 	log.Printf("There are %d artists\n", len(artists))
 	log.Printf("Longest artist list length: %d", longestArtistListLength)
@@ -62,6 +95,7 @@ func Shuffle(playlist []Track) []Track {
 	if longestArtistListLength > 1 {
 		// TODO: Fisher-Yates shuffle the tracks in the artist arrays
 		// TODO: Spread songs in artist arrays of length, longestArtistListLength, for each artist
+		shuffled = *playlist
 	} else {
 		// Fisher-Yates shuffle the artist array
 		N := len(artists)
@@ -71,13 +105,12 @@ func Shuffle(playlist []Track) []Track {
 			artists[r], artists[i] = artists[i], artists[r]
 		}
 
-		shuffled := make([]Track, len(playlist))
 		for i, tracks := range artists {
 			shuffled[i] = *tracks[0]
 		}
 	}
 
-	return playlist
+	return &shuffled
 }
 
 func artists(tracks []Track) ([]([]*Track), int) {

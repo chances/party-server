@@ -18,6 +18,12 @@ type Track struct {
 	ContributorID int             `json:"contributor_id"`
 }
 
+type PlayingTrack struct {
+	Track
+	Paused  bool `json:"paused,omitempty"`
+	Elapsed uint `json:"elapsed,omitempty"`
+}
+
 type TrackArtist struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
