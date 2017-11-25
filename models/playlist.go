@@ -95,7 +95,10 @@ func Shuffle(playlist *[]Track) *[]Track {
 	if longestArtistListLength > 1 {
 		// TODO: Fisher-Yates shuffle the tracks in the artist arrays
 		// TODO: Spread songs in artist arrays of length, longestArtistListLength, for each artist
-		shuffled = *playlist
+		// Spotify's algorithm takes into account how long a playlist is, and how many of each type
+		//  of song there are. So if there are four White Stripes songs in the list, they will each
+		//   appear at roughly 25% intervals.
+		return playlist
 	} else {
 		// Fisher-Yates shuffle the artist array
 		N := len(artists)
