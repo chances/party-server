@@ -104,8 +104,7 @@ func main() {
 	}
 
 	// Playback routes
-	playback := g.Group("/playback")
-	playback.Use(m.AuthenticationRequired())
+	playback := g.Group("/playback").Use(m.AuthenticationRequired())
 	{
 		playback.POST("/play", music.Play())
 		playback.POST("/pause", music.Pause())
@@ -113,13 +112,11 @@ func main() {
 	}
 
 	// Search routes
-	g.Group("/search").
-		Use(m.AuthorizationRequired()).
+	g.Group("/search").Use(m.AuthorizationRequired()).
 		GET("", search.SearchTracks())
 
 	// Events routes
-	event := g.Group("/events")
-	event.Use(m.AuthorizationRequired())
+	event := g.Group("/events").Use(m.AuthorizationRequired())
 	{
 		event.GET("/party", events.Stream("party"))
 	}

@@ -257,7 +257,7 @@ func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int) (*models
 		ID:   queueID,
 		Data: queueJson,
 	}
-	err = queueTrackList.UpdateG("data")
+	err = queueTrackList.UpdateG()
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func (cr *Playback) pushTrack(history *[]models.Track, historyID int, track *mod
 		ID:   historyID,
 		Data: historyJson,
 	}
-	err = historyTrackList.UpdateG("data")
+	err = historyTrackList.UpdateG()
 	if err != nil {
 		return err
 	}
