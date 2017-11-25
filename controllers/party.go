@@ -3,13 +3,12 @@ package controllers
 import (
 	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	pseudoRand "math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	null "gopkg.in/nullbio/null.v6"
@@ -439,14 +438,18 @@ func (cr *Party) endParty(c *gin.Context, user *models.User, party *models.Party
 	}
 }
 
-const roomCodeLength = 3 // Generates string of length 4
+const roomCodeLength = 4
+const letterBytes = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letterBytesLength = int64(len(letterBytes))
 
-func generateRoomCode(s int) string {
-	b := make([]byte, s)
-	_, err := rand.Read(b)
-	if err != nil {
-		return ""
+func generateRoomCode(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		index, err := rand.Int(rand.Reader, big.NewInt(letterBytesLength))
+		if err != nil {
+			panic(err)
+		}
+		b[i] = letterBytes[index.Int64()]
 	}
-	roomCode := base64.URLEncoding.EncodeToString(b)
-	return strings.ToUpper(roomCode)
+	return string(b)
 }
