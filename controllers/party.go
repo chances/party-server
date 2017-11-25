@@ -117,6 +117,9 @@ func (cr *Party) Join() gin.HandlerFunc {
 
 		// TODO: Handle party has ended, respond with some error code, 404 seems wrong...
 
+		// TODO: Add party leave endpoint for guests? (Remove them from Redis, especially)
+		// "Already joined a party" will error if guest exists in Redis, but not DB
+
 		// It is a bad request to try to join a party if the guest has already
 		//  joined a different party
 		//
