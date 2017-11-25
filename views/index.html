@@ -70,14 +70,14 @@
           let startParty = window.fetch(new Request('/party/start', {
             method: 'POST',
             headers: headers,
+            credentials: 'include',
+            cache: 'no-store',
             body: JSON.stringify({
               data: {
                 host: decodeURIComponent(hostName),
                 playlist_id: decodeURIComponent(playlistId)
               }
-            }),
-            credentials: 'include',
-            cache: 'no-store'
+            })
           })).then(function (response) {
             return response.json();
           }).then(function (newPartyOrErrors) {

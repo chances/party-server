@@ -1,9 +1,11 @@
 package spotify
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/chances/party-server/cache"
+	e "github.com/chances/party-server/errors"
 	"github.com/chances/party-server/models"
 	"github.com/vattle/sqlboiler/boil"
 	"github.com/vattle/sqlboiler/queries/qm"
@@ -25,23 +27,25 @@ func playlist(username string, playlistID string, client spotify.Client) (cache.
 	// Try to get CachedPlaylist, if not in cache try from DB, else get from Spotify API
 	playlistEntry, err := partyCache.GetOrDefer("playlist:"+playlistID, func() (*cache.Entry, error) {
 		trackList, err := models.TrackListsG(qm.Where("spotify_playlist_id=?", playlistID)).One()
-		if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			return nil, err
 		}
 
-		// Only cache playlists in the DB for six hours
+		// Only cache playlists in the DB for one day
 		now := time.Now().UTC()
 		oneHour := time.Duration(1) * time.Hour
-		hourLongWindow := now.Add(oneHour * -6)
+		oneDay := time.Duration(24) * time.Hour
+		dbCacheValidWindow := now.Add(oneDay * -1)
+		dbCacheEntryValid := err != sql.ErrNoRows && trackList.UpdatedAt.After(dbCacheValidWindow)
 
 		var playlistEntry cache.Entry
-		if trackList != nil && trackList.UpdatedAt.Before(hourLongWindow) {
+		if trackList != nil && dbCacheEntryValid {
 			var playlist models.CachedPlaylist
 			err := trackList.Data.Unmarshal(&playlistEntry)
 			if err != nil {
 				return nil, err
 			}
-			playlistEntry = cache.Forever(playlist)
+			playlistEntry = cache.ExpiresRolling(time.Now().UTC().Add(oneHour), playlist)
 		} else {
 			playlist, err := client.GetPlaylist(username, spotify.ID(playlistID))
 			if err != nil {
@@ -88,6 +92,9 @@ func playlist(username string, playlistID string, client spotify.Client) (cache.
 	})
 	if err != nil {
 		return cache.Entry{}, err
+	}
+	if playlistEntry == nil {
+		return cache.Entry{}, e.Internal.WithDetail("Playlist cache entry is nil")
 	}
 	return *playlistEntry, nil
 }

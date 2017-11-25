@@ -303,6 +303,7 @@ func (cr *Party) Start() gin.HandlerFunc {
 		for _, playlist := range playlists {
 			if playlistID == playlist.ID {
 				currentPlaylist = &playlist
+				break
 			}
 		}
 

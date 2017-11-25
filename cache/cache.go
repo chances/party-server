@@ -121,8 +121,8 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		return nil, err
 	}
 	if !exists {
-		entry, deferErr := deferFn()
-		if deferErr != nil {
+		entry, err := deferFn()
+		if err != nil {
 			return nil, err
 		}
 		err = s.Set(key, *entry)
