@@ -3,6 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -96,6 +97,8 @@ func (cr *Playback) Play() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.JSON(http.StatusOK, models.EmptyRespose)
 	}
 }
 
@@ -163,6 +166,8 @@ func (cr *Playback) Pause() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.JSON(http.StatusOK, models.EmptyRespose)
 	}
 }
 
@@ -232,6 +237,8 @@ func (cr *Playback) Skip() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		c.JSON(http.StatusOK, models.EmptyRespose)
 	}
 }
 

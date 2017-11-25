@@ -51,6 +51,7 @@ func main() {
 	playlists := controllers.NewPlaylists()
 	queue := controllers.NewQueue()
 	history := controllers.NewHistory()
+	music := controllers.NewPlayback()
 	search := controllers.NewSearch()
 	events := controllers.NewEvents()
 
@@ -100,6 +101,15 @@ func main() {
 	{
 		playlist.GET("", playlists.Get())
 		playlist.PATCH("", playlists.Patch())
+	}
+
+	// Playback routes
+	playback := g.Group("/playback")
+	playback.Use(m.AuthenticationRequired())
+	{
+		playback.POST("/play", music.Play())
+		playback.POST("/pause", music.Pause())
+		playback.POST("/skip", music.Skip())
 	}
 
 	// Search routes
