@@ -44,7 +44,6 @@ func main() {
 		getenvOrFatal("SPOTIFY_APP_KEY"),
 		getenvOrFatal("SPOTIFY_APP_SECRET"),
 		getenvOrFatal("SPOTIFY_CALLBACK"),
-		getenvOrFatal("GUEST_SECRET"),
 	)
 	index := controllers.NewIndex()
 	party := controllers.NewParty()
