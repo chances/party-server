@@ -123,7 +123,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 20 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `history` event)
     - Updates when current track changes
   - Most recent track first
   - Clients may use a track's `began_playing` timestamp to show timeago info
@@ -132,7 +132,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 10 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
     - Updates when current track changes
     - Updates when guests contribute tracks
   - Server keeps track of whole Queue

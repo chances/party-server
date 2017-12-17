@@ -62,7 +62,7 @@ func (cr *Playback) Play() gin.HandlerFunc {
 				queue = models.Shuffle(queue)
 			}
 
-			track, err := cr.popTrackAndPlay(queue, currentParty.QueueID)
+			track, err := cr.popTrackAndPlay(queue, currentParty.QueueID, currentParty.RoomCode)
 			if err != nil {
 				c.Error(e.Internal.CausedBy(err))
 				c.Abort()
@@ -171,6 +171,7 @@ func (cr *Playback) Pause() gin.HandlerFunc {
 	}
 }
 
+// Skip they party's current track
 func (cr *Playback) Skip() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		currentParty, err := session.CurrentParty(c)
@@ -210,7 +211,7 @@ func (cr *Playback) Skip() gin.HandlerFunc {
 			return
 		}
 
-		newTrack, err := cr.popTrackAndPlay(queue, currentParty.QueueID)
+		newTrack, err := cr.popTrackAndPlay(queue, currentParty.QueueID, currentParty.RoomCode)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not pop track from queue").CausedBy(err))
 			c.Abort()
@@ -231,7 +232,7 @@ func (cr *Playback) Skip() gin.HandlerFunc {
 			return
 		}
 
-		err = cr.pushTrack(history, currentParty.HistoryID, &lastTrack)
+		err = cr.pushTrack(history, currentParty.HistoryID, &lastTrack, currentParty.RoomCode)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not push track to history").CausedBy(err))
 			c.Abort()
@@ -242,7 +243,7 @@ func (cr *Playback) Skip() gin.HandlerFunc {
 	}
 }
 
-func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int) (*models.PlayingTrack, error) {
+func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int, partyCode string) (*models.PlayingTrack, error) {
 	// Pop first track from top of queue
 	firstTrack := (*queue)[0]
 	copy(*queue, (*queue)[1:])
@@ -262,7 +263,7 @@ func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int) (*models
 		return nil, err
 	}
 
-	// TODO: Send "queue" changed event on party's message channel
+	events.UpdateQueue(&updatedQueue, partyCode)
 
 	// "Play" the track
 	currentTrack := models.PlayingTrack{
@@ -275,7 +276,7 @@ func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int) (*models
 	return &currentTrack, nil
 }
 
-func (cr *Playback) pushTrack(history *[]models.Track, historyID int, track *models.Track) error {
+func (cr *Playback) pushTrack(history *[]models.Track, historyID int, track *models.Track, partyCode string) error {
 	// Push track to top of history stack
 	updatedHistory := append([]models.Track{*track}, *history...)
 	historyJsonRaw, err := json.Marshal(updatedHistory)
@@ -292,7 +293,7 @@ func (cr *Playback) pushTrack(history *[]models.Track, historyID int, track *mod
 		return err
 	}
 
-	// TODO: Send "history" changed event on party's message channel
+	events.UpdateHistory(&updatedHistory, partyCode)
 
 	return nil
 }
