@@ -85,11 +85,12 @@ func (cr *Playback) Play() gin.HandlerFunc {
 				return
 			}
 
-			currentTrack.Paused = false
 			currentTrack.BeganPlaying = time.Now().UTC().Add(
 				time.Duration(currentTrack.Elapsed) * time.Second * -1,
 			)
 		}
+
+		currentTrack.Paused = false
 
 		err = cr.updateTrackAndBroadcast(currentParty, &currentTrack)
 		if err != nil {
