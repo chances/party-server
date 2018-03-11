@@ -32,6 +32,8 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback string) Auth {
 	spotifyAuth := spotify.NewAuthenticator(
 		spotifyCallback,
 		spotify.ScopeUserReadPrivate,
+		spotify.ScopeUserLibraryRead,
+		spotify.ScopeUserLibraryModify,
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistReadCollaborative,
 	)
