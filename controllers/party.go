@@ -333,7 +333,12 @@ func (cr *Party) Start() gin.HandlerFunc {
 			RoomCode:     roomCode,
 			CurrentTrack: null.JSONFrom(nil),
 		}
-		party.Location.Marshal(location)
+		err = party.Location.Marshal(location)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 
 		// New party's queue
 		playlist, err := s.Playlist(currentUser.Username, currentPlaylist.ID, *spotifyClient)
@@ -345,7 +350,12 @@ func (cr *Party) Start() gin.HandlerFunc {
 		queue := models.TrackList{
 			SpotifyPlaylistID: null.NewString("", false),
 		}
-		queue.Data.Marshal(&playlist.Tracks)
+		err = queue.Data.Marshal(&playlist.Tracks)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 		err = party.SetQueueG(true, &queue)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not create queue").CausedBy(err))
@@ -357,7 +367,12 @@ func (cr *Party) Start() gin.HandlerFunc {
 		history := models.TrackList{
 			SpotifyPlaylistID: null.NewString("", false),
 		}
-		history.Data.Marshal(make([]models.Track, 0))
+		err = history.Data.Marshal(make([]models.Track, 0))
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 		err = party.SetHistoryG(true, &history)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not create history").CausedBy(err))
@@ -368,7 +383,12 @@ func (cr *Party) Start() gin.HandlerFunc {
 		// New party's guest list
 		guests := make([]models.Guest, 0)
 		guestList := models.GuestList{}
-		guestList.Data.Marshal(guests)
+		err = guestList.Data.Marshal(guests)
+		if err != nil {
+			c.Error(e.Internal.CausedBy(err))
+			c.Abort()
+			return
+		}
 		err = party.SetGuestG(true, &guestList)
 		if err != nil {
 			c.Error(e.Internal.WithDetail("Could not create guest list").CausedBy(err))
