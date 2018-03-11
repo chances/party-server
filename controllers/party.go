@@ -206,8 +206,8 @@ func (cr *Party) PruneExpiredGuests() {
 				if !exists {
 					// Cut out this guest from the slice of guests
 					guests = append(guests[:i], guests[i+1:]...)
-					i -= 1
-					prunedGuests += 1
+					i--
+					prunedGuests++
 				}
 			}
 
@@ -239,9 +239,9 @@ func (cr *Party) augmentParty(
 		for _, guest := range guests {
 			guestsPublic = append(guestsPublic, guest.Public())
 		}
-		guestsJsonRaw, _ := json.Marshal(guestsPublic)
-		guestsJson := types.JSON(guestsJsonRaw)
-		response.Guests = &guestsJson
+		guestsJSONRaw, _ := json.Marshal(guestsPublic)
+		guestsJSON := types.JSON(guestsJSONRaw)
+		response.Guests = &guestsJSON
 	}
 
 	if party.CurrentTrack.Valid {

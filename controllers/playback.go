@@ -250,14 +250,14 @@ func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int, partyCod
 	copy(*queue, (*queue)[1:])
 	updatedQueue := (*queue)[:len(*queue)-1]
 	// Update the queue
-	queueJsonRaw, err := json.Marshal(updatedQueue)
+	queueJSONRaw, err := json.Marshal(updatedQueue)
 	if err != nil {
 		return nil, err
 	}
-	queueJson := types.JSON(queueJsonRaw)
+	queueJSON := types.JSON(queueJSONRaw)
 	queueTrackList := models.TrackList{
 		ID:   queueID,
-		Data: queueJson,
+		Data: queueJSON,
 	}
 	err = queueTrackList.UpdateG()
 	if err != nil {
@@ -280,14 +280,14 @@ func (cr *Playback) popTrackAndPlay(queue *[]models.Track, queueID int, partyCod
 func (cr *Playback) pushTrack(history *[]models.Track, historyID int, track *models.Track, partyCode string) error {
 	// Push track to top of history stack
 	updatedHistory := append([]models.Track{*track}, *history...)
-	historyJsonRaw, err := json.Marshal(updatedHistory)
+	historyJSONRaw, err := json.Marshal(updatedHistory)
 	if err != nil {
 		return err
 	}
-	historyJson := types.JSON(historyJsonRaw)
+	historyJSON := types.JSON(historyJSONRaw)
 	historyTrackList := models.TrackList{
 		ID:   historyID,
-		Data: historyJson,
+		Data: historyJSON,
 	}
 	err = historyTrackList.UpdateG()
 	if err != nil {
