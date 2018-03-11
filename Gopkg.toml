@@ -24,6 +24,10 @@
 #   go-tests = true
 #   unused-packages = true
 
+[metadata.heroku]
+  root-package = "github.com/chances/party-server"
+  go-version = "1.10"
+  install = [ "./..." ]
 
 [[constraint]]
   branch = "master"
