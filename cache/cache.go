@@ -133,11 +133,9 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 	}
 
 	entry, err := s.Get(key)
-	if err != nil {
-		return nil, err
-	}
+	empty := err != nil && err.Error() == "EOF"
 
-	if entry.IsExpired() {
+	if empty || entry.IsExpired() {
 		entry, err = deferFn()
 		if err != nil {
 			return nil, err
@@ -148,6 +146,11 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		}
 		return entry, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
 	return entry, nil
 }
 
