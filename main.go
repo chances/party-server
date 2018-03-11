@@ -13,6 +13,9 @@ import (
 	"github.com/chances/party-server/models"
 	"github.com/chances/party-server/session"
 	s "github.com/chances/party-server/spotify"
+	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -61,6 +64,7 @@ func main() {
 
 	// === Middleware ===
 	g.Use(gin.Logger())
+	g.Use(gzip.Gzip(gzip.DefaultCompression))
 	// CORS
 	corsOrigins :=
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
@@ -69,7 +73,7 @@ func main() {
 	g.Use(session.Middleware(partyCache))
 
 	g.Use(e.HandleErrors())
-	g.Use(gin.Recovery())
+	g.Use(sentry.Recovery(raven.DefaultClient, false))
 
 	// Static files
 	g.Static("/css/", "./public")
