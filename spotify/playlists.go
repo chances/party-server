@@ -111,7 +111,7 @@ func Playlists(username string, client spotify.Client) ([]models.Playlist, error
 
 func playlists(client spotify.Client) ([]models.Playlist, error) {
 	limit := 50
-	// TODO: Only get the necessary fields for the list fo playlists
+	// TODO: Only get the necessary fields for the list of playlists
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
 	})
@@ -121,7 +121,8 @@ func playlists(client spotify.Client) ([]models.Playlist, error) {
 		return nil, err
 	}
 
-	playlists := make([]models.Playlist, len(playlistPage.Playlists))
+	numPlaylists := len(playlistPage.Playlists)
+	playlists := make([]models.Playlist, numPlaylists)
 
 	for i, playlist := range playlistPage.Playlists {
 		// Don't cache *all* the playlists so aggressively.
