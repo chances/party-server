@@ -46,11 +46,12 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback string) Auth {
 		},
 	)
 
-	spotifyScopes := make([]string, 4)
+	spotifyScopes := make([]string, 5)
 	spotifyScopes[0] = spotify.ScopeUserReadPrivate
-	spotifyScopes[1] = "user-library-modify"
-	spotifyScopes[2] = spotify.ScopePlaylistReadPrivate
-	spotifyScopes[3] = spotify.ScopePlaylistReadCollaborative
+	spotifyScopes[1] = spotify.ScopeUserLibraryRead
+	spotifyScopes[2] = spotify.ScopeUserLibraryModify
+	spotifyScopes[3] = spotify.ScopePlaylistReadPrivate
+	spotifyScopes[4] = spotify.ScopePlaylistReadCollaborative
 
 	newAuth := Auth{
 		spotifyScopes: strings.Join(spotifyScopes, " "),
