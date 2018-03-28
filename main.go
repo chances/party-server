@@ -13,6 +13,9 @@ import (
 	"github.com/chances/party-server/models"
 	"github.com/chances/party-server/session"
 	s "github.com/chances/party-server/spotify"
+	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -44,13 +47,13 @@ func main() {
 		getenvOrFatal("SPOTIFY_APP_KEY"),
 		getenvOrFatal("SPOTIFY_APP_SECRET"),
 		getenvOrFatal("SPOTIFY_CALLBACK"),
-		getenvOrFatal("GUEST_SECRET"),
 	)
 	index := controllers.NewIndex()
 	party := controllers.NewParty()
 	playlists := controllers.NewPlaylists()
 	queue := controllers.NewQueue()
 	history := controllers.NewHistory()
+	music := controllers.NewPlayback()
 	search := controllers.NewSearch()
 	events := controllers.NewEvents()
 
@@ -61,6 +64,7 @@ func main() {
 
 	// === Middleware ===
 	g.Use(gin.Logger())
+	g.Use(gzip.Gzip(gzip.DefaultCompression))
 	// CORS
 	corsOrigins :=
 		strings.Split(getenv("CORS_ORIGINS", "https://chancesnow.me"), ",")
@@ -69,7 +73,7 @@ func main() {
 	g.Use(session.Middleware(partyCache))
 
 	g.Use(e.HandleErrors())
-	g.Use(gin.Recovery())
+	g.Use(sentry.Recovery(raven.DefaultClient, false))
 
 	// Static files
 	g.Static("/css/", "./public")
@@ -85,7 +89,7 @@ func main() {
 	partyAdmin := g.Group("/party").Use(m.AuthenticationRequired())
 	{
 		partyAdmin.POST("/start", party.Start())
-		// partyAdmin.POST("/end", party.End())
+		partyAdmin.POST("/end", party.End())
 	}
 	partyUser := g.Group("/party").Use(m.AuthorizationRequired())
 	{
@@ -102,14 +106,20 @@ func main() {
 		playlist.PATCH("", playlists.Patch())
 	}
 
+	// Playback routes
+	playback := g.Group("/playback").Use(m.AuthenticationRequired())
+	{
+		playback.POST("/play", music.Play())
+		playback.POST("/pause", music.Pause())
+		playback.POST("/skip", music.Skip())
+	}
+
 	// Search routes
-	g.Group("/search").
-		Use(m.AuthorizationRequired()).
+	g.Group("/search").Use(m.AuthorizationRequired()).
 		GET("", search.SearchTracks())
 
 	// Events routes
-	event := g.Group("/events")
-	event.Use(m.AuthorizationRequired())
+	event := g.Group("/events").Use(m.AuthorizationRequired())
 	{
 		event.GET("/party", events.Stream("party"))
 	}

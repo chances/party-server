@@ -22,17 +22,18 @@ import (
 type Auth struct {
 	Controller
 	spotifyScopes string
-	jwtSigningKey []byte
 }
 
 // NewAuth creates a new Auth controller
-func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth {
+func NewAuth(spotifyKey, spotifySecret, spotifyCallback string) Auth {
 	gob.Register(oauth2.Token{})
 
 	// TODO: Refactor out "auth" Spotify client factories
 	spotifyAuth := spotify.NewAuthenticator(
 		spotifyCallback,
 		spotify.ScopeUserReadPrivate,
+		spotify.ScopeUserLibraryRead,
+		spotify.ScopeUserLibraryModify,
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistReadCollaborative,
 	)
@@ -47,14 +48,15 @@ func NewAuth(spotifyKey, spotifySecret, spotifyCallback, jwtSecret string) Auth 
 		},
 	)
 
-	spotifyScopes := make([]string, 3)
+	spotifyScopes := make([]string, 5)
 	spotifyScopes[0] = spotify.ScopeUserReadPrivate
-	spotifyScopes[1] = spotify.ScopePlaylistReadPrivate
-	spotifyScopes[2] = spotify.ScopePlaylistReadCollaborative
+	spotifyScopes[1] = spotify.ScopeUserLibraryRead
+	spotifyScopes[2] = spotify.ScopeUserLibraryModify
+	spotifyScopes[3] = spotify.ScopePlaylistReadPrivate
+	spotifyScopes[4] = spotify.ScopePlaylistReadCollaborative
 
 	newAuth := Auth{
 		spotifyScopes: strings.Join(spotifyScopes, " "),
-		jwtSigningKey: []byte(jwtSecret),
 	}
 	newAuth.Setup()
 	return newAuth

@@ -1,7 +1,11 @@
 package spotify
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/chances/party-server/cache"
+	e "github.com/chances/party-server/errors"
 	"github.com/chances/party-server/models"
 	"github.com/vattle/sqlboiler/boil"
 	"github.com/vattle/sqlboiler/queries/qm"
@@ -23,27 +27,54 @@ func playlist(username string, playlistID string, client spotify.Client) (cache.
 	// Try to get CachedPlaylist, if not in cache try from DB, else get from Spotify API
 	playlistEntry, err := partyCache.GetOrDefer("playlist:"+playlistID, func() (*cache.Entry, error) {
 		trackList, err := models.TrackListsG(qm.Where("spotify_playlist_id=?", playlistID)).One()
-		if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			return nil, err
 		}
 
+		// Only cache playlists in the DB for one day
+		now := time.Now().UTC()
+		oneHour := time.Duration(1) * time.Hour
+		oneDay := time.Duration(24) * time.Hour
+		dbCacheValidWindow := now.Add(oneDay * -1)
+		dbCacheEntryValid := err != sql.ErrNoRows && trackList.UpdatedAt.After(dbCacheValidWindow)
+
 		var playlistEntry cache.Entry
-		if trackList != nil {
+		if trackList != nil && dbCacheEntryValid {
 			var playlist models.CachedPlaylist
 			err := trackList.Data.Unmarshal(&playlistEntry)
 			if err != nil {
 				return nil, err
 			}
-			playlistEntry = cache.Forever(playlist)
+			playlistEntry = cache.ExpiresRolling(time.Now().UTC().Add(oneHour), playlist)
 		} else {
 			playlist, err := client.GetPlaylist(username, spotify.ID(playlistID))
-			// TODO: Page through all tracks
 			if err != nil {
 				return nil, err
 			}
 
-			tracks := models.NewTracks(playlist.Tracks.Tracks)
-			playlistEntry = cache.Forever(
+			tracksPage := playlist.Tracks
+			tracks := models.NewTracks(tracksPage.Tracks)
+
+			// Page through all of the playlist's tracks
+			limit := 50
+			for offset := tracksPage.Offset + tracksPage.Limit; offset < tracksPage.Total; offset += tracksPage.Limit {
+				page, err := client.GetPlaylistTracksOpt(username, spotify.ID(playlistID), &spotify.Options{
+					Offset: &offset,
+					Limit:  &limit,
+				}, "")
+				if err != nil {
+					return nil, err
+				}
+
+				pageTracks := models.NewTracks(page.Tracks)
+				tracks = append(tracks, pageTracks...)
+
+				tracksPage = *page
+			}
+
+			// Cache playlists in a one hour window, rolling forward when accessed
+			playlistEntry = cache.ExpiresRolling(
+				time.Now().UTC().Add(oneHour),
 				models.CachedPlaylist{
 					Playlist: models.NewPlaylistFromFullPlaylist(playlist),
 					Tracks:   tracks,
@@ -62,41 +93,40 @@ func playlist(username string, playlistID string, client spotify.Client) (cache.
 	if err != nil {
 		return cache.Entry{}, err
 	}
+	if playlistEntry == nil {
+		return cache.Entry{}, e.Internal.WithDetail("Playlist cache entry is nil")
+	}
 	return *playlistEntry, nil
 }
 
 // Playlists gets the current user's playlists
 func Playlists(username string, client spotify.Client) ([]models.Playlist, error) {
-	playlistsEntry, err := partyCache.GetOrDefer("playlists:"+username, func() (*cache.Entry, error) {
-		playlists, err := playlists(client)
-		if err != nil {
-			return nil, err
-		}
-		playlistsEntry := cache.Forever(playlists)
-		return &playlistsEntry, nil
-	})
+	playlists, err := playlists(client)
 	if err != nil {
 		return nil, err
 	}
 
-	playlists := (*playlistsEntry).Value.([]models.Playlist)
 	return playlists, nil
 }
 
 func playlists(client spotify.Client) ([]models.Playlist, error) {
 	limit := 50
+	// TODO: Only get the necessary fields for the list of playlists
 	playlistPage, err := client.CurrentUsersPlaylistsOpt(&spotify.Options{
 		Limit: &limit,
 	})
+	// TODO: Page through all of the user's playlists
 	if err != nil {
 		// TODO: Fix "The access token expired" errors
 		return nil, err
 	}
 
-	playlists := make([]models.Playlist, len(playlistPage.Playlists))
+	numPlaylists := len(playlistPage.Playlists)
+	playlists := make([]models.Playlist, numPlaylists)
 
 	for i, playlist := range playlistPage.Playlists {
-		go cachePlaylist(client, playlist)
+		// Don't cache *all* the playlists so aggressively.
+		// go cachePlaylist(client, playlist)
 		playlists[i] = models.NewPlaylist(playlist)
 	}
 

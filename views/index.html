@@ -28,6 +28,9 @@
   {{ if .currentParty }}
   <div class="details">
     <p>Current party: <span id="currentParty">{{ .currentParty.RoomCode }}</span></p>
+    <p>
+      <a id="endParty" href="#party/end">End Party</a>
+    </p>
   </div>
   {{ else }}
   <p>
@@ -67,14 +70,14 @@
           let startParty = window.fetch(new Request('/party/start', {
             method: 'POST',
             headers: headers,
+            credentials: 'include',
+            cache: 'no-store',
             body: JSON.stringify({
               data: {
                 host: decodeURIComponent(hostName),
                 playlist_id: decodeURIComponent(playlistId)
               }
-            }),
-            credentials: 'include',
-            cache: 'no-store'
+            })
           })).then(function (response) {
             return response.json();
           }).then(function (newPartyOrErrors) {
@@ -88,6 +91,33 @@
 
           startParty.then(function (party) {
             console.log('Started party:', party)
+          });
+        })
+      }
+
+      let endPartyLink = document.querySelector('#endParty');
+      if (endPartyLink) {
+        endPartyLink.addEventListener('click', function (e) {
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let endParty = window.fetch(new Request('/party/end', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (endPartyOrErrors) {
+            if (endPartyOrErrors.errors !== undefined) {
+              console.log(endPartyOrErrors);
+              throw new Error(endPartyOrErrors.errors);
+            }
+
+            return endPartyOrErrors.data;
+          });
+
+          endParty.then(function (party) {
+            console.log('Ended party:', party)
           });
         })
       }

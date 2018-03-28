@@ -1,6 +1,7 @@
 # [Chance's Party App](http://chancesnow.me/party)
 
 [![Build Status](https://travis-ci.org/chances/party-server.svg)](https://travis-ci.org/chances/party-server)
+[![Go Report Card](https://goreportcard.com/badge/github.com/chances/party-server)](https://goreportcard.com/report/github.com/chances/party-server)
 
 A party web app to facilitate guest interaction at your parties.
 
@@ -11,7 +12,7 @@ This application tightly integrates with the [Spotify Web API](https://developer
 1. Make a copy of `.env.example` as `.env` and replace necessary values.
 2. Run `make` in the root directory
 4. Ensure Postgres is running 
-2. Ensure Redis is running: `redis-server &> /dev/null &`
+2. Ensure Redis is running: `make redis-start`
 3. Run `./party-server`
 
 ## Contributing

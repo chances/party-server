@@ -16,12 +16,14 @@ type Store struct {
 
 // Entry stores a cache line given a value and expiry time
 type Entry struct {
-	Value  interface{}
-	Expiry time.Time
+	Value   interface{}
+	Expiry  time.Time
+	Rolling bool
 }
 
+// IsForever returns true if entry is cached indefinitely
 func (e *Entry) IsForever() bool {
-  return e.Expiry.Equal(time.Unix(0, 0).UTC())
+	return e.Expiry.Equal(time.Unix(0, 0).UTC())
 }
 
 // IsExpired returns true if entry is expired
@@ -33,23 +35,35 @@ func (e *Entry) IsExpired() bool {
 // Value creates a plain cache entry given a value
 func Value(value interface{}) Entry {
 	return Entry{
-		Value: value,
+		Value:   value,
+		Rolling: false,
 	}
 }
 
 // Expires creates a cache entry that expires at the given time
 func Expires(expiry time.Time, value interface{}) Entry {
 	return Entry{
-		Expiry: expiry.UTC(),
-		Value:  value,
+		Expiry:  expiry.UTC(),
+		Value:   value,
+		Rolling: false,
+	}
+}
+
+// ExpiresRolling creates a cache entry that expires at the given time, though expiry will roll forward when accessed
+func ExpiresRolling(expiry time.Time, value interface{}) Entry {
+	return Entry{
+		Expiry:  expiry.UTC(),
+		Value:   value,
+		Rolling: true,
 	}
 }
 
 // Forever creates a cache entry that shall never expire
 func Forever(value interface{}) Entry {
 	return Entry{
-		Expiry: time.Unix(0, 0).UTC(),
-		Value:  value,
+		Expiry:  time.Unix(0, 0).UTC(),
+		Value:   value,
+		Rolling: false,
 	}
 }
 
@@ -83,6 +97,14 @@ func (s *Store) Get(key string) (*Entry, error) {
 		return nil, err
 	}
 
+	// Refresh the entry in Redis if it's expiry rolls with access
+	if !value.IsForever() && value.Rolling {
+		err = s.redisSet(key, valueBuffer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Delete the entry from the cache if it's expired
 	if value.IsExpired() {
 		s.Delete(key)
@@ -99,8 +121,8 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		return nil, err
 	}
 	if !exists {
-		entry, deferErr := deferFn()
-		if deferErr != nil {
+		entry, err := deferFn()
+		if err != nil {
 			return nil, err
 		}
 		err = s.Set(key, *entry)
@@ -111,11 +133,9 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 	}
 
 	entry, err := s.Get(key)
-	if err != nil {
-		return nil, err
-	}
+	empty := err != nil && err.Error() == "EOF"
 
-	if entry.IsExpired() {
+	if empty || entry.IsExpired() {
 		entry, err = deferFn()
 		if err != nil {
 			return nil, err
@@ -126,6 +146,11 @@ func (s *Store) GetOrDefer(key string, deferFn func() (*Entry, error)) (*Entry, 
 		}
 		return entry, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
 	return entry, nil
 }
 
@@ -140,15 +165,15 @@ func (s *Store) Set(key string, e Entry) error {
 
 	err = s.redisSet(key, valueBuffer)
 	if err != nil {
-	  return err
-  }
-  // If key is not forever then tell redis to expire it automagically
-  if !e.IsForever() {
-    lifetime := e.Expiry.Sub(time.Now())
-    return s.redisExpire(key, lifetime)
-  }
+		return err
+	}
+	// If key is not forever then tell redis to expire it automagically
+	if !e.IsForever() {
+		lifetime := e.Expiry.Sub(time.Now())
+		return s.redisExpire(key, lifetime)
+	}
 
-  return nil
+	return nil
 }
 
 // Delete a cache entry

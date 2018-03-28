@@ -6,10 +6,13 @@ logs
 pids
 *.pid
 *.seed
+dump.rdb
 
 .idea
 
 .env
+
+vendor/
 
 # Built binaries
 party-server
