@@ -1,12 +1,13 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-      "target": "ES5",
+      "target": "ES6",
       "module": "commonjs",
       "strict": true,
       "strictNullChecks": true,
       "removeComments": false,
       "preserveConstEnums": true,
+      "skipLibCheck": true,
       "experimentalDecorators": true,
       "inlineSourceMap": true,
       "inlineSources": true,
