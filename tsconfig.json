@@ -1,0 +1,28 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+      "target": "ES5",
+      "module": "commonjs",
+      "strict": true,
+      "strictNullChecks": true,
+      "removeComments": false,
+      "preserveConstEnums": true,
+      "experimentalDecorators": true,
+      "inlineSourceMap": true,
+      "inlineSources": true,
+      "noEmitOnError": true,
+      "outDir": "dist/",
+      "lib": [
+        "es6",
+        "es2015.symbol",
+        "dom"
+      ]
+  },
+  "include": [
+      "src/**/*"
+  ],
+  "exclude": [
+      "node_modules",
+      "**/*.spec.ts"
+  ]
+}

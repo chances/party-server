@@ -1,12 +1,13 @@
-language: go
+language: node_js
 
-go:
-  - 1.8
+node_js:
+  - "8"
+
+dist: trusty
 
 cache:
   directories:
-    - $GOPATH/src
-    - $GOPATH/pkg
+    - node_modules
 
-install: go get -t -v ./...
-script: go test $(go list ./... | grep -v /models)
+before_install: npm i -g npm
+install: npm ci

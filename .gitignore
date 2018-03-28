@@ -11,10 +11,17 @@ pids
 
 .env
 
-# Built binaries
-party-server
-debug
+# Node
+node_modules/
+npm-debug.log
 
-sqlboiler.toml
+# Code coverage
+.nyc_output/
+
+# Intermediate build files
+js/
+
+# Code coverage
+coverage/
 
 deploy_key
