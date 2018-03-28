@@ -19,7 +19,7 @@ npm-debug.log
 .nyc_output/
 
 # Intermediate build files
-js/
+dist/
 
 # Code coverage
 coverage/
