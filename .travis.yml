@@ -5,9 +5,5 @@ node_js:
 
 dist: trusty
 
-cache:
-  directories:
-    - node_modules
-
 before_install: npm i -g npm
 install: npm ci
