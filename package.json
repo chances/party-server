@@ -8,7 +8,8 @@
     "start:dev": "nodemon",
     "prestart:prod": "rm -rf dist && tsc",
     "start:prod": "node dist/main.js",
-    "test": "make test"
+    "test": "npm run lint",
+    "lint": "tslint -p ."
   },
   "repository": {
     "type": "git",
