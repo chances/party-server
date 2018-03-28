@@ -12,6 +12,7 @@
       "inlineSourceMap": true,
       "inlineSources": true,
       "noEmitOnError": true,
+      "baseUrl": "src/",
       "outDir": "dist/",
       "lib": [
         "es6",

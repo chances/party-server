@@ -7,3 +7,10 @@ dist: trusty
 
 before_install: npm i -g npm
 install: npm ci
+
+before_script: npm i codecov
+script:
+  - "npm run lint"
+  - "./node_modules/.bin/nyc npm test"
+  - "nyc report --reporter=text-lcov > coverage.lcov"
+  - "./node_modules/.bin/codecov"

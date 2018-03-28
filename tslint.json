@@ -25,6 +25,6 @@
     "member-access": [true, "no-public"],
     "ban-types": [false],
 
-    "jsx-wrap-multiline": false
+    "no-implicit-dependencies": [true, "dev"]
   }
 }
