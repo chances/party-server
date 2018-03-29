@@ -8,4 +8,10 @@ async function bootstrap() {
   const env = app.get(EnvironmentService)
   await app.listen(env.port)
 }
-bootstrap()
+try {
+  bootstrap()
+} catch (e) {
+  if (e instanceof FatalException) {
+    process.exit(1)
+  }
+}

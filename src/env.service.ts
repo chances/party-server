@@ -1,5 +1,6 @@
 import { Component, Logger } from '@nestjs/common'
 import * as dotenv from 'dotenv'
+import { FatalException } from './fatal.exception'
 
 @Component()
 export class EnvironmentService {
@@ -10,8 +11,7 @@ export class EnvironmentService {
   }
 
   get port() {
-    const port = this.get('PORT', '3000')
-    if (port === undefined) { return 3000 }
+    const port = this.get('PORT', '3000') as string
     return parseInt(port, 10)
   }
 
@@ -40,16 +40,16 @@ export class EnvironmentService {
     return this.getOrFatal('SPOTIFY_CALLBACK')
   }
 
-  private get(key: string, defaultValue?: string) {
+  get(key: string, defaultValue?: string) {
     return process.env[key] || defaultValue
   }
 
-  private getOrFatal(key: string) {
+  getOrFatal(key: string) {
     const value = this.get(key)
     if (value === undefined) {
-      this.logger.error(`Missing environment variable: ${key}`, '')
-      process.exit(1)
-      return ''
+      const message = `Missing environment variable: ${key}`
+      this.logger.error(message, '')
+      throw new FatalException(message)
     }
     return value
   }
