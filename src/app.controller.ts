@@ -1,9 +1,17 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, Render } from '@nestjs/common'
+import { IndexView } from './models/views'
 
 @Controller()
 export class AppController {
   @Get()
-  root(): string {
-    return 'Hello World!'
+  @Render('index')
+  root(): IndexView {
+    return {
+      user: null,
+      currentParty: null,
+      currentPlaylist: null,
+      playlists: [],
+      error: null,
+    }
   }
 }
