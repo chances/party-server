@@ -11,6 +11,7 @@
     "clean": "rm -rf dist",
     "test": "tape -r ts-node/register src/**/*.spec.ts | faucet",
     "test:coverage": "nyc npm test",
+    "test:watch": "sane 'nyc npm test' --glob='**/*.spec.ts' --wait=2",
     "lint": "tslint -p ."
   },
   "repository": {
@@ -49,6 +50,7 @@
     "faucet": "0.0.1",
     "nodemon": "^1.17.2",
     "nyc": "^11.6.0",
+    "sane": "^2.5.0",
     "tape": "^4.9.0",
     "ts-node": "^5.0.1",
     "tsconfig-paths": "^3.1.3",
