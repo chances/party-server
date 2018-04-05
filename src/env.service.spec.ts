@@ -59,6 +59,7 @@ test('getOrFatal throws for non-existent env variable', t => {
 
 test('port defaults to 3000', t => {
   getService().then(env => {
+    delete process.env.PORT
     expect(that(env.port).equals(3000))
     t.end()
   })
