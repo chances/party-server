@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chances/party-server.svg)](https://travis-ci.org/chances/party-server)
 [![Go Report Card](https://goreportcard.com/badge/github.com/chances/party-server)](https://goreportcard.com/report/github.com/chances/party-server)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fchances%2Fparty-server.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fchances%2Fparty-server?ref=badge_shield)
 
 A party web app to facilitate guest interaction at your parties.
 
@@ -30,3 +31,6 @@ The project is still experimental, but feel free to contribute.
 [MIT License](http://opensource.org/licenses/MIT)
 
 Copyright &copy; 2016 Chance Snow. All rights reserved.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fchances%2Fparty-server.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fchances%2Fparty-server?ref=badge_large)
