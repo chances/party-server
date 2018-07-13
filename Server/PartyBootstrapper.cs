@@ -1,12 +1,13 @@
 ﻿using Nancy;
 using Nancy.TinyIoc;
+using Server.Configuration;
 
 namespace Server
 {
   public class PartyBootstrapper : DefaultNancyBootstrapper
   {
     private readonly AppConfiguration _appConfig;
-    
+
     public PartyBootstrapper()
     {
     }

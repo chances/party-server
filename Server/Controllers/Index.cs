@@ -1,5 +1,6 @@
 ﻿using System;
 using Nancy;
+using Server.Configuration;
 
 namespace Server.Controllers
 {
