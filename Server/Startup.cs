@@ -25,14 +25,6 @@ namespace Server
     {
       var appConfig = new AppConfiguration();
 
-      Console.WriteLine(appConfig.Port);
-      Console.WriteLine(appConfig.Cors.AllowedOrigins);
-      Console.WriteLine(appConfig.Spotify.AppKey);
-      if (Environment.GetEnvironmentVariables() is Dictionary<string, string> envVars)
-        Console.WriteLine(envVars.Keys.Distinct().Aggregate((a, b) => a + "\n" + b));
-      Console.WriteLine(appConfig.Spotify.AppSecret);
-      Console.WriteLine(appConfig.Spotify.Callback);
-
       app.UseOwin(x => x.UseNancy(opt => opt.Bootstrapper = new PartyBootstrapper(appConfig)));
     }
   }
