@@ -12,8 +12,8 @@ create table "user"
 	refresh_token varchar not null,
 	token_expiry_date timestamp with time zone not null,
 	token_scope varchar not null,
-	created_at timestamp with time zone not null,
-	updated_at timestamp with time zone not null,
+	created_at timestamp with time zone default now() not null,
+	updated_at timestamp with time zone default now() not null,
 	party_id integer
 )
 ;
