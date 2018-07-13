@@ -6,11 +6,7 @@ namespace Models
 {
     public partial class PartyModelContainer : DbContext
     {
-        public PartyModelContainer()
-        {
-        }
-
-        public PartyModelContainer(DbContextOptions<PartyModelContainer> options)
+        public PartyModelContainer(DbContextOptions options)
             : base(options)
         {
         }
@@ -19,15 +15,6 @@ namespace Models
         public virtual DbSet<Party> Party { get; set; }
         public virtual DbSet<TrackList> TrackList { get; set; }
         public virtual DbSet<User> User { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseNpgsql("Host=localhost;Database=party;Username=party;Password=party");
-            }
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
