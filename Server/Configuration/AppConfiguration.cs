@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Models;
 
 namespace Server.Configuration
 {
@@ -53,6 +54,7 @@ namespace Server.Configuration
     public Cors Cors { get; }
 
     public string DatabaseUrl { get; }
+    public string ConnectionString => DatabaseUrl.ToConnectionString();
 
     public Spotify Spotify { get; }
 
