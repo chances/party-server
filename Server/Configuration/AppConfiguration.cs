@@ -37,6 +37,9 @@ namespace Server.Configuration
       var databaseUrl = GetVariable("DATABASE_URL");
       DatabaseUrl = databaseUrl ?? throw new NullReferenceException("Database URL configuration is missing");
 
+      var redisUrl = GetVariable("REDIS_URL");
+      RedisUrl = redisUrl ?? throw new NullReferenceException("Redis URL configuration is missing");
+
       var spotifyAppKey = GetVariable("SPOTIFY_APP_KEY");
       var spotifyAppSecret = GetVariable("SPOTIFY_APP_SECRET");
       var spotifyCallback = GetVariable("SPOTIFY_CALLBACK");
@@ -55,6 +58,8 @@ namespace Server.Configuration
 
     public string DatabaseUrl { get; }
     public string ConnectionString => DatabaseUrl.ToConnectionString();
+
+    public string RedisUrl { get; }
 
     public Spotify Spotify { get; }
 
