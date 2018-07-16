@@ -64,7 +64,7 @@ namespace Server.Services.Session
 
     private void ResetSession()
     {
-      Id = new Guid();
+      Id = Guid.NewGuid();
       Flashes = new Dictionary<string, string>();
     }
 
@@ -74,6 +74,7 @@ namespace Server.Services.Session
       {
         var sessionId = context.Request.Cookies[SessionName];
         Flashes = _store.LoadFlashes(Id = Guid.Parse(sessionId));
+        return context.GetResponse();
       }
       else
       {
@@ -90,7 +91,7 @@ namespace Server.Services.Session
       {
         Domain = _appMode.IsDevelopment() ? null : ".chancesnow.me"
       };
-      return context.Response.WithCookie(cookie);
+      return context.GetResponse().WithCookie(cookie);
     }
 
     private void SaveSession(NancyContext context)

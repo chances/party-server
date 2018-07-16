@@ -5,7 +5,7 @@ namespace Models
 {
   public static class ConnectionStringExtensions
   {
-    public static string ToConnectionString(this string source)
+    public static string ToPgsqlConnectionString(this string source)
     {
       var isUrl = Uri.TryCreate(source, UriKind.Absolute, out var url);
       if (!isUrl) throw new ArgumentException($"Invalid PgSQL connection string: {source}", nameof(source));

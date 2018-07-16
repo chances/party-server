@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Server
 {
+  [UsedImplicitly]
   public class Program
   {
     public static void Main(string[] args)

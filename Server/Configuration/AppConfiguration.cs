@@ -72,7 +72,7 @@ namespace Server.Configuration
     public Cors Cors { get; }
 
     public string DatabaseUrl { get; }
-    public string ConnectionString => DatabaseUrl.ToConnectionString();
+    public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString();
 
     public string RedisUrl { get; }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
+using LiteGuard;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Redis;
 
@@ -26,6 +27,8 @@ namespace Server.Services.Session
 
     public void SaveFlashes(Guid sessionId, Dictionary<string, string> flashes)
     {
+      Guard.AgainstNullArgument(nameof(flashes), flashes);
+
       var storedFlashes = flashes.Aggregate("",
         delegate(string s, KeyValuePair<string, string> pair)
         {
