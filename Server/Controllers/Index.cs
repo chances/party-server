@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Text;
+using JetBrains.Annotations;
 using Nancy;
 
 namespace Server.Controllers
@@ -11,9 +12,9 @@ namespace Server.Controllers
       Get("/", _ => GetIndex());
     }
 
-    private static string GetIndex()
+    private Response GetIndex()
     {
-      return @"<a href=""/auth/spotify"">Login with Spotify</a>";
+      return Response.AsText(@"<a href=""/auth/spotify"">Login with Spotify</a>", "text/html", Encoding.UTF8);
     }
   }
 }
