@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Models;
+using Server.Services;
 
 namespace Server.Configuration
 {
@@ -14,13 +15,25 @@ namespace Server.Configuration
 
     public AppConfiguration()
     {
+      Mode = Mode.Production;
+
       if (!File.Exists(".env"))
       {
         Console.WriteLine("Warning: .env file is not present. Using system provided environment variables");
       }
+      else
+      {
+        Mode = Mode.Development;
+      }
 
       LoadDotEnv();
       _environmentVariables = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>();
+
+      var modeString = GetVariable("MODE");
+      if (modeString != null && modeString.ToLower() == "development")
+      {
+        Mode = Mode.Development;
+      }
 
       var portString = GetVariable("PORT");
       if (portString != null && int.TryParse(portString, out var port))
@@ -51,6 +64,8 @@ namespace Server.Configuration
 
       Spotify = new Spotify(spotifyAppKey, spotifyAppSecret, spotifyCallback);
     }
+
+    public Mode Mode { get; }
 
     public int Port { get; }
 

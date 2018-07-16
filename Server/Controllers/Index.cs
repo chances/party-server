@@ -1,19 +1,19 @@
-﻿using System;
+﻿using JetBrains.Annotations;
 using Nancy;
-using Server.Configuration;
 
 namespace Server.Controllers
 {
+  [UsedImplicitly]
   public sealed class Index : NancyModule
   {
-    public Index(AppConfiguration appConfig)
+    public Index()
     {
       Get("/", _ => GetIndex());
     }
 
     private static string GetIndex()
     {
-      return @"<a href=""/authentication/redirect/spotify""></a>";
+      return @"<a href=""/auth/spotify"">Login with Spotify</a>";
     }
   }
 }
