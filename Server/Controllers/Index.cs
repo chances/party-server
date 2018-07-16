@@ -13,7 +13,7 @@ namespace Server.Controllers
 
     private static string GetIndex()
     {
-      return "Hello from Party";
+      return @"<a href=""/authentication/redirect/spotify""></a>";
     }
   }
 }
