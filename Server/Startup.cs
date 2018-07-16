@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +20,7 @@ namespace Server
       _config = builder.Build();
     }
 
+    [UsedImplicitly]
     public void Configure(IApplicationBuilder app)
     {
       var appConfig = new AppConfiguration();
