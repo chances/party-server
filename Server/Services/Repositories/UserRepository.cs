@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using FlexLabs.EntityFrameworkCore.Upsert;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Models;
 using Newtonsoft.Json;
 using Skybrud.Social.Spotify.Objects.Authentication;
@@ -45,7 +45,22 @@ namespace Server.Services.Repositories
           ContractResolver = Json.SnakeCaseContractResolver
         })
       };
-      _db.Upsert(user).On(u => u.Username).Run();
+      var existingUser = _db.User
+        .Where(u => u.Username == user.Username)
+        .Select(u => new {u.Id, u.CreatedAt})
+        .FirstOrDefault();
+      if (existingUser != null)
+      {
+        user.Id = existingUser.Id;
+        user.CreatedAt = existingUser.CreatedAt;
+        user.UpdatedAt = DateTime.UtcNow;
+        _db.User.Attach(user).State = EntityState.Modified;
+      }
+      else
+      {
+        _db.User.Add(user);
+      }
+      _db.SaveChanges();
 
       return user;
     }
