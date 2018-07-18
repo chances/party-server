@@ -40,7 +40,7 @@ namespace Server.Controllers
       ModulePath = "/auth";
 
       Get("/spotify", _ => LoginWithSpotify());
-      Get(appConfiguration.Spotify.Callback, _ => SpotifyCallback());
+      Get("/spotify/callback", _ => SpotifyCallback());
       Get("/finished", _ => GetFinished());
     }
 
@@ -51,7 +51,7 @@ namespace Server.Controllers
 
     private dynamic LoginWithSpotify()
     {
-      var state = new Guid();
+      var state = Guid.NewGuid();
       _session.AuthState = state.ToString();
 
       var authUrl = _oAuth.GetAuthorizationUrl(state.ToString(), PartySpotifyScopes);
