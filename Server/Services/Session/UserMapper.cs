@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Models;
 using Server.Services.Auth;
 using Server.Services.Auth.Spotify;
+using Server.Services.Repositories;
 
 namespace Server.Services.Session
 {
@@ -11,12 +12,12 @@ namespace Server.Services.Session
   public class UserMapper : IUserMapper
   {
     private readonly Session _session;
-    private readonly PartyModelContainer _db;
+    private readonly IUserRepository _userRepository;
 
-    public UserMapper(Session session, PartyModelContainer db)
+    public UserMapper(Session session, IUserRepository userRepository)
     {
       _session = session;
-      _db = db;
+      _userRepository = userRepository;
     }
 
     public ClaimsPrincipal GetUserFromSession()
@@ -24,7 +25,7 @@ namespace Server.Services.Session
       var currentUsername = _session.Username;
       if (string.IsNullOrWhiteSpace(currentUsername)) return null;
 
-      var existingUser = _db.User.FirstOrDefault(u => u.Username == currentUsername);
+      var existingUser = _userRepository.GetUserByUsername(currentUsername);
       return existingUser != null
         ? new ClaimsPrincipal(new SpotifyIdentity(existingUser))
         : new ClaimsPrincipal(new SpotifyIdentity(currentUsername));

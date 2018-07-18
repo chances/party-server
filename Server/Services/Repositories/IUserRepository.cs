@@ -7,5 +7,7 @@ namespace Server.Services.Repositories
   public interface IUserRepository
   {
     User CreateUserFromSpotify(SpotifyToken token, SpotifyScope[] scopes);
+
+    User GetUserByUsername(string username);
   }
 }

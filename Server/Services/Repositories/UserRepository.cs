@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using FlexLabs.EntityFrameworkCore.Upsert;
+using JetBrains.Annotations;
 using Models;
 using Newtonsoft.Json;
 using Skybrud.Social.Spotify.Objects.Authentication;
@@ -9,6 +10,7 @@ using Spotify.API.NetCore;
 
 namespace Server.Services.Repositories
 {
+  [UsedImplicitly]
   public class UserRepository : IUserRepository
   {
     private readonly PartyModelContainer _db;
@@ -47,5 +49,7 @@ namespace Server.Services.Repositories
 
       return user;
     }
+
+    public User GetUserByUsername(string username) => _db.User.FirstOrDefault(u => u.Username == username);
   }
 }
