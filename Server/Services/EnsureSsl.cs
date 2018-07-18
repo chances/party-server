@@ -25,7 +25,7 @@ namespace Server.Services
     private Response RedirectForSsl(NancyContext context)
     {
       var url = context.Request.Url;
-      if (_mode.IsDevelopment() || url.IsSecure) return context.GetResponse();
+      if (_mode.IsDevelopment() || url.IsSecure) return null;
 
       url.Scheme = "https";
       return new RedirectResponse(url.ToString());

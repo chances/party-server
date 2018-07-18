@@ -20,6 +20,10 @@ namespace Server.Services.Session
     private readonly Mode _appMode;
     private readonly SessionStore _store;
 
+    private Guid _id;
+    private Dictionary<string, string> _flashes;
+    private bool _isFresh = true;
+
     public Session(INancyEnvironment environment, SessionStore store)
     {
       _appMode = environment.GetValue<Mode>();
@@ -32,8 +36,6 @@ namespace Server.Services.Session
       pipelines.AfterRequest.AddItemToEndOfPipeline(SaveSession);
     }
 
-    public Guid Id { get; private set; }
-    public Dictionary<string, string> Flashes { get; private set; }
     public string AuthState
     {
       get => _store.Get(AuthStateSessionKey);
@@ -50,22 +52,23 @@ namespace Server.Services.Session
       }
     }
 
-    public string Error => Flashes.ContainsKey("error") ? Flashes["error"] : null;
+    public string Error => _flashes.ContainsKey("error") ? _flashes["error"] : null;
 
     public string Username
     {
-      get => _store.Get(UserSessionKey);
-      set => _store.Set(UserSessionKey, value);
+      get => _store.Get($"{_id}:{UserSessionKey}");
+      set => _store.Set($"{_id}:{UserSessionKey}", value);
     }
 
-    public void Flash(string key, string value) => Flashes.Add(key, value);
+    public void Flash(string key, string value) => _flashes.Add(key, value);
 
-    public void Logout() => _store.Delete(UserSessionKey);
+    public void Logout() => _store.Delete($"{_id}:{UserSessionKey}");
 
     private void ResetSession()
     {
-      Id = Guid.NewGuid();
-      Flashes = new Dictionary<string, string>();
+      _id = Guid.NewGuid();
+      _flashes = new Dictionary<string, string>();
+      _isFresh = true;
     }
 
     private Response LoadSession(NancyContext context)
@@ -73,17 +76,27 @@ namespace Server.Services.Session
       if (context.Request.Cookies.ContainsKey(SessionName))
       {
         var sessionId = context.Request.Cookies[SessionName];
-        Flashes = _store.LoadFlashes(Id = Guid.Parse(sessionId));
-        return context.GetResponse();
+        _flashes = _store.LoadFlashes(_id = Guid.Parse(sessionId));
+        _isFresh = false;
       }
       else
       {
         ResetSession();
       }
 
+      return null;
+    }
+
+    private void SaveSession(NancyContext context)
+    {
+      _store.SaveFlashes(_id, _flashes);
+
+      // Only set the cookie if the session is "fresh", i.e. newly created
+      if (!_isFresh) return;
+
       var cookie = new NancyCookie(
         SessionName,
-        Id.ToString(),
+        _id.ToString(),
         true, // HTTPOnly
         _appMode.IsProduction(), // Secure
         DateTime.UtcNow.Add(MaxAge)
@@ -91,12 +104,7 @@ namespace Server.Services.Session
       {
         Domain = _appMode.IsDevelopment() ? null : ".chancesnow.me"
       };
-      return context.GetResponse().WithCookie(cookie);
-    }
-
-    private void SaveSession(NancyContext context)
-    {
-      _store.SaveFlashes(Id, Flashes);
+      context.Response.Cookies.Add(cookie);
     }
   }
 }
