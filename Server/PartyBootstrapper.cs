@@ -36,6 +36,11 @@ namespace Server
     {
       base.Configure(environment);
 
+      if (_appConfig.Mode.IsDevelopment())
+      {
+        environment.Tracing(enabled: false, displayErrorTraces: true);
+      }
+
       environment.AddValue(_appConfig.Mode);
     }
 
