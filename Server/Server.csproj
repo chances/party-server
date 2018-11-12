@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Services" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
@@ -12,6 +13,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" />
     <PackageReference Include="LiteGuard" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="Spotify.API.NetCore" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
