@@ -1,9 +1,11 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Models
 {
+    [UsedImplicitly]
     public partial class PartyModelContainer : DbContext
     {
         public PartyModelContainer(DbContextOptions options)

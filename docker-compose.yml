@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  party-server:
+    image: party-server
+    build: .
+    ports:
+      - 3005:3005
