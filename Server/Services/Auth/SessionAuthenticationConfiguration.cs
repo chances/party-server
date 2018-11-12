@@ -1,10 +1,13 @@
 ﻿using System.Security.Claims;
+using JetBrains.Annotations;
 using Nancy;
 using Nancy.Authentication.Stateless;
+using Nancy.Bootstrapper;
 
 namespace Server.Services.Auth
 {
-  public class SessionAuthenticationConfiguration : StatelessAuthenticationConfiguration
+  [UsedImplicitly]
+  public class SessionAuthenticationConfiguration : StatelessAuthenticationConfiguration//, IRequestStartup
   {
     public SessionAuthenticationConfiguration(IUserMapper userMapper) :
       base(context => AuthenticateSession(userMapper, context))
@@ -14,5 +17,10 @@ namespace Server.Services.Auth
     // ReSharper disable once UnusedParameter.Local
     private static ClaimsPrincipal AuthenticateSession(IUserMapper userMapper, NancyContext _) =>
       userMapper.GetUserFromSession();
+
+    public void Initialize(IPipelines pipelines, NancyContext context)
+    {
+      StatelessAuthentication.Enable(pipelines, this);
+    }
   }
 }

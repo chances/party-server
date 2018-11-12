@@ -10,6 +10,7 @@ using Nancy.TinyIoc;
 using Server.Configuration;
 using Server.Services.Cache;
 using Server.Services.Repositories;
+using Server.Services.Session;
 
 namespace Server
 {

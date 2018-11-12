@@ -23,6 +23,12 @@ namespace Server.Services.Session
 
     public void Set(string key, string value) => _store.SetString(key, value);
 
+    public void SetWithRollingExpiry(string key, string value, TimeSpan maxAge) => _store.SetString(key, value,
+      new DistributedCacheEntryOptions()
+      {
+        SlidingExpiration = maxAge
+      });
+
     public void Delete(string key) => _store.Remove(key);
 
     public void SaveFlashes(Guid sessionId, Dictionary<string, string> flashes)

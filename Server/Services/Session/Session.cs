@@ -10,7 +10,7 @@ using Server.Configuration;
 namespace Server.Services.Session
 {
   [UsedImplicitly]
-  public class Session : IRequestStartup
+  public class Session : ISession, IRequestStartup
   {
     private const string AuthStateSessionKey = "AUTH_STATE";
     private const string UserSessionKey = "USER";
