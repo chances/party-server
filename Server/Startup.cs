@@ -16,6 +16,7 @@ namespace Server
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services)
     {
+      services.AddSingleton(typeof(AppConfiguration), _appConfig);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 32);
       services.AddMvc();
     }
