@@ -1,0 +1,135 @@
+@model Server.ViewModels.Administrator
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chance's Party - Admin</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  @if (!Model.LoggedIn)
+  {
+  <p>
+    <a href="/auth/login">Login with Spotify</a>
+  </p>
+  }
+  else
+  {
+  <p>
+    <a href="/auth/logout">Log Out</a>
+  </p>
+  <h1>Logged in as @Model.User.DisplayName</h1>
+  @if (Model.HasUserImage)
+  {
+  <img id="avatar" width="200" height="200" src="@Model.LargestUserImage.Url" />
+  }
+  <div id="user" class="details">
+    <p>ID: @Model.User.Id {{ .user.ID }}</p>
+    <p>Profile: <a href="@Model.User.Uri">@Model.User.Uri</a></p>
+    <p>Followers: @Model.User.Followers.Total</p>
+    <p>Country: @Model.User.Country</p>
+    <p>Product: @Model.User.Product</p>
+  </div>
+  <p>
+    Current playlist: <span id="currentPlaylist">
+      @*{{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}*@
+    </span>
+  </p>
+  @*{{ if .currentParty }}*@
+  <div class="details">
+    <p>Current party: <span id="currentParty">{{ .currentParty.RoomCode }}</span></p>
+  </div>
+  @*{{ else }}*@
+  <p>
+    <a id="startParty" data-id="{{ .currentPlaylist.ID }}" data-host="{{ .user.DisplayName }}" href="#party/start">Start Party</a>
+  </p>
+  @*{{ end }}*@
+  <div style="clear: both;"></div>
+  @*{{ if .playlists }}*@
+  <h2>Pick a playlist for the party</h2>
+  @*{{ $user := .user }}*@
+  <ul>
+    @*{{ range .playlists }}*@
+    @*{{ if eq .Owner $user.ID }}*@
+    <li>
+      <a class="playlist" data-id="{{ urlquery .ID }}" href="#playlist/{{ urlquery .ID }}">
+        {{ .Name }}
+      </a>
+      <a href="{{ .Endpoint }}" class="link-back">On Spotify</a>
+    </li>
+    @*{{ end }}*@
+    @*{{ end }}*@
+  </ul>
+  @*{{ end }}*@
+  }
+  @if (Model.HasError)
+  {
+  <p>Error:</p>
+  <p>@Model.Error</p>
+  }
+  <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch@2.0.3"></script>
+  <script type="text/javascript">document.addEventListener('DOMContentLoaded', function domContentLoaded() {
+      let startPartyLink = document.querySelector('#startParty');
+      if (startPartyLink) {
+        startPartyLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let hostName = e.target.getAttribute('data-host');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let startParty = window.fetch(new Request('/party/start', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              data: {
+                host: decodeURIComponent(hostName),
+                playlist_id: decodeURIComponent(playlistId)
+              }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (newPartyOrErrors) {
+            if (newPartyOrErrors.errors !== undefined) {
+              console.log(newPartyOrErrors);
+              throw new Error(newPartyOrErrors.errors);
+            }
+            return newPartyOrErrors.data;
+          });
+          startParty.then(function (party) {
+            console.log('Started party:', party)
+          });
+        })
+      }
+      let playlistLinks = [].slice.call(document.querySelectorAll('a.playlist'));
+      playlistLinks.forEach(function (playlistLink) {
+        playlistLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let patchPlaylist = window.fetch(new Request('/playlist', {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({
+              data: { id: decodeURIComponent(playlistId) }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (patchedPlaylistOrErrors) {
+            if (patchedPlaylistOrErrors.errors !== undefined) {
+              console.log(patchedPlaylistOrErrors);
+              throw new Error(patchedPlaylistOrErrors.errors);
+            }
+            return patchedPlaylistOrErrors.data;
+          });
+          patchPlaylist.then(function (playlist) {
+            document.querySelector('#currentPlaylist').innerText =
+              playlist.name;
+          });
+        })
+      })
+    })</script>
+</body>
+</html>

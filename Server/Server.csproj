@@ -7,6 +7,9 @@
   <ItemGroup>
     <Folder Include="Services" />
     <Folder Include="wwwroot\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="public\" />
+    <Folder Include="public\css\" />
   </ItemGroup>
 
   <ItemGroup>

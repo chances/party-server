@@ -24,6 +24,7 @@ namespace Server
     private static IWebHost BuildWebHost(string[] args, string port) =>
       WebHost.CreateDefaultBuilder(args)
         .UseUrls($"http://localhost:{port}")
+        .UseWebRoot("./Server/public")
         .UseKestrel()
         .UseStartup<Startup>()
         .Build();
