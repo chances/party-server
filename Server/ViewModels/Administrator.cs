@@ -34,6 +34,10 @@ namespace Server.ViewModels
     }
     public bool HasUserImage => User.Images != null && User.Images.Count > 0;
 
+    public Administrator(string error) : this(null, error)
+    {
+    }
+
     public Administrator(PrivateProfile user = null) : this(user, null)
     {
     }

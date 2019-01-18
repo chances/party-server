@@ -5,10 +5,15 @@ namespace Server.Controllers
 {
   public class Index : Controller
   {
-    // GET
+    [HttpGet]
     [Route("")]
     public IActionResult GetIndex()
     {
+      if (HttpContext.User.Identity.IsAuthenticated)
+      {
+        return View("../Index", new Administrator("Logged in presently."));
+      }
+
       return View("../Index", new Administrator());
     }
   }

@@ -10,6 +10,7 @@
     <Folder Include="ViewModels\" />
     <Folder Include="public\" />
     <Folder Include="public\css\" />
+    <Folder Include="Services\Authentication\" />
   </ItemGroup>
 
   <ItemGroup>

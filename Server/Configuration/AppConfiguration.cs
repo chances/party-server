@@ -74,6 +74,7 @@ namespace Server.Configuration
     public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString();
 
     public string RedisUrl { get; }
+    public string RedisConnectionString => RedisUrl.ToRedisConnectionString();
 
     public Spotify Spotify { get; }
 
