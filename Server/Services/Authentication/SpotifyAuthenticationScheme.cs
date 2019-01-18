@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using LiteGuard;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 using Models;
@@ -63,6 +64,8 @@ namespace Server.Services.Authentication
 
     public static async Task UpsertPartyUser(PartyModelContainer dbContext, IEnumerable<Claim> principalClaims)
     {
+      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+
       var claims = principalClaims.ToDictionary(claim => claim.Type);
       var userJson = claims[SpotifyUserJsonClaim].Value;
       var accessToken = claims[SpotifyAccessTokenClaim].Value;
@@ -103,6 +106,8 @@ namespace Server.Services.Authentication
     /// <param name="principalClaims">Principal Claims.</param>
     public static async Task<bool> RefreshAccessToken(IEnumerable<Claim> principalClaims)
     {
+      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+
       var claims = principalClaims.ToDictionary(claim => claim.Type);
       var userJson = claims[SpotifyUserJsonClaim].Value;
       var accessToken = claims[SpotifyAccessTokenClaim].Value;
@@ -113,6 +118,19 @@ namespace Server.Services.Authentication
       var tokenExpired = tokenExpiry.Subtract(DateTime.UtcNow).Ticks <= 0;
 
       return tokenExpired;
+    }
+
+    public static PrivateProfile GetProfile(IEnumerable<Claim> principalClaims)
+    {
+      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+
+      var claims = principalClaims.ToDictionary(claim => claim.Type);
+      var userJson = claims[SpotifyUserJsonClaim]?.Value ?? null;
+
+      if (userJson == null) return null;
+
+      var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
+      return spotifyUser;
     }
   }
 }

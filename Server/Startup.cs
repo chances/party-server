@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
 using Server.Configuration;
+using Server.Services;
 using Server.Services.Authentication;
 
 namespace Server
@@ -18,6 +19,8 @@ namespace Server
     {
       services.AddSingleton(typeof(AppConfiguration), _appConfig);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 32);
+
+      // Authentication
       services.AddDistributedRedisCache(options =>
       {
         options.Configuration = _appConfig.RedisConnectionString;
@@ -44,6 +47,11 @@ namespace Server
           _appConfig.Spotify.AppSecret,
           _appConfig.Spotify.Callback)
       );
+
+      // Session-based model providers
+      services.AddHttpContextAccessor();
+      services.AddScoped<ProfileProvider>();
+
       services.AddMvc();
     }
 
