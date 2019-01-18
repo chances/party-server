@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Newtonsoft.Json;
+using Spotify.API.NetCore;
+using Spotify.API.NetCore.Enums;
 using Spotify.API.NetCore.Models;
 
 namespace Server.Services.Authentication
@@ -23,6 +25,11 @@ namespace Server.Services.Authentication
     private static readonly string SpotifyTokenExpiryClaim = "urn:party:spotify:tokenExpiry";
     private static readonly string SpotifyUserJsonClaim = "urn:party:spotify:userJson";
 
+    private static readonly Scope Scope =
+      Scope.UserReadPrivate |
+      Scope.PlaylistReadPrivate |
+      Scope.PlaylistReadCollaborative;
+
     public static void Configure(OAuthOptions options, string appKey, string appSecret, string callback)
     {
       options.ClientId = appKey;
@@ -32,6 +39,11 @@ namespace Server.Services.Authentication
       options.TokenEndpoint = "https://accounts.spotify.com/api/token";
       options.UserInformationEndpoint = "https://api.spotify.com/v1/me";
       options.SaveTokens = true;
+
+      foreach (var scope in Scope.GetStringAttribute(",").Split(","))
+      {
+        options.Scope.Add(scope);
+      }
 
       options.Events = new OAuthEvents
       {
@@ -72,6 +84,7 @@ namespace Server.Services.Authentication
       var refreshToken = claims[SpotifyRefreshTokenClaim].Value;
       var tokenExpiry = claims[SpotifyTokenExpiryClaim].Value;
 
+      // TODO: Switch to SpotifyApi.NetCore? It's more often maintained, but has less API coverage
       var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
 
       var user = await dbContext.User
