@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Redis;
@@ -60,6 +60,7 @@ namespace Server
       );
 
       services.AddHttpContextAccessor();
+      services.AddScoped<UserProvider>();
       services.AddScoped<ProfileProvider>();
       services.AddScoped<SpotifyRepository>();
 
