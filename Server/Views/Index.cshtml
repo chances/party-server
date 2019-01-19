@@ -67,7 +67,8 @@
   <p>@Model.Error</p>
   }
   <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch@2.0.3"></script>
-  <script type="text/javascript">document.addEventListener('DOMContentLoaded', function domContentLoaded() {
+  <script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function domContentLoaded() {
       let startPartyLink = document.querySelector('#startParty');
       if (startPartyLink) {
         startPartyLink.addEventListener('click', function (e) {
@@ -110,7 +111,7 @@
             method: 'PATCH',
             headers: headers,
             body: JSON.stringify({
-              data: { id: decodeURIComponent(playlistId) }
+              data: { id: decodeURIComponent(playlistId), type: 'playlist' }
             }),
             credentials: 'include',
             cache: 'no-store'
@@ -125,7 +126,7 @@
           });
           patchPlaylist.then(function (playlist) {
             document.querySelector('#currentPlaylist').innerText =
-              playlist.name;
+              playlist.attributes.name;
           });
         })
       })
