@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
+using Server.Configuration;
 
 namespace Server.Services.Authentication
 {
@@ -13,8 +14,10 @@ namespace Server.Services.Authentication
     private static readonly string CookieName = "cpSESSION";
     private static readonly string ProductionCookieDomain = ".chancesnow.me";
 
-    public static void Configure(CookieAuthenticationOptions options, ITicketStore sessionStore, bool isProduction)
+    public static void Configure(CookieAuthenticationOptions options, ITicketStore sessionStore, AppConfiguration config)
     {
+      var isProduction = config.Mode.IsProduction();
+
       options.SessionStore = sessionStore;
       options.LoginPath = "/auth/login";
       options.LogoutPath = "/auth/logout";
@@ -34,12 +37,24 @@ namespace Server.Services.Authentication
 
         OnValidatePrincipal = async context =>
         {
-          var principalExpired = await SpotifyAuthenticationScheme.RefreshAccessToken(context.Principal.Claims);
+          var claims = context.Principal.Claims;
 
-          // Reject principal if Spotify access token is expired
-          if (principalExpired)
+          // Try to replace Spotify access token if it's expired
+          if (SpotifyAuthenticationScheme.IsAccessTokenExpired(claims))
           {
+            var updatedPrincipal = await SpotifyAuthenticationScheme
+              .RefreshAccessToken(claims, config.Spotify);
+
+            // Replace principal if Spotify access token was refreshed
+            if (updatedPrincipal != null)
+            {
+              context.ReplacePrincipal(updatedPrincipal);
+              return;
+            }
+
+            // Reject principal otherwise
             context.RejectPrincipal();
+            context.ShouldRenew = false;
           }
         }
       };

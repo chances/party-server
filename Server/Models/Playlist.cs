@@ -11,7 +11,7 @@ namespace Server.Models
     [JsonProperty("id")]
     public string Id { get; set; }
 
-    [JsonProperty("id")]
+    [JsonProperty("name")]
     public string Name { get; set; }
 
     [JsonProperty("owner")]

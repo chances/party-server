@@ -7,6 +7,7 @@ using Models;
 using Server.Configuration;
 using Server.Services;
 using Server.Services.Authentication;
+using Server.Services.Background;
 
 namespace Server
 {
@@ -26,6 +27,10 @@ namespace Server
       services.AddSingleton(_redisCache);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 32);
 
+      // Background tasks
+      services.AddHostedService<QueuedHostedService>();
+      services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+
       // Authentication
       services.AddDistributedRedisCache(options =>
       {
@@ -42,7 +47,7 @@ namespace Server
         (options) => CookiesAuthenticationScheme.Configure(
           options,
           new RedisCacheTicketStore(_redisCache),
-          _appConfig.Mode.IsProduction()
+          _appConfig
         )
       )
       .AddOAuth(

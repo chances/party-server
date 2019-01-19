@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Models;
+using Server.Models;
 using Spotify.API.NetCore.Models;
 
 namespace Server.ViewModels
@@ -14,7 +14,7 @@ namespace Server.ViewModels
     public Party CurrentParty { get; }
     public bool HasCurrentParty => CurrentParty != null;
 
-    public IEnumerable<SimplePlaylist> Playlists { get; }
+    public IEnumerable<Playlist> Playlists { get; }
     public bool HasPlaylists => Playlists?.Any() ?? false;
 
     public string Error { get; }
@@ -52,11 +52,11 @@ namespace Server.ViewModels
     {
     }
 
-    public Administrator(PrivateProfile user, IEnumerable<SimplePlaylist> playlists, Party party = null) : this(user, playlists, party, null)
+    public Administrator(PrivateProfile user, IEnumerable<Playlist> playlists, Party party = null) : this(user, playlists, party, null)
     {
     }
 
-    public Administrator(PrivateProfile user, IEnumerable<SimplePlaylist> playlists, Party party, string error)
+    public Administrator(PrivateProfile user, IEnumerable<Playlist> playlists, Party party, string error)
     {
       User = user;
       Playlists = playlists;

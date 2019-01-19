@@ -21,8 +21,6 @@ namespace Server.Services.Authentication
     public static readonly string Name = "Spotify";
 
     private static readonly string SpotifyAccessTokenClaim = "urn:party:spotify:accessToken";
-    private static readonly string SpotifyRefreshTokenClaim = "urn:party:spotify:refreshToken";
-    private static readonly string SpotifyTokenExpiryClaim = "urn:party:spotify:tokenExpiry";
     private static readonly string SpotifyUserJsonClaim = "urn:party:spotify:userJson";
 
     private static readonly Scope Scope =
@@ -49,7 +47,14 @@ namespace Server.Services.Authentication
       {
         OnCreatingTicket = async context =>
         {
-          var tokenExpiry = DateTime.UtcNow.AddSeconds(double.Parse(context.TokenResponse.ExpiresIn));
+          var token = new Token()
+          {
+            AccessToken = context.AccessToken,
+            TokenType = context.TokenType,
+            RefreshToken = context.RefreshToken,
+            CreateDate = DateTime.UtcNow,
+            ExpiresIn = (int) context.ExpiresIn.GetValueOrDefault(TimeSpan.FromSeconds(0)).TotalSeconds
+          };
 
           var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
           request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -65,9 +70,7 @@ namespace Server.Services.Authentication
               {
                 new Claim(ClaimsIdentity.DefaultRoleClaimType, Roles.Host),
                 new Claim(ClaimTypes.NameIdentifier, spotifyUser.Id),
-                new Claim(SpotifyAccessTokenClaim, context.AccessToken),
-                new Claim(SpotifyRefreshTokenClaim, context.RefreshToken),
-                new Claim(SpotifyTokenExpiryClaim, tokenExpiry.ToString()),
+                new Claim(SpotifyAccessTokenClaim, JsonConvert.SerializeObject(token)),
                 new Claim(SpotifyUserJsonClaim, userJson)
               };
           context.Principal.AddIdentity(new ClaimsIdentity(claims, Name));
@@ -81,9 +84,9 @@ namespace Server.Services.Authentication
 
       var claims = principalClaims.ToDictionary(claim => claim.Type);
       var userJson = claims[SpotifyUserJsonClaim].Value;
-      var accessToken = claims[SpotifyAccessTokenClaim].Value;
-      var refreshToken = claims[SpotifyRefreshTokenClaim].Value;
-      var tokenExpiry = claims[SpotifyTokenExpiryClaim].Value;
+      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
+      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
+      var tokenExpiry = accessToken.CreateDate.AddSeconds(accessToken.ExpiresIn);
 
       // TODO: Switch to SpotifyApi.NetCore? It's more often maintained, but has less API coverage
       var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
@@ -105,33 +108,97 @@ namespace Server.Services.Authentication
         user.UpdatedAt = DateTime.UtcNow;
       }
 
-      user.AccessToken = accessToken;
-      user.RefreshToken = refreshToken;
+      user.AccessToken = accessToken.AccessToken;
+      user.RefreshToken = accessToken.RefreshToken;
       user.SpotifyUser = userJson;
-      user.TokenExpiryDate = DateTime.Parse(tokenExpiry).ToUniversalTime();
+      user.TokenExpiryDate = tokenExpiry.ToUniversalTime();
 
       await dbContext.SaveChangesAsync();
+    }
+
+    public static bool IsAccessTokenExpired(IEnumerable<Claim> principalClaims)
+    {
+      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+
+      var claims = principalClaims.ToDictionary(claim => claim.Type);
+      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
+      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
+
+      return accessToken.IsExpired();
     }
 
     /// <summary>
     /// Refreshs the Spotify access token associated with the given principal claims.
     /// </summary>
-    /// <returns>Returns true if the access token is expired.</returns>
+    /// <returns>Returns a new <see cref="ClaimsPrincipal"/> if the access token was refreshed.</returns>
     /// <param name="principalClaims">Principal Claims.</param>
-    public static async Task<bool> RefreshAccessToken(IEnumerable<Claim> principalClaims)
+    public static async Task<ClaimsPrincipal> RefreshAccessToken(IEnumerable<Claim> principalClaims, Configuration.Spotify config)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
       var claims = principalClaims.ToDictionary(claim => claim.Type);
       var userJson = claims[SpotifyUserJsonClaim].Value;
-      var accessToken = claims[SpotifyAccessTokenClaim].Value;
-      var refreshToken = claims[SpotifyRefreshTokenClaim].Value;
-      var tokenExpiry = DateTime.Parse(claims[SpotifyTokenExpiryClaim].Value).ToUniversalTime();
+      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
+      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
 
-      // TODO: Try to refresh Spotify access token
-      var tokenExpired = IsTokenExpiryExpired(tokenExpiry);
+      // Try to refresh the access token if expired, only once
+      if (accessToken.IsExpired())
+      {
+        var refreshedToken = await TryRefreshToken(config.AppKey, config.AppSecret, accessToken.RefreshToken);
+        if (refreshedToken != null)
+        {
+          var userId = claims[ClaimTypes.NameIdentifier].Value;
 
-      return tokenExpired;
+          var newClaims = new List<Claim>
+          {
+            new Claim(ClaimsIdentity.DefaultRoleClaimType, Roles.Host),
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(SpotifyAccessTokenClaim, JsonConvert.SerializeObject(refreshedToken)),
+            new Claim(SpotifyUserJsonClaim, userJson)
+          };
+          return new ClaimsPrincipal(new ClaimsIdentity(newClaims, Name));
+        }
+      }
+
+      return null;
+    }
+
+    private static async Task<Token> TryRefreshToken(string appKey, string appSecret, string refreshToken)
+    {
+      using (var client = new HttpClient())
+      {
+        try
+        {
+          var refreshRequestData = new List<KeyValuePair<string, string>>
+          {
+            new KeyValuePair<string, string>("grant_type", "refresh_token"),
+            new KeyValuePair<string, string>("refresh_token", refreshToken)
+          };
+          var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
+          {
+            Content = new FormUrlEncodedContent(refreshRequestData)
+          };
+          request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+          var authorization = Base64Encode($"{appKey}:{appSecret}");
+          request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authorization);
+
+          var response = await client.SendAsync(request);
+          response.EnsureSuccessStatusCode();
+
+          string json = await response.Content.ReadAsStringAsync();
+          return JsonConvert.DeserializeObject<Token>(json);
+        }
+        catch (HttpRequestException)
+        {
+          return null;
+        }
+      }
+    }
+
+    private static string Base64Encode(string plainText)
+    {
+      var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+      return Convert.ToBase64String(plainTextBytes);
     }
 
     public static PrivateProfile GetProfile(IEnumerable<Claim> principalClaims)
@@ -152,29 +219,15 @@ namespace Server.Services.Authentication
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
       var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var accessToken = claims[SpotifyAccessTokenClaim]?.Value ?? null;
+      var accessTokenJson = claims[SpotifyAccessTokenClaim]?.Value ?? null;
+
+      if (accessTokenJson == null) return null;
+
+      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
 
       if (accessToken == null) return null;
 
-      var refreshToken = claims[SpotifyRefreshTokenClaim].Value;
-      var tokenExpiry = DateTime.Parse(claims[SpotifyTokenExpiryClaim].Value).ToUniversalTime();
-
-      if (IsTokenExpiryExpired(tokenExpiry)) return null;
-
-      var expiresIn = (int) tokenExpiry.Subtract(DateTime.UtcNow).TotalSeconds;
-
-      return new Token()
-      {
-        AccessToken = accessToken,
-        RefreshToken = refreshToken,
-        TokenType = "Bearer",
-        ExpiresIn = expiresIn
-      };
-    }
-
-    private static bool IsTokenExpiryExpired(DateTime tokenExpiry)
-    {
-      return tokenExpiry <= DateTime.UtcNow;
+      return accessToken;
     }
   }
 }

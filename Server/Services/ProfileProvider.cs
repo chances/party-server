@@ -8,6 +8,10 @@ namespace Server.Services
   {
     public ProfileProvider(IHttpContextAccessor context) : base(context)
     {
+      Profile = null;
+
+      if (!HttpContext?.User?.Identity.IsAuthenticated ?? true) return;
+
       var claims = HttpContext?.User?.Claims ?? null;
       if (claims != null)
       {
