@@ -4,24 +4,17 @@ using Spotify.API.NetCore.Models;
 
 namespace Server.Services
 {
-  public class ProfileProvider
+  public class ProfileProvider : ScopedService
   {
-    private readonly IHttpContextAccessor _context;
-
-    public ProfileProvider(IHttpContextAccessor context)
+    public ProfileProvider(IHttpContextAccessor context) : base(context)
     {
-      _context = context;
-    }
-
-    public PrivateProfile Profile
-    {
-      get
+      var claims = HttpContext?.User?.Claims ?? null;
+      if (claims != null)
       {
-        var claims = _context.HttpContext?.User?.Claims ?? null;
-        if (claims == null) return null;
-
-        return SpotifyAuthenticationScheme.GetProfile(claims);
+        Profile = SpotifyAuthenticationScheme.GetProfile(claims);
       }
     }
+
+    public PrivateProfile Profile { get; }
   }
 }

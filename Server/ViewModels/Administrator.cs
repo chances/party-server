@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Models;
 using Spotify.API.NetCore.Models;
 
 namespace Server.ViewModels
@@ -8,10 +11,17 @@ namespace Server.ViewModels
     public PrivateProfile User { get; }
     public bool LoggedIn => User != null;
 
-    public string Error { get; }
-    public bool HasError => Error != null;
+    public Party CurrentParty { get; }
+    public bool HasCurrentParty => CurrentParty != null;
 
-    public Image LargestUserImage {
+    public IEnumerable<SimplePlaylist> Playlists { get; }
+    public bool HasPlaylists => Playlists?.Any() ?? false;
+
+    public string Error { get; }
+    public bool HasError => Error?.Any() ?? false;
+
+    public Image LargestUserImage
+    {
       get
       {
         if (User.Images == null || User.Images.Count == 0)
@@ -34,17 +44,23 @@ namespace Server.ViewModels
     }
     public bool HasUserImage => User.Images != null && User.Images.Count > 0;
 
-    public Administrator(string error) : this(null, error)
+    public Administrator(string error) : this(null, null, null, error)
     {
     }
 
-    public Administrator(PrivateProfile user = null) : this(user, null)
+    public Administrator(PrivateProfile user = null, Party party = null) : this(user, null, null)
     {
     }
 
-    public Administrator(PrivateProfile user, string error)
+    public Administrator(PrivateProfile user, IEnumerable<SimplePlaylist> playlists, Party party = null) : this(user, playlists, party, null)
+    {
+    }
+
+    public Administrator(PrivateProfile user, IEnumerable<SimplePlaylist> playlists, Party party, string error)
     {
       User = user;
+      Playlists = playlists;
+      CurrentParty = party;
       Error = error;
     }
   }

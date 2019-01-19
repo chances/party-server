@@ -12,9 +12,7 @@
   <p>
     <a href="/auth/login">Login with Spotify</a>
   </p>
-  }
-  else
-  {
+  } else {
   <p>
     <a href="/auth/logout">Log Out</a>
   </p>
@@ -25,6 +23,7 @@
   }
   <div id="user" class="details">
     <p>ID: @Model.User.Id</p>
+    <p>Display Name: @Model.User.DisplayName</p>
     <p>Profile: <a href="@Model.User.Uri">@Model.User.Uri</a></p>
     <p>Followers: @Model.User.Followers.Total</p>
     <p>Country: @Model.User.Country</p>
@@ -35,32 +34,32 @@
       @*{{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}*@
     </span>
   </p>
-  @*{{ if .currentParty }}*@
+  @if (Model.HasCurrentParty)
+  {
   <div class="details">
-    <p>Current party: <span id="currentParty">{{ .currentParty.RoomCode }}</span></p>
+    <p>Current party: <span id="currentParty">@Model.CurrentParty.RoomCode</span></p>
   </div>
-  @*{{ else }}*@
+  } else {
   <p>
-    <a id="startParty" data-id="{{ .currentPlaylist.ID }}" data-host="{{ .user.DisplayName }}" href="#party/start">Start Party</a>
+    <a id="startParty" data-id="{{ .currentPlaylist.ID }}" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
   </p>
-  @*{{ end }}*@
+  }
   <div style="clear: both;"></div>
-  @*{{ if .playlists }}*@
+  @if (Model.HasPlaylists)
+  {
   <h2>Pick a playlist for the party</h2>
-  @*{{ $user := .user }}*@
   <ul>
-    @*{{ range .playlists }}*@
-    @*{{ if eq .Owner $user.ID }}*@
+    @foreach (var playlist in Model.Playlists)
+    {
     <li>
-      <a class="playlist" data-id="{{ urlquery .ID }}" href="#playlist/{{ urlquery .ID }}">
-        {{ .Name }}
+      <a class="playlist" data-id="@Uri.EscapeDataString(playlist.Id)" href="#playlist/@Uri.EscapeDataString(playlist.Id)">
+        @playlist.Name
       </a>
-      <a href="{{ .Endpoint }}" class="link-back">On Spotify</a>
+      <a href="@playlist.Href" class="link-back">On Spotify</a>
     </li>
-    @*{{ end }}*@
-    @*{{ end }}*@
+    }
   </ul>
-  @*{{ end }}*@
+  }
   }
   @if (Model.HasError)
   {

@@ -13,13 +13,9 @@ namespace Server.Services.Authentication
     private const string KeyPrefix = "Session:";
     private IDistributedCache _cache;
 
-    public RedisCacheTicketStore(string redisUrl)
+    public RedisCacheTicketStore(RedisCache cache)
     {
-      // TODO: Use a connection pool, somehow...
-      _cache = new RedisCache(new RedisCacheOptions()
-      {
-        Configuration = redisUrl
-      });
+      _cache = cache;
     }
 
     public async Task<string> StoreAsync(AuthenticationTicket ticket)

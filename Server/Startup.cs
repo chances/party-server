@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Redis;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
 using Server.Configuration;
@@ -11,13 +12,18 @@ namespace Server
 {
   public class Startup
   {
-    private readonly AppConfiguration _appConfig = new AppConfiguration();
+    private static readonly AppConfiguration _appConfig = new AppConfiguration();
+    private readonly RedisCache _redisCache = new RedisCache(new RedisCacheOptions()
+    {
+      Configuration = _appConfig.RedisConnectionString
+    });
 
     // This method gets called by the runtime. Use this method to add services to the container.
     // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
     public void ConfigureServices(IServiceCollection services)
     {
-      services.AddSingleton(typeof(AppConfiguration), _appConfig);
+      services.AddSingleton(_appConfig);
+      services.AddSingleton(_redisCache);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 32);
 
       // Authentication
@@ -35,7 +41,7 @@ namespace Server
         CookiesAuthenticationScheme.Name,
         (options) => CookiesAuthenticationScheme.Configure(
           options,
-          new RedisCacheTicketStore(_appConfig.RedisConnectionString),
+          new RedisCacheTicketStore(_redisCache),
           _appConfig.Mode.IsProduction()
         )
       )
@@ -48,9 +54,9 @@ namespace Server
           _appConfig.Spotify.Callback)
       );
 
-      // Session-based model providers
       services.AddHttpContextAccessor();
       services.AddScoped<ProfileProvider>();
+      services.AddScoped<SpotifyRepository>();
 
       services.AddMvc();
     }

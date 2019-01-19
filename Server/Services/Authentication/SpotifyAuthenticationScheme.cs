@@ -63,13 +63,14 @@ namespace Server.Services.Authentication
 
           var claims = new List<Claim>
               {
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, Roles.Host),
                 new Claim(ClaimTypes.NameIdentifier, spotifyUser.Id),
                 new Claim(SpotifyAccessTokenClaim, context.AccessToken),
                 new Claim(SpotifyRefreshTokenClaim, context.RefreshToken),
                 new Claim(SpotifyTokenExpiryClaim, tokenExpiry.ToString()),
                 new Claim(SpotifyUserJsonClaim, userJson)
               };
-          context.Principal.AddIdentity(new ClaimsIdentity(claims, "Spotify"));
+          context.Principal.AddIdentity(new ClaimsIdentity(claims, Name));
         }
       };
     }
@@ -128,7 +129,7 @@ namespace Server.Services.Authentication
       var tokenExpiry = DateTime.Parse(claims[SpotifyTokenExpiryClaim].Value).ToUniversalTime();
 
       // TODO: Try to refresh Spotify access token
-      var tokenExpired = tokenExpiry.Subtract(DateTime.UtcNow).Ticks <= 0;
+      var tokenExpired = IsTokenExpiryExpired(tokenExpiry);
 
       return tokenExpired;
     }
@@ -144,6 +145,36 @@ namespace Server.Services.Authentication
 
       var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
       return spotifyUser;
+    }
+
+    public static Token GetToken(IEnumerable<Claim> principalClaims)
+    {
+      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+
+      var claims = principalClaims.ToDictionary(claim => claim.Type);
+      var accessToken = claims[SpotifyAccessTokenClaim]?.Value ?? null;
+
+      if (accessToken == null) return null;
+
+      var refreshToken = claims[SpotifyRefreshTokenClaim].Value;
+      var tokenExpiry = DateTime.Parse(claims[SpotifyTokenExpiryClaim].Value).ToUniversalTime();
+
+      if (IsTokenExpiryExpired(tokenExpiry)) return null;
+
+      var expiresIn = tokenExpiry.Subtract(DateTime.UtcNow).Seconds;
+
+      return new Token()
+      {
+        AccessToken = accessToken,
+        RefreshToken = refreshToken,
+        TokenType = "Bearer",
+        ExpiresIn = expiresIn
+      };
+    }
+
+    private static bool IsTokenExpiryExpired(DateTime tokenExpiry)
+    {
+      return tokenExpiry.Subtract(DateTime.UtcNow).Ticks <= 0;
     }
   }
 }
