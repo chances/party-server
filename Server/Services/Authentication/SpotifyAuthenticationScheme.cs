@@ -161,7 +161,7 @@ namespace Server.Services.Authentication
 
       if (IsTokenExpiryExpired(tokenExpiry)) return null;
 
-      var expiresIn = tokenExpiry.Subtract(DateTime.UtcNow).Seconds;
+      var expiresIn = (int) tokenExpiry.Subtract(DateTime.UtcNow).TotalSeconds;
 
       return new Token()
       {
@@ -174,7 +174,7 @@ namespace Server.Services.Authentication
 
     private static bool IsTokenExpiryExpired(DateTime tokenExpiry)
     {
-      return tokenExpiry.Subtract(DateTime.UtcNow).Ticks <= 0;
+      return tokenExpiry <= DateTime.UtcNow;
     }
   }
 }
