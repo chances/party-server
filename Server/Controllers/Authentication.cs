@@ -18,7 +18,7 @@ namespace Server.Controllers
     public async Task<IActionResult> Logout()
     {
       await HttpContext.SignOutAsync("Cookies");
-      return RedirectToAction(nameof(Index.GetIndex), nameof(Index));
+      return RedirectToAction(nameof(Home.Index), nameof(Home));
     }
   }
 }

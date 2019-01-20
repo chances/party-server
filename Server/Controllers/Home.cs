@@ -7,14 +7,14 @@ using Server.ViewModels;
 
 namespace Server.Controllers
 {
-  public class Index : Controller
+  public class Home : Controller
   {
     private readonly UserProvider _userProvider;
     private readonly ProfileProvider _profileProvider;
     private readonly SpotifyRepository _spotify;
     private readonly PartyModelContainer _db;
 
-    public Index(
+    public Home(
       UserProvider userProvider,
       ProfileProvider profileProvider,
       SpotifyRepository spotify,
@@ -29,7 +29,7 @@ namespace Server.Controllers
 
     [HttpGet]
     [Route("")]
-    public async Task<IActionResult> GetIndex()
+    public async Task<IActionResult> Index()
     {
       if (_userProvider.IsUserHost)
       {
