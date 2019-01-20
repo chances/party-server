@@ -8,17 +8,8 @@ using Npgsql;
 
 namespace Server.Models
 {
-  public class Guest
+  public class Guest : PublicGuest
   {
-    [JsonProperty("name")]
-    public string Name { get; set; }
-
-    [JsonProperty("alias")]
-    public string Alias { get; set; }
-
-    [JsonProperty("checked_in")]
-    public bool CheckedIn { get; set; }
-
     [JsonProperty("token")]
     public string Token { get; set; }
 
