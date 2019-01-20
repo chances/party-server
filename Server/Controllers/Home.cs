@@ -33,7 +33,7 @@ namespace Server.Controllers
     {
       if (_userProvider.IsUserHost)
       {
-        var user = _userProvider.User;
+        var user = await _userProvider.GetUserAsync();
         var spotifyProfile = _profileProvider.Profile;
         var playlists = await _spotify.GetMyOwnPlaylists();
         var playlist = playlists

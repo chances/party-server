@@ -15,13 +15,13 @@ namespace Server.Controllers
   public class Playlists : Controller
   {
     private readonly PartyModelContainer _db;
-    private readonly UserProvider _user;
+    private readonly UserProvider _userProvider;
     private readonly SpotifyRepository _spotify;
 
     public Playlists(PartyModelContainer db, UserProvider user, SpotifyRepository spotify)
     {
       _db = db;
-      _user = user;
+      _userProvider = user;
       _spotify = spotify;
     }
 
@@ -29,7 +29,7 @@ namespace Server.Controllers
     [Route("/playlist")]
     public async Task<IActionResult> Get()
     {
-      var currentUser = _user.User;
+      var currentUser = await _userProvider.GetUserAsync();
       if (currentUser.SpotifyPlaylistId == null)
       {
         return NotFound();
@@ -56,7 +56,8 @@ namespace Server.Controllers
 
       if (playlist != null)
       {
-        _user.User.SpotifyPlaylistId = patchPlaylist.Data.Id;
+        var user = await _userProvider.GetUserAsync();
+        user.SpotifyPlaylistId = patchPlaylist.Data.Id;
         await _db.SaveChangesAsync();
 
         // TODO: Update the user's current party somehow? Add the new playlists's tracks or replace the queue?
