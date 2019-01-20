@@ -28,7 +28,7 @@ namespace Server.Models
       Id = playlist.Id,
       Name = playlist.Name,
       Owner = playlist.Owner.Id,
-      Endpoint = playlist.Href,
+      Endpoint = playlist.ExternalUrls["spotify"],
       TotalTracks = playlist.Tracks.Total
     };
 
@@ -37,7 +37,7 @@ namespace Server.Models
       Id = playlist.Id,
       Name = playlist.Name,
       Owner = playlist.Owner.Id,
-      Endpoint = playlist.Href,
+      Endpoint = playlist.ExternalUrls["spotify"],
       TotalTracks = playlist.Tracks.Total
     };
 

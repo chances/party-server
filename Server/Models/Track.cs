@@ -53,7 +53,7 @@ namespace Server.Models
       Name = track.Name,
       Artists = track.Artists.Select(a => new TrackArtist() { Id = a.Id, Name = a.Name}).ToList(),
       Images = track.Album.Images,
-      Endpoint = track.Href,
+      Endpoint = track.ExternUrls["spotify"],
       BeganPlaying = null,
       Duration = (int) Math.Round(track.DurationMs / 1000.0),
       Contributor = null,

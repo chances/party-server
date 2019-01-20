@@ -9,6 +9,7 @@ namespace Server.ViewModels
   public class Administrator
   {
     public PrivateProfile User { get; }
+    public string UserUrl => User?.ExternalUrls["spotify"] ?? null;
     public bool LoggedIn => User != null;
 
     public Playlist CurrentPlaylist { get; }
