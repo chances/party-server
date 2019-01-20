@@ -31,8 +31,14 @@
   </div>
   <p>
     Current playlist: <span id="currentPlaylist">
-      @*{{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}*@
-    </span>
+  @if (Model.HasCurrentPlaylist)
+  {
+    @Model.CurrentPlaylist.Name
+  } else {
+    @Html.Raw("N/A")
+  }
+    @*{{ if .currentPlaylist -}} {{ .currentPlaylist.Name }} {{- else -}} N/A {{- end }}*@
+  </span>
   </p>
   @if (Model.HasCurrentParty)
   {

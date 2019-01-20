@@ -11,6 +11,9 @@ namespace Server.ViewModels
     public PrivateProfile User { get; }
     public bool LoggedIn => User != null;
 
+    public Playlist CurrentPlaylist { get; }
+    public bool HasCurrentPlaylist => CurrentPlaylist != null;
+
     public Party CurrentParty { get; }
     public bool HasCurrentParty => CurrentParty != null;
 
@@ -44,22 +47,31 @@ namespace Server.ViewModels
     }
     public bool HasUserImage => User.Images != null && User.Images.Count > 0;
 
-    public Administrator(string error) : this(null, null, null, error)
+    public Administrator(string error = null)
+      : this(null, null, null, null, error)
     {
     }
 
-    public Administrator(PrivateProfile user = null, Party party = null) : this(user, null, null)
+    public Administrator(
+      PrivateProfile user,
+      IEnumerable<Playlist> playlists,
+      Playlist playlist,
+      Party party
+    ) : this(user, playlists, playlist, party, null)
     {
     }
 
-    public Administrator(PrivateProfile user, IEnumerable<Playlist> playlists, Party party = null) : this(user, playlists, party, null)
-    {
-    }
-
-    public Administrator(PrivateProfile user, IEnumerable<Playlist> playlists, Party party, string error)
+    public Administrator(
+      PrivateProfile user,
+      IEnumerable<Playlist> playlists,
+      Playlist playlist,
+      Party party,
+      string error
+    )
     {
       User = user;
       Playlists = playlists;
+      CurrentPlaylist = playlist;
       CurrentParty = party;
       Error = error;
     }
