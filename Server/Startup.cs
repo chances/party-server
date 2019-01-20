@@ -64,6 +64,8 @@ namespace Server
       services.AddScoped<ProfileProvider>();
       services.AddScoped<SpotifyRepository>();
 
+      services.AddSingleton(new RoomCodeGenerator());
+
       services.AddMvc();
     }
 
