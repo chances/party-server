@@ -46,7 +46,7 @@
   </div>
   } else {
   <p>
-    <a id="startParty" data-id="{{ .currentPlaylist.ID }}" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
+    <a id="startParty" data-id="@Model.CurrentPlaylist.Id" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
   </p>
   }
   <div style="clear: both;"></div>
@@ -86,8 +86,13 @@ document.addEventListener('DOMContentLoaded', function domContentLoaded() {
             headers: headers,
             body: JSON.stringify({
               data: {
-                host: decodeURIComponent(hostName),
-                playlist_id: decodeURIComponent(playlistId)
+                type: 'new_party',
+                attributes: {
+                  location: {
+                    host_name: decodeURIComponent(hostName)
+                  },
+                  playlist_id: decodeURIComponent(playlistId)
+                }
               }
             }),
             credentials: 'include',
