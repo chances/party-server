@@ -25,6 +25,11 @@ namespace Server.Data
 
   public class ResourceIdentifier<T> : IResourceIdentifier, IValidatableObject
   {
+    public ResourceIdentifier()
+    {
+      Type = ExpectedType;
+    }
+
     [Required]
     [BindRequired]
     [JsonProperty("id")]

@@ -12,6 +12,11 @@ namespace Server.Data
     [JsonProperty("meta", NullValueHandling = NullValueHandling.Ignore)]
     public JObject Metadata { get; set; }
 
+    public static ResourceIdentifierDocument<T> ResourceIdentifier<T>(string id) =>
+      new ResourceIdentifierDocument<T>(
+        new ResourceIdentifier<T> { Id = id }
+      );
+
     public static Document<T> Resource<T>(string id, T data) => new Document<T>(
       new Resource<T> { Id = id, Attributes = data }
     );
@@ -58,5 +63,26 @@ namespace Server.Data
     [BindRequired]
     [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
     public ResourceIdentifier<T> Data { get; set; }
+
+    public ResourceIdentifierDocument(ResourceIdentifier<T> data = null)
+    {
+      Data = data;
+    }
+  }
+
+  public class NewResourceDocument<T> : Document
+  {
+    [Required]
+    [BindRequired]
+    [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
+    public NewResource<T> Data { get; set; }
+  }
+
+  public class ResourceDocument<T> : Document
+  {
+    [Required]
+    [BindRequired]
+    [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
+    public Resource<T> Data { get; set; }
   }
 }
