@@ -63,5 +63,13 @@ namespace Server.Data
         Detail = detail
       })
     );
+
+    public static NotFoundObjectResult Internal(string detail = null) => new NotFoundObjectResult(
+      Document.Error(new Error((int)HttpStatusCode.InternalServerError)
+      {
+        Id = Enum.GetName(typeof(HttpStatusCode), HttpStatusCode.InternalServerError).ToSnakeCase(),
+        Detail = detail
+      })
+    );
   }
 }
