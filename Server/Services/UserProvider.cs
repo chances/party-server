@@ -57,6 +57,27 @@ namespace Server.Services
       );
     }
 
+    /// <summary>
+    /// Gets the user asynchronously, bypassing the cache.
+    /// </summary>
+    /// <remarks>
+    /// A user retrieved when bypassing the cache will update the cached user.
+    /// </remarks>
+    /// <returns>The user retrieved from the database.</returns>
+    /// <param name="db">Party database container instance.</param>
+    public async Task<User> GetUserAsync(PartyModelContainer db)
+    {
+      if (!IsAuthenticated) return null;
+
+      // Get user from the DB and update the cached user
+      var username = HttpContext.User.Username();
+      var user = await db.User
+            .Where(u => u.Username == username)
+            .FirstOrDefaultAsync();
+      if (user != null) CacheUser(user);
+      return user;
+    }
+
     public Guest Guest
     {
       get

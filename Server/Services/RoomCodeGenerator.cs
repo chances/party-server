@@ -26,7 +26,7 @@ namespace Server.Services
     /// Gets a new room code.
     /// </summary>
     /// <value>The new room code.</value>
-    public string RoomCode => GenerateRoomCode();
+    public string NewRoomCode => GenerateRoomCode();
 
     /// <summary>
     /// Generates a new room code.

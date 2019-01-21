@@ -56,8 +56,10 @@ namespace Server.Controllers
 
       if (playlist != null)
       {
-        var user = await _userProvider.GetUserAsync();
+        var user = await _userProvider.GetUserAsync(_db);
         user.SpotifyPlaylistId = patchPlaylist.Data.Id;
+        user.UpdatedAt = DateTime.UtcNow;
+
         await _db.SaveChangesAsync();
 
         // TODO: Update the user's current party somehow? Add the new playlists's tracks or replace the queue?
