@@ -10,7 +10,7 @@ namespace Server.Services
       return principal?.Claims
         .Where(c => c.Type == ClaimTypes.NameIdentifier)
         .Select(c => c.Value)
-        .FirstOrDefault() ?? null;
+        .FirstOrDefault();
     }
   }
 }
