@@ -156,14 +156,15 @@ namespace Server.Controllers
     [Route("queue")]
     public async Task<IActionResult> GetQueue()
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync();
+      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
       if (currentParty == null) return NotFound();
 
       // TODO: Add pagination
+      // TODO: Limit the list to ~5-10 tracks for party guests
 
-      var queue = currentParty.QueueTracks();
+      var queue = await currentParty.QueueTracks(_db);
 
-      return Ok(Document.Resource($"{currentParty.RoomCode}#queue", "track_list", queue));
+      return Ok(Document.Collection(queue, t => t.Id));
     }
 
     [HttpGet]
@@ -171,14 +172,14 @@ namespace Server.Controllers
     [Route("history")]
     public async Task<IActionResult> GetHistory()
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync();
+      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
       if (currentParty == null) return NotFound();
 
       // TODO: Add pagination
 
-      var history = currentParty.HistoryTracks();
+      var history = await currentParty.HistoryTracks(_db);
 
-      return Ok(Document.Resource($"{currentParty.RoomCode}#history", "track_list", history));
+      return Ok(Document.Collection(history, t => t.Id));
     }
   }
 }

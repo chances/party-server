@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -17,11 +19,15 @@ namespace Server.Data
         new ResourceIdentifier<T> { Id = id }
       );
 
-    public static Document Resource(string id, string type, object data) => new DataDocument(id, type, data);
-
     public static Document<T> Resource<T>(string id, T data) => new Document<T>(
       new Resource<T> { Id = id, Attributes = data }
     );
+
+    public static CollectionDocument<T> Collection<T>(IEnumerable<T> data, Func<T, string> idSelector) =>
+      new CollectionDocument<T>
+      {
+        Data = data.Select(d => new Resource<T> { Id = idSelector(d), Attributes = d }).ToList()
+      };
 
     public static Document Error(Error error) => new ErrorDocument(error);
 
@@ -29,28 +35,23 @@ namespace Server.Data
       new ErrorDocument(errors.ToList());
   }
 
-  public class DataDocument : Document
+  public class CollectionDocument : Document
   {
     [Required]
     [BindRequired]
     [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
-    public Resource Data { get; set; }
-
-    public DataDocument()
-    {}
-
-    public DataDocument(string id, string type, object data)
-    {
-      Data = new Resource
-      {
-        Id = id,
-        Type = type,
-        Attributes = JObject.FromObject(data)
-      };
-    }
+    public List<Resource> Data { get; set; }
   }
 
-  public class Document<T> : DataDocument
+  public class CollectionDocument<T> : Document
+  {
+    [Required]
+    [BindRequired]
+    [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
+    public List<Resource<T>> Data { get; set; }
+  }
+
+  public class Document<T>
   {
     [Required]
     [BindRequired]
