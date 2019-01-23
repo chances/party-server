@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Models;
 using Newtonsoft.Json;
 
@@ -9,8 +10,9 @@ namespace Server.Models
   {
     private static readonly List<Track> EmptyTrackList = new List<Track>(0);
 
-    public static List<Track> QueueTracks(this Party party)
+    public static async Task<List<Track>> QueueTracks(this Party party, PartyModelContainer db)
     {
+      await db.Entry(party).Reference(p => p.Queue).LoadAsync();
       var queue = party.Queue;
 
       if (queue == null || string.IsNullOrWhiteSpace(queue.Data))
@@ -21,8 +23,9 @@ namespace Server.Models
       return JsonConvert.DeserializeObject<List<Track>>(queue.Data);
     }
 
-    public static List<Track> HistoryTracks(this Party party)
+    public static async Task<List<Track>> HistoryTracks(this Party party, PartyModelContainer db)
     {
+      await db.Entry(party).Reference(p => p.History).LoadAsync();
       var history = party.History;
 
       if (history == null || string.IsNullOrWhiteSpace(history.Data))
