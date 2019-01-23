@@ -79,5 +79,7 @@ namespace Server.Data
 
       return sb.ToString();
     }
+
+    public static string ToKebabCase(this string s) => s.ToSnakeCase().Replace('_', '-');
   }
 }

@@ -41,7 +41,19 @@ namespace Server.Data
     public string Type { get; set; }
 
     [JsonIgnore]
-    public string ExpectedType => typeof(T).Name.ToSnakeCase();
+    private static string ExpectedType
+    {
+      get
+      {
+        var type = typeof(T);
+        var resourceIdAttribute =
+          (ResourceIdentifierAttribute) Attribute.GetCustomAttribute(type, typeof(ResourceIdentifierAttribute));
+
+        return resourceIdAttribute != null
+          ? resourceIdAttribute.Type
+          : type.Name.ToKebabCase();
+      }
+    }
 
     [JsonProperty("meta", NullValueHandling = NullValueHandling.Ignore)]
     public JObject Metadata { get; set; }

@@ -1,12 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Server.Data;
 
 namespace Server.Models
 {
+  [ResourceIdentifier("party")]
   public class PublicParty
   {
     [JsonProperty("location", NullValueHandling = NullValueHandling.Include)]
