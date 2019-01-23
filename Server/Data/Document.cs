@@ -56,7 +56,7 @@ namespace Server.Data
     [Required]
     [BindRequired]
     [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
-    public new Resource<T> Data { get; set; }
+    public Resource<T> Data { get; set; }
 
     public Document(Resource<T> data = null)
     {
