@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Db = Models;
 using Server.Data;
 using Server.Models;
 using Server.Services;
 using Newtonsoft.Json;
+using Server.Services.Authentication;
 using Server.Services.Spotify;
 
 namespace Server.Controllers
@@ -34,6 +36,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
+    [Authorize(Roles = Roles.Authenticated)]
     [Route("")]
     public async Task<IActionResult> Index()
     {
@@ -50,6 +53,7 @@ namespace Server.Controllers
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.Host)]
     [Route("start")]
     public async Task<IActionResult> Start([FromBody] NewResourceDocument<NewParty> newParty)
     {
@@ -121,6 +125,30 @@ namespace Server.Controllers
       await _db.SaveChangesAsync();
 
       return Ok(Document.ResourceIdentifier<Db.Party>(roomCode));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = Roles.Host)]
+    [Route("end")]
+    public async Task<IActionResult> End()
+    {
+      var user = await _userProvider.GetUserAsync(_db);
+      if (user == null) return Unauthorized();
+
+      var currentParty = user.Party;
+      if (currentParty == null)
+      {
+        return Error.BadRequest("No party exists for current user");
+      }
+
+      currentParty.Ended = true;
+      user.Party = null;
+
+      await _db.SaveChangesAsync();
+
+      // TODO: Broadcast to clients that the party has ended
+
+      return Ok();
     }
   }
 }

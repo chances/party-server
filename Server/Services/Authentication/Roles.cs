@@ -5,5 +5,6 @@ namespace Server.Services.Authentication
   {
     public const string Host = "host";
     public const string Guest = "guest";
+    public const string Authenticated = "host,guest";
   }
 }
