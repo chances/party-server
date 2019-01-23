@@ -25,6 +25,8 @@ namespace Server.Services.Authentication
 
     private static readonly Scope Scope =
       Scope.UserReadPrivate |
+      Scope.UserLibraryRead |
+      Scope.UserLibraryModify |
       Scope.PlaylistReadPrivate |
       Scope.PlaylistReadCollaborative;
 
