@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Redis;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
+using Newtonsoft.Json;
 using Server.Configuration;
 using Server.Services;
 using Server.Services.Authentication;
@@ -62,13 +63,17 @@ namespace Server
 
       // Controller services
       services.AddHttpContextAccessor();
-      services.AddScoped<UserProvider>();
       services.AddScoped<ProfileProvider>();
+      services.AddScoped<UserProvider>();
+      services.AddScoped<PartyProvider>();
       services.AddScoped<SpotifyRepository>();
 
       services.AddSingleton(new RoomCodeGenerator());
 
-      services.AddMvc();
+      services.AddMvc()
+        .AddJsonOptions(
+          options => options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+        );
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

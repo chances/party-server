@@ -35,7 +35,10 @@ namespace Server.Services
       }
 
       var user = await _userProvider.GetUserAsync(db);
-      return user?.Party;
+      if (user == null) return null;
+      await db.Entry(user).Reference(u => u.Party).LoadAsync();
+
+      return user.Party;
     }
   }
 }
