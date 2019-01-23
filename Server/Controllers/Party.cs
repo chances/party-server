@@ -15,8 +15,8 @@ namespace Server.Controllers
   [Route("/party")]
   public class Party : Controller
   {
-    private RoomCodeGenerator _roomCodeGenerator;
-    private UserProvider _userProvider;
+    private readonly RoomCodeGenerator _roomCodeGenerator;
+    private readonly UserProvider _userProvider;
     private readonly SpotifyRepository _spotify;
     private readonly Db.PartyModelContainer _db;
 
@@ -60,10 +60,11 @@ namespace Server.Controllers
       var user = await _userProvider.GetUserAsync(_db);
       if (user == null) return Unauthorized();
 
-      // End the user's current party if they've already started one
+      // Bad request if the user hasn't ended an ongoing party
       var currentParty = user.Party;
       if (currentParty != null)
       {
+        return Error.BadRequest("A party has already been started. End it first.");
         // TODO: Call end party action?
       }
 
@@ -78,7 +79,7 @@ namespace Server.Controllers
         );
       }
 
-      string roomCode = _roomCodeGenerator.NewRoomCode;
+      var roomCode = _roomCodeGenerator.NewRoomCode;
       if (string.IsNullOrWhiteSpace(roomCode))
       {
         return Error.Internal("Could not generate room code");
@@ -119,7 +120,7 @@ namespace Server.Controllers
 
       await _db.SaveChangesAsync();
 
-      return Ok(Document.ResourceIdentifier<Party>(roomCode));
+      return Ok(Document.ResourceIdentifier<Db.Party>(roomCode));
     }
   }
 }
