@@ -36,18 +36,17 @@ namespace Server.Services.Spotify
       _db = db;
       _cache = cache;
 
-      if (HttpContext.User.IsInRole(Roles.Host))
-      {
-        var token = SpotifyAuthenticationScheme.GetToken(HttpContext.User.Claims);
-        if (token == null) return;
+      if (!HttpContext.User.IsInRole(Roles.Host)) return;
 
-        _api = new SpotifyWebAPI()
-        {
-          UseAuth = true,
-          AccessToken = token.AccessToken,
-          TokenType = token.TokenType
-        };
-      }
+      var token = SpotifyAuthenticationScheme.GetToken(HttpContext.User.Claims);
+      if (token == null) return;
+
+      _api = new SpotifyWebAPI()
+      {
+        UseAuth = true,
+        AccessToken = token.AccessToken,
+        TokenType = token.TokenType
+      };
     }
 
     // TODO: Rename these with async suffixes
@@ -109,10 +108,13 @@ namespace Server.Services.Spotify
       _background.QueueTask(async token =>
       {
         var json = JsonConvert.SerializeObject(playlists);
-        await _cache.SetStringAsync($"playlists:{userId}", json, new DistributedCacheEntryOptions()
-        {
-          AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-        });
+        await _cache.SetStringAsync(
+          $"playlists:{userId}", json, new DistributedCacheEntryOptions()
+          {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+          },
+          token
+        );
       });
 
       return playlists;
@@ -204,7 +206,7 @@ namespace Server.Services.Spotify
             trackList.UpdatedAt = DateTime.UtcNow;
           }
 
-          await _db.SaveChangesAsync();
+          await _db.SaveChangesAsync(token);
         });
 
         return cachedPlaylist;
