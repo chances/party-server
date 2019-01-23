@@ -4,17 +4,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Server.Controllers
 {
+  [Route("/auth")]
   public class Authentication : Controller
   {
     [HttpGet]
-    [Route("/auth/login")]
+    [Route("login")]
     public IActionResult Login(string returnUrl = "/")
     {
       return Challenge(new AuthenticationProperties() { RedirectUri = returnUrl });
     }
 
     [HttpGet]
-    [Route("/auth/logout")]
+    [Route("logout")]
     public async Task<IActionResult> Logout()
     {
       await HttpContext.SignOutAsync("Cookies");

@@ -13,6 +13,7 @@ using Server.Services.Spotify;
 namespace Server.Controllers
 {
   [Authorize(Roles = Roles.Host)]
+  [Route("/playlist")]
   public class Playlists : Controller
   {
     private readonly PartyModelContainer _db;
@@ -27,7 +28,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [Route("/playlist")]
+    [Route("")]
     public async Task<IActionResult> Get()
     {
       var currentUser = await _userProvider.GetUserAsync();
@@ -45,7 +46,7 @@ namespace Server.Controllers
     }
 
     [HttpPatch]
-    [Route("/playlist")]
+    [Route("")]
     public async Task<IActionResult> Patch(
       [FromBody] ResourceIdentifierDocument<Playlist> patchPlaylist
     )
