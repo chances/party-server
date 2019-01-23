@@ -10,14 +10,17 @@ namespace Server.Models
 {
   public class Guest : PublicGuest
   {
+    [JsonProperty("party_id")]
+    public int PartyId { get; set; }
+
     [JsonProperty("token")]
     public string Token { get; set; }
 
     public static async Task<Guest> GetByToken(DbSet<GuestList> db, string token)
     {
-      var sql = "SELECT guests.id, guests.data FROM " +
-        "(SELECT id, data, json_array_elements(data) AS guest FROM guest_list)" +
-        " AS guests WHERE guest->>'token'=@token";
+      const string sql = "SELECT guests.id, guests.data FROM " +
+                         "(SELECT id, data, json_array_elements(data) AS guest FROM guest_list)" +
+                         " AS guests WHERE guest->>'token'=@token";
       var tokenParam = new NpgsqlParameter("token", token);
 
       var guestList = await db.FromSql(sql, tokenParam).FirstOrDefaultAsync();
