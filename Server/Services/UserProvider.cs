@@ -13,9 +13,9 @@ namespace Server.Services
 {
   public class UserProvider : ScopedService
   {
-    private PartyModelContainer _db;
-    private IDistributedCache _cache;
-    private IBackgroundTaskQueue _background;
+    private readonly PartyModelContainer _db;
+    private readonly IDistributedCache _cache;
+    private readonly IBackgroundTaskQueue _background;
 
     public UserProvider(
       IHttpContextAccessor context,
@@ -43,7 +43,7 @@ namespace Server.Services
     {
       if (!IsAuthenticated) return null;
 
-      // Get user, maybe from cache 
+      // Get user, maybe from cache
       var username = HttpContext.User.Username();
       return await _cache.GetOrDeferAsync(
         username,

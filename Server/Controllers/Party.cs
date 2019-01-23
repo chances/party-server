@@ -19,18 +19,21 @@ namespace Server.Controllers
   {
     private readonly RoomCodeGenerator _roomCodeGenerator;
     private readonly UserProvider _userProvider;
+    private readonly PartyProvider _partyProvider;
     private readonly SpotifyRepository _spotify;
     private readonly Db.PartyModelContainer _db;
 
     public Party(
       RoomCodeGenerator roomCodeGenerator,
       UserProvider userProvider,
+      PartyProvider partyProvider,
       SpotifyRepository spotify,
       Db.PartyModelContainer db
     )
     {
       _roomCodeGenerator = roomCodeGenerator;
       _userProvider = userProvider;
+      _partyProvider = partyProvider;
       _spotify = spotify;
       _db = db;
     }
@@ -40,10 +43,7 @@ namespace Server.Controllers
     [Route("")]
     public async Task<IActionResult> Index()
     {
-      var user = await _userProvider.GetUserAsync();
-      if (user == null) return Unauthorized();
-
-      var party = user.Party;
+      var party = await _partyProvider.GetCurrentPartyAsync();
       if (party == null) return NotFound();
 
       return Ok(Document.Resource(
@@ -148,7 +148,37 @@ namespace Server.Controllers
 
       // TODO: Broadcast to clients that the party has ended
 
-      return Ok();
+      return Ok(Document.Resource(currentParty.RoomCode, currentParty));
+    }
+
+    [HttpGet]
+    [Authorize(Roles = Roles.Authenticated)]
+    [Route("queue")]
+    public async Task<IActionResult> GetQueue()
+    {
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
+      if (currentParty == null) return NotFound();
+
+      // TODO: Add pagination
+
+      var queue = currentParty.QueueTracks();
+
+      return Ok(Document.Resource($"{currentParty.RoomCode}#queue", "track_list", queue));
+    }
+
+    [HttpGet]
+    [Authorize(Roles = Roles.Authenticated)]
+    [Route("history")]
+    public async Task<IActionResult> GetHistory()
+    {
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
+      if (currentParty == null) return NotFound();
+
+      // TODO: Add pagination
+
+      var history = currentParty.HistoryTracks();
+
+      return Ok(Document.Resource($"{currentParty.RoomCode}#history", "track_list", history));
     }
   }
 }

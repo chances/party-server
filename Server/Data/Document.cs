@@ -17,6 +17,8 @@ namespace Server.Data
         new ResourceIdentifier<T> { Id = id }
       );
 
+    public static Document Resource(string id, string type, object data) => new DataDocument(id, type, data);
+
     public static Document<T> Resource<T>(string id, T data) => new Document<T>(
       new Resource<T> { Id = id, Attributes = data }
     );
@@ -27,12 +29,33 @@ namespace Server.Data
       new ErrorDocument(errors.ToList());
   }
 
-  public class Document<T> : Document
+  public class DataDocument : Document
   {
     [Required]
     [BindRequired]
     [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
-    public Resource<T> Data { get; set; }
+    public Resource Data { get; set; }
+
+    public DataDocument()
+    {}
+
+    public DataDocument(string id, string type, object data)
+    {
+      Data = new Resource
+      {
+        Id = id,
+        Type = type,
+        Attributes = JObject.FromObject(data)
+      };
+    }
+  }
+
+  public class Document<T> : DataDocument
+  {
+    [Required]
+    [BindRequired]
+    [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
+    public new Resource<T> Data { get; set; }
 
     public Document(Resource<T> data = null)
     {
