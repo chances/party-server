@@ -8,6 +8,7 @@ using Server.Data;
 using Server.Models;
 using Server.Services;
 using Newtonsoft.Json;
+using Server.Services.Spotify;
 
 namespace Server.Controllers
 {

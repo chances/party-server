@@ -8,6 +8,7 @@ using Server.Configuration;
 using Server.Services;
 using Server.Services.Authentication;
 using Server.Services.Background;
+using Server.Services.Spotify;
 
 namespace Server
 {
@@ -59,6 +60,7 @@ namespace Server
           _appConfig.Spotify.Callback)
       );
 
+      // Controller services
       services.AddHttpContextAccessor();
       services.AddScoped<UserProvider>();
       services.AddScoped<ProfileProvider>();

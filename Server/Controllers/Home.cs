@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Server.Services;
+using Server.Services.Spotify;
 using Server.ViewModels;
 
 namespace Server.Controllers

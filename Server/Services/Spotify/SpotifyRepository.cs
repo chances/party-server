@@ -1,20 +1,20 @@
 using System;
-using System.Threading.Tasks;
-using Spotify.API.NetCore;
-using Spotify.API.NetCore.Models;
-using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using Server.Services.Authentication;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Models;
 using Newtonsoft.Json;
 using Server.Models;
+using Server.Services.Authentication;
 using Server.Services.Background;
-using Microsoft.EntityFrameworkCore;
+using Spotify.API.NetCore;
+using Spotify.API.NetCore.Models;
 
-namespace Server.Services
+namespace Server.Services.Spotify
 {
   public class SpotifyRepository : ScopedService
   {
