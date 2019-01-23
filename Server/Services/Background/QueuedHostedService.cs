@@ -17,9 +17,9 @@ namespace Server.Services.Background
       _logger = loggerFactory.CreateLogger<QueuedHostedService>();
     }
 
-    public IBackgroundTaskQueue TaskQueue { get; }
+    private IBackgroundTaskQueue TaskQueue { get; }
 
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
       _logger.LogInformation("Queued Hosted Service is starting.");
 

@@ -17,7 +17,7 @@
     <a href="/auth/logout">Log Out</a>
   </p>
   <h1>Logged in as @Model.User.DisplayName</h1>
-  @if (Model.HasUserImage)
+  if (Model.HasUserImage)
   {
   <img id="avatar" width="200" height="200" src="@Model.LargestUserImage.Url" />
   }
@@ -39,7 +39,7 @@
   }
   </span>
   </p>
-  @if (Model.HasCurrentParty)
+  if (Model.HasCurrentParty)
   {
   <div class="details">
     <p>Current party: <span id="currentParty">@Model.CurrentParty.RoomCode</span></p>
@@ -50,7 +50,7 @@
   </p>
   }
   <div style="clear: both;"></div>
-  @if (Model.HasPlaylists)
+  if (Model.HasPlaylists)
   {
   <h2>Pick a playlist for the party</h2>
   <ul>
