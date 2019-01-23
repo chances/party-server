@@ -32,23 +32,18 @@ namespace Server.Controllers
     [Route("")]
     public async Task<IActionResult> Index()
     {
-      if (_userProvider.IsUserHost)
-      {
-        var user = await _userProvider.GetUserAsync();
-        var spotifyProfile = _profileProvider.Profile;
-        var playlists = await _spotify.GetMyOwnPlaylists();
-        var playlist = playlists
-          .FirstOrDefault(p => p.Id == user.SpotifyPlaylistId);
-        var party = _db.Party
-          .Where(p => p.User.Username == spotifyProfile.Id)
-          .FirstOrDefault();
+      if (!_userProvider.IsUserHost) return View("../Index", new Administrator());
 
-        var admin = new Administrator(spotifyProfile, playlists, playlist, party);
+      var user = await _userProvider.GetUserAsync();
+      var spotifyProfile = _profileProvider.Profile;
+      var playlists = (await _spotify.GetMyOwnPlaylists()).ToList();
+      var playlist = playlists
+        .FirstOrDefault(p => p.Id == user.SpotifyPlaylistId);
+      var party = _db.Party
+        .FirstOrDefault(p => p.User.Username == spotifyProfile.Id);
 
-        return View("../Index", admin);
-      }
-
-      return View("../Index", new Administrator());
+      var admin = new Administrator(spotifyProfile, playlists, playlist, party);
+      return View("../Index", admin);
     }
   }
 }
