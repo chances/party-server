@@ -25,12 +25,13 @@ namespace Server.Models
     [JsonProperty("current_track", NullValueHandling = NullValueHandling.Ignore)]
     public PlayingTrack CurrentTrack { get; set; }
 
-    public static PublicParty FromParty(Party party) => new PublicParty {
+    public static PublicParty FromParty(Party party, IEnumerable<Guest> guests = null) => new PublicParty {
       Location = string.IsNullOrWhiteSpace(party.Location)
         ? null
         : JsonConvert.DeserializeObject<JObject>(party.Location),
       RoomCode = party.RoomCode,
       Ended = party.Ended,
+      Guests = guests?.Select(g => new PublicGuest(g)).ToList() ?? new List<PublicGuest>(),
       CurrentTrack = string.IsNullOrWhiteSpace(party.CurrentTrack)
         ? null
         : JsonConvert.DeserializeObject<PlayingTrack>(party.CurrentTrack)

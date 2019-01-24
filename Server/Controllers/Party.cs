@@ -218,16 +218,14 @@ namespace Server.Controllers
       // TODO: Update connected guests and host with new party (SignalR)
 
       var principal = CookiesAuthenticationScheme.CreateGuestPrincipal(guest);
-      return SignIn(principal, new AuthenticationProperties
-      {
-        RedirectUri = Url.Action("Index")
-      }, CookiesAuthenticationScheme.Name);
+      await HttpContext.SignInAsync(CookiesAuthenticationScheme.Name, principal);
+
+      return AugmentParty(party, guests);
     }
 
-    private static OkObjectResult AugmentParty(Db.Party party, List<Guest> guests)
+    private static OkObjectResult AugmentParty(Db.Party party, IEnumerable<Guest> guests)
     {
-      var publicParty = PublicParty.FromParty(party);
-      publicParty.Guests = guests.Cast<PublicGuest>().ToList();
+      var publicParty = PublicParty.FromParty(party, guests);
       return new OkObjectResult(Document.Resource(party.RoomCode, publicParty));
     }
 
