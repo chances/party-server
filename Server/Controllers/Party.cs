@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -13,6 +12,7 @@ using Server.Models;
 using Server.Services;
 using Newtonsoft.Json;
 using Server.Services.Authentication;
+using Server.Services.Filters;
 using Server.Services.Spotify;
 
 namespace Server.Controllers
@@ -42,7 +42,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [Authorize(Roles = Roles.Authenticated)]
+    [UserAuthenticated]
     [Route("")]
     public async Task<IActionResult> Index()
     {
