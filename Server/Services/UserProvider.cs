@@ -27,8 +27,6 @@ namespace Server.Services
       _db = db;
       _cache = cache;
       _background = background;
-
-      // TODO: Check for guest token and whatnot
     }
 
     public bool IsAuthenticated =>

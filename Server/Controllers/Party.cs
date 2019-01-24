@@ -148,7 +148,7 @@ namespace Server.Controllers
 
       await _db.SaveChangesAsync();
 
-      // TODO: Broadcast to clients that the party has ended
+      // TODO: Broadcast to clients that the party has ended (SignalR)
 
       return Ok(Document.Resource(currentParty.RoomCode, currentParty));
     }

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +11,7 @@ using Server.Configuration;
 using Server.Services;
 using Server.Services.Authentication;
 using Server.Services.Background;
+using Server.Services.Jobs;
 using Server.Services.Spotify;
 
 namespace Server
@@ -35,6 +35,7 @@ namespace Server
       // Background tasks
       services.AddHostedService<QueuedHostedService>();
       services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+      services.AddHostedService<PruneExpiredGuestsService>();
 
       // Authentication
       services.AddDistributedRedisCache(options =>

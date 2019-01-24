@@ -1,11 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Server.Services.Background
 {
+  [UsedImplicitly]
   public class QueuedHostedService : BackgroundService
   {
     private readonly ILogger _logger;
