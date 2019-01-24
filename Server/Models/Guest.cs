@@ -1,36 +1,36 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Models;
+﻿using System;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
-using Npgsql;
 
 namespace Server.Models
 {
   public class Guest : PublicGuest
   {
-    [JsonProperty("party_id")]
-    public int PartyId { get; set; }
-
     [JsonProperty("token")]
     public string Token { get; set; }
 
-    public static async Task<Guest> GetByToken(DbSet<GuestList> db, string token)
+    [JsonProperty("origin")]
+    public string Origin { get; set; }
+
+    [JsonProperty("expiry")]
+    public DateTime Expiry { get; set; }
+
+    [JsonIgnore] public bool IsExpired => Expiry <= DateTime.UtcNow;
+
+    [JsonProperty("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+
+    [JsonProperty("party_id")]
+    public int PartyId { get; set; }
+
+    public Guest()
     {
-      const string sql = "SELECT guests.id, guests.data FROM " +
-                         "(SELECT id, data, json_array_elements(data) AS guest FROM guest_list)" +
-                         " AS guests WHERE guest->>'token'=@token";
-      var tokenParam = new NpgsqlParameter("token", token);
-
-      var guestList = await db.FromSql(sql, tokenParam).FirstOrDefaultAsync();
-      if (guestList == null || string.IsNullOrWhiteSpace(guestList.Data))
-      {
-        return null;
-      }
-
-      return JsonConvert.DeserializeObject<List<Guest>>(guestList.Data)
-        .FirstOrDefault(g => g.Token == token);
+      Token = Guid.NewGuid().ToString();
+      Expiry = DateTime.UtcNow.AddMinutes(30);
+      UpdatedAt = DateTime.UtcNow;
     }
+
+    public bool OriginMatches(IHeaderDictionary headers) =>
+      headers.ContainsKey("Origin") && headers["Origin"] == Origin;
   }
 }

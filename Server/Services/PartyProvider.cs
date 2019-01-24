@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Models;
 
 namespace Server.Services
@@ -30,8 +31,10 @@ namespace Server.Services
 
       if (_userProvider.IsUserGuest)
       {
-        // TODO: Get party from Guest record after they joined a party
-        return null;
+        var guest = _userProvider.Guest;
+        if (guest == null) return null;
+
+        return await db.Party.FirstOrDefaultAsync(p => p.Id == guest.PartyId);
       }
 
       var user = await _userProvider.GetUserAsync(db);

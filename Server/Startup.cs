@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Redis;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +66,12 @@ namespace Server
 
       // Controller services
       services.AddHttpContextAccessor();
+      services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+      services.AddScoped(sp => {
+        var actionContext = sp.GetRequiredService<IActionContextAccessor>().ActionContext;
+        var factory = sp.GetRequiredService<IUrlHelperFactory>();
+        return factory.GetUrlHelper(actionContext);
+      });
       services.AddScoped<ProfileProvider>();
       services.AddScoped<UserProvider>();
       services.AddScoped<PartyProvider>();

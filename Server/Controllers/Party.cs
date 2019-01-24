@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Db = Models;
 using Server.Data;
 using Server.Models;
@@ -43,13 +46,12 @@ namespace Server.Controllers
     [Route("")]
     public async Task<IActionResult> Index()
     {
-      var party = await _partyProvider.GetCurrentPartyAsync();
+      var party = await _partyProvider.GetCurrentPartyAsync(_db);
       if (party == null) return NotFound();
 
-      return Ok(Document.Resource(
-        party.Id.ToString(),
-        PublicParty.FromParty(party)
-      ));
+      var guests = await party.GuestList(_db);
+
+      return AugmentParty(party, guests);
     }
 
     [HttpPost]
@@ -149,6 +151,84 @@ namespace Server.Controllers
       // TODO: Broadcast to clients that the party has ended
 
       return Ok(Document.Resource(currentParty.RoomCode, currentParty));
+    }
+
+    [HttpPost]
+    [Route("join")]
+    public async Task<IActionResult> Join([FromBody] NewResourceDocument<JoinParty> joinParty)
+    {
+      if (!ModelState.IsValid) return Error.BadRequest(ModelState.Errors());
+
+      var roomCode = joinParty.Data.Attributes.RoomCode;
+      var party = await _db.Party.FirstOrDefaultAsync(p => p.RoomCode == roomCode);
+
+      if (party == null) return NotFound();
+
+      // If the party has ended, respond with just the party
+      if (party.Ended) return Ok(Document.Resource(
+        party.RoomCode, PublicParty.FromParty(party)
+      ));
+
+      var guests = await party.GuestList(_db);
+
+      // If the user is fully authenticated skip guest initialization and
+      //  respond with augmented party
+      if (_userProvider.IsAuthenticated)
+      {
+        return AugmentParty(party, guests);
+      }
+
+      Guest guest = null;
+
+      // TODO: Add party leave endpoint for guests? (Remove them from Redis, especially)
+
+      // Or remove guest tokens from Redis when a party ends? (Periodic cleanup of guests)
+      // "Already joined a party" will error if guest exists in Redis, but not DB
+
+      // It is a bad request to try to join a party if the guest has already
+      //  joined a different party
+      //
+      // If the user is already a guest and they've joined _this_ party then
+      //  respond with augmented party
+      // Otherwise, it is a bad request if they have NOT joined _this_ party
+      if (_userProvider.IsUserGuest)
+      {
+        guest = _userProvider.Guest;
+        if (guest.PartyId == party.Id)
+        {
+          return AugmentParty(party, guests);
+        }
+
+        return Error.BadRequest("Already joined a party");
+      }
+
+      if (!HttpContext.Request.Headers.ContainsKey("Origin")) return BadRequest();
+      var origin = HttpContext.Request.Headers["Origin"];
+
+      guest = new Guest
+      {
+        Origin = origin,
+        PartyId = party.Id
+      };
+
+      guests.Add(guest);
+      party.UpdateGuestList(guests);
+      await _db.SaveChangesAsync();
+
+      // TODO: Update connected guests and host with new party (SignalR)
+
+      var principal = CookiesAuthenticationScheme.CreateGuestPrincipal(guest);
+      return SignIn(principal, new AuthenticationProperties
+      {
+        RedirectUri = Url.Action("Index")
+      }, CookiesAuthenticationScheme.Name);
+    }
+
+    private static OkObjectResult AugmentParty(Db.Party party, List<Guest> guests)
+    {
+      var publicParty = PublicParty.FromParty(party);
+      publicParty.Guests = guests.Cast<PublicGuest>().ToList();
+      return new OkObjectResult(Document.Resource(party.RoomCode, publicParty));
     }
 
     [HttpGet]

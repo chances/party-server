@@ -48,6 +48,13 @@ namespace Server.Models
       return JsonConvert.DeserializeObject<List<Guest>>(guests.Data);
     }
 
+    public static async Task<List<Guest>> GuestList(this Party party, PartyModelContainer db)
+    {
+      await db.Entry(party).Reference(p => p.Guests).LoadAsync();
+
+      return party.GuestList();
+    }
+
     public static void UpdateGuestList(this Party party, List<Guest> guests)
     {
       if (party.Guests == null)

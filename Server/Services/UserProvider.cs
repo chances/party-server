@@ -84,7 +84,8 @@ namespace Server.Services
       {
         if (!IsAuthenticated) return null;
 
-        return null;
+        var claims = HttpContext.User?.Claims;
+        return CookiesAuthenticationScheme.GetGuest(claims);
       }
     }
 

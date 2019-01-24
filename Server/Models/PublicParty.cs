@@ -31,7 +31,6 @@ namespace Server.Models
         : JsonConvert.DeserializeObject<JObject>(party.Location),
       RoomCode = party.RoomCode,
       Ended = party.Ended,
-      Guests = party.GuestList().Cast<PublicGuest>().ToList(),
       CurrentTrack = string.IsNullOrWhiteSpace(party.CurrentTrack)
         ? null
         : JsonConvert.DeserializeObject<PlayingTrack>(party.CurrentTrack)
