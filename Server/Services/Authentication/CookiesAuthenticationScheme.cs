@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -40,6 +41,15 @@ namespace Server.Services.Authentication
 
       options.Events = new CookieAuthenticationEvents
       {
+        OnRedirectToLogin = context =>
+        {
+          // https://github.com/aspnet/Security/issues/1394
+          // https://github.com/aspnet/AspNetCore/blob/62351067ff4c1401556725b401478e648b66acdc/src/Security/Authentication/Cookies/src/CookieAuthenticationEvents.cs#L42
+          context.Response.Headers["Location"] = context.RedirectUri;
+          context.Response.StatusCode = 401;
+          return Task.CompletedTask;
+        },
+
         OnSignedIn = async context =>
         {
           if (context.Principal.IsInRole(Roles.Guest)) return;
@@ -55,6 +65,10 @@ namespace Server.Services.Authentication
           if (context.Principal.IsInRole(Roles.Guest))
           {
             ValidateGuestPrincipal(context);
+            if (context.ShouldRenew == false)
+            {
+              await context.HttpContext.SignOutAsync(Name);
+            }
             return;
           }
 

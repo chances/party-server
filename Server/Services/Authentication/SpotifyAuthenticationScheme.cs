@@ -227,8 +227,6 @@ namespace Server.Services.Authentication
 
       var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
 
-      if (accessToken == null) return null;
-
       return accessToken;
     }
   }
