@@ -56,11 +56,10 @@ namespace Server.Controllers
 
     [HttpPost]
     [Authorize(Roles = Roles.Host)]
+    [ValidateModel]
     [Route("start")]
     public async Task<IActionResult> Start([FromBody] NewResourceDocument<NewParty> newParty)
     {
-      if (!ModelState.IsValid) return Error.BadRequest(ModelState.Errors());
-
       var playlistId = newParty.Data.Attributes.PlaylistId;
 
       var user = await _userProvider.GetUserAsync(_db);
@@ -154,11 +153,10 @@ namespace Server.Controllers
     }
 
     [HttpPost]
+    [ValidateModel]
     [Route("join")]
     public async Task<IActionResult> Join([FromBody] NewResourceDocument<JoinParty> joinParty)
     {
-      if (!ModelState.IsValid) return Error.BadRequest(ModelState.Errors());
-
       var roomCode = joinParty.Data.Attributes.RoomCode;
       var party = await _db.Party.FirstOrDefaultAsync(p => p.RoomCode == roomCode);
 

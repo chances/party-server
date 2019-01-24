@@ -8,6 +8,7 @@ using Server.Data;
 using Server.Models;
 using Server.Services;
 using Server.Services.Authentication;
+using Server.Services.Filters;
 using Server.Services.Spotify;
 
 namespace Server.Controllers
@@ -46,30 +47,26 @@ namespace Server.Controllers
     }
 
     [HttpPatch]
+    [ValidateModel]
     [Route("")]
     public async Task<IActionResult> Patch(
       [FromBody] ResourceIdentifierDocument<Playlist> patchPlaylist
     )
     {
-      if (!ModelState.IsValid) return Error.BadRequest(ModelState.Errors());
-
       var playlists = await _spotify.GetMyOwnPlaylists();
       var playlist = playlists.FirstOrDefault(p => p.Id == patchPlaylist.Data.Id);
 
-      if (playlist != null)
-      {
-        var user = await _userProvider.GetUserAsync(_db);
-        user.SpotifyPlaylistId = patchPlaylist.Data.Id;
-        user.UpdatedAt = DateTime.UtcNow;
+      if (playlist == null) return Error.BadRequest("Invalid playlist id");
 
-        await _db.SaveChangesAsync();
+      var user = await _userProvider.GetUserAsync(_db);
+      user.SpotifyPlaylistId = patchPlaylist.Data.Id;
+      user.UpdatedAt = DateTime.UtcNow;
 
-        // TODO: Update the user's current party somehow? Add the new playlists's tracks or replace the queue?
+      await _db.SaveChangesAsync();
 
-        return Ok(Document.Resource(playlist.Id, playlist));
-      }
+      // TODO: Update the user's current party somehow? Add the new playlist's tracks or replace the queue?
 
-      return Error.BadRequest("Invalid playlist id");
+      return Ok(Document.Resource(playlist.Id, playlist));
     }
   }
 }
