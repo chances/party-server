@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -5,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Redis;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
@@ -36,6 +39,26 @@ namespace Server
       services.AddHostedService<QueuedHostedService>();
       services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
       services.AddHostedService<PruneExpiredGuestsService>();
+
+      // CORS
+      services.AddCors(options =>
+      {
+        options.AddDefaultPolicy(builder =>
+        {
+          var allowedHeaders = new[]
+          {
+            HeaderNames.CacheControl, HeaderNames.ContentLanguage, HeaderNames.Accept,
+            HeaderNames.Expires, HeaderNames.LastModified,
+            HeaderNames.ContentLength, HeaderNames.ContentType, "Last-Event-ID"
+          };
+          builder.WithOrigins(_appConfig.Cors.AllowedOrigins.ToArray());
+          builder.WithMethods("GET", "PUT", "POST", "PATCH", "DELETE");
+          builder.WithHeaders(allowedHeaders);
+          builder.WithExposedHeaders(allowedHeaders);
+          builder.AllowCredentials();
+          builder.SetPreflightMaxAge(TimeSpan.FromHours(12));
+        });
+      });
 
       // Authentication
       services.AddDistributedRedisCache(options =>
@@ -95,6 +118,7 @@ namespace Server
       }
 
       app.UseStaticFiles();
+      app.UseCors();
       app.UseAuthentication();
       app.UseMvc();
     }

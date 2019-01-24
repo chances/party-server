@@ -5,7 +5,7 @@
 
 ## Security
 
-- [ ] Improve CSP support (CORS)
+- [x] Improve CSP support (CORS)
 - [x] Add HTTPOnly or SecureOnly support to cookies
 - [ ] Add CSRF token support?
 
@@ -30,11 +30,11 @@ _Note: The Android client app authenticates with Spotify directly._
 - [x] Change playlist endpoint to PATCH instead of current GET, also don't redirect
   - [x] Update the Party's current playlist asynchronously
 - [ ] Add search
-  - [x] For tracks
+  - [ ] For tracks
   - [ ] For artists
   - [ ] For albums
   - [ ] Expose "See more results in Spotify" href
-  - [x] Get access tokens for searching via [Client Credentials Flow](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) if session is unauthorized with Spotify
+  - [ ] Get access tokens for searching via [Client Credentials Flow](https://developer.spotify.com/web-api/authorization-guide/#client-credentials-flow) if session is unauthorized with Spotify
 
 ### Models
 
@@ -95,9 +95,9 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Deliver a _Party Access Token_ to pseudo-authenticated guests
     - Those who have joined a party with valid party ID **and** over SSL **_with_** CORS Origin validation
     - Store originating Origin and validate subsequent requests given the request's _Party Access Token_
-  - [ ] Recurring job to clean expired tokens
+  - [x] Recurring job to clean expired tokens
     - Party access tokens expire after 30 minutes of disuse
-  - [x] Automatically refresh token expiration time via ping/pong
+  - [ ] Automatically refresh token expiration time via ping/pong
 
 ### Server Events
 
@@ -120,7 +120,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 20 tracks, by default, per page
     - `limit` and `offset` query params
-  - [x] With SSE support (Sent via party, `/events/party`, stream as `history` event)
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
     - Updates when current track changes
   - Most recent track first
   - Clients may use a track's `began_playing` timestamp to show timeago info
@@ -129,7 +129,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 10 tracks, by default, per page
     - `limit` and `offset` query params
-  - [x] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
+  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
     - Updates when current track changes
     - Updates when guests contribute tracks
   - Server keeps track of whole Queue
@@ -142,7 +142,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Join a party
     - [x] Via _authorized_ room code
     - [ ] Check-In via OAuth provider
-    - [x] With SSE support (Update clients with Guest-list)
+    - [ ] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
   - _Maybe better with a WebSocket?_
@@ -154,7 +154,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Redirect back to new `/auth/finished` endpoint
     - Render: `Logged in as $name$ : <a href=/auth/logout>Logout</a>`
     - Mobile app handles redirection back here
-  - [x] Spotify access token delivery
+  - [ ] Spotify access token delivery
     - Only deliver access token, server manages refresh
   - [ ] Spotify token refresh endpoint `/auth/refresh`
     - Responds with refreshed token
