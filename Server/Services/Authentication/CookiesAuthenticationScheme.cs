@@ -64,8 +64,8 @@ namespace Server.Services.Authentication
 
           if (context.Principal.IsInRole(Roles.Guest))
           {
-            ValidateGuestPrincipal(context);
-            if (context.ShouldRenew == false)
+            var guestIsValid = ValidateGuestPrincipal(context);
+            if (guestIsValid == false)
             {
               await context.HttpContext.SignOutAsync(Name);
             }
@@ -120,7 +120,12 @@ namespace Server.Services.Authentication
         : JsonConvert.DeserializeObject<Guest>(guestJson);
     }
 
-    private static void ValidateGuestPrincipal(CookieValidatePrincipalContext context)
+    /// <summary>
+    /// Validate a guest user's principal user data
+    /// </summary>
+    /// <param name="context">The principal user data</param>
+    /// <returns>True if the principal is valid, false otherwise</returns>
+    private static bool ValidateGuestPrincipal(CookieValidatePrincipalContext context)
     {
       var guest = GetGuest(context.Principal.Claims);
 
@@ -132,11 +137,11 @@ namespace Server.Services.Authentication
       {
         context.RejectPrincipal();
         context.ShouldRenew = false;
-        return;
+        return false;
       }
 
       // Sliding expiration rule, update expiry if time left on expiry is more than half through
-      if (guest.Expiry.Subtract(DateTime.UtcNow).TotalMinutes >= 15) return;
+      if (guest.Expiry.Subtract(DateTime.UtcNow).TotalMinutes >= 15) return true;
 
       guest.UpdatedAt = DateTime.UtcNow;
       guest.Expiry = guest.UpdatedAt.AddMinutes(30);
@@ -164,6 +169,8 @@ namespace Server.Services.Authentication
 
       context.ReplacePrincipal(CreateGuestPrincipal(guest));
       context.ShouldRenew = true;
+
+      return true;
     }
   }
 }

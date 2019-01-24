@@ -10,7 +10,9 @@ namespace Server.Services.Filters
   {
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-      var authenticated = context.HttpContext.User?.IsInRole(Roles.Authenticated) ?? false;
+      var isHostUser = context.HttpContext.User?.IsInRole(Roles.Host) ?? false;
+      var isGuestUser = context.HttpContext.User?.IsInRole(Roles.Guest) ?? false;
+      var authenticated = isHostUser || isGuestUser;
       if (!authenticated)
       {
         context.Result = new UnauthorizedResult();
