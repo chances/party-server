@@ -2,8 +2,6 @@
 using JetBrains.Annotations;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Server
 {
@@ -27,6 +25,7 @@ namespace Server
         .UseWebRoot("./Server/public")
         .UseKestrel()
         .UseStartup<Startup>()
+        .UseSentry()
         .Build();
   }
 }
