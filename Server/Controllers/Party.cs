@@ -228,7 +228,18 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [Authorize(Roles = Roles.Authenticated)]
+    [UserAuthenticated]
+    [Route("ping")]
+    public OkObjectResult Ping()
+    {
+      // QUESTION: Should guest pinging return anything else?
+      // NOTE: This tiny amount of work keeps the request blazing fast...
+
+      return Ok(Document.Resource("pong", Pong.Instance));
+    }
+
+    [HttpGet]
+    [UserAuthenticated]
     [Route("queue")]
     public async Task<IActionResult> GetQueue()
     {
@@ -244,7 +255,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [Authorize(Roles = Roles.Authenticated)]
+    [UserAuthenticated]
     [Route("history")]
     public async Task<IActionResult> GetHistory()
     {
