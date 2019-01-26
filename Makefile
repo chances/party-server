@@ -14,19 +14,20 @@ build: $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
 $(DOCKERFILE_TARGET): $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
 	dotnet publish -c Release
 	cp Dockerfile Server/bin/Release/netcoreapp2.1/publish
-	docker build -t party-server Server/bin/Release/netcoreapp2.1/publish
 
 .env.docker:
 	cp .env.example .env.docker
 
 docker: $(DOCKERFILE_TARGET)
+	cd Server/bin/Release/netcoreapp2.1/publish && \
+	docker build -t party-server .
 .PHONY: docker
 
 docker-test: $(DOCKERFILE_TARGET) .env.docker
 	docker run --name party-server -p 3005:3005 --rm -d --env-file ./.env.docker party-server
 .PHONY: docker-test
 
-publish: $(DOCKERFILE_TARGET)
+publish: docker
 	docker tag party-server registry.heroku.com/chances-party-staging/web
 	heroku container:push web -a chances-party-staging
 	heroku container:release web -a chances-party-staging
