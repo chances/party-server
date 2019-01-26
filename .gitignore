@@ -11,6 +11,7 @@ dump.rdb
 .idea
 
 .env
+.env.docker
 
 vendor/
 
