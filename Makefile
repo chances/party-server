@@ -16,7 +16,7 @@ $(DOCKERFILE_TARGET): $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
 	cp Dockerfile Server/bin/Release/netcoreapp2.1/publish
 	docker build -t party-server Server/bin/Release/netcoreapp2.1/publish
 
-.env.docker: .env.example
+.env.docker:
 	cp .env.example .env.docker
 
 docker: $(DOCKERFILE_TARGET)
