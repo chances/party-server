@@ -1,0 +1,7 @@
+language: csharp
+solution: party-server.sln
+dotnet: 2.1.503
+script:
+ - dotnet restore
+ - msbuild /p:Configuration=Release party-server.sln
+
