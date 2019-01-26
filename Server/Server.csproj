@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <Folder Include="Services" />
-    <Folder Include="wwwroot\" />
     <Folder Include="ViewModels\" />
     <Folder Include="public\" />
     <Folder Include="public\css\" />
@@ -24,10 +23,15 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="1.1.2" />
     <PackageReference Include="Spotify.API.NetCore" Version="1.0.2" />
+    <PackageReference Include="System.Reactive" Version="4.1.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Models\Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="public\**\*" Link="Server\public\%(RecursiveDir)%(FileName)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
