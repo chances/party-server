@@ -33,7 +33,7 @@ namespace Server
     {
       services.AddSingleton(_appConfig);
       services.AddSingleton(_redisCache);
-      services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 32);
+      services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 15);
 
       // Background tasks
       services.AddHostedService<QueuedHostedService>();
