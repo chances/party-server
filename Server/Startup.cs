@@ -12,9 +12,13 @@ using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
+using Server.Hubs;
+using Server.Middleware;
+using Server.Models;
 using Server.Services;
 using Server.Services.Authentication;
 using Server.Services.Background;
+using Server.Services.Channels;
 using Server.Services.Jobs;
 using Server.Services.Spotify;
 
@@ -87,6 +91,11 @@ namespace Server
 
       services.AddSingleton(new RoomCodeGenerator());
 
+      // SignalR real-time hubs and channels
+      services.AddSignalR();
+
+      services.AddSingleton<IEventChannel<PublicParty>>(new PartyChannel());
+
       services.AddMvc()
         .AddJsonOptions(
           options => options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore
@@ -104,6 +113,16 @@ namespace Server
       app.UseStaticFiles();
       app.UseCors();
       app.UseAuthentication();
+
+      app.UseWebSocketOriginPolicy(_appConfig.Cors.AllowedOrigins);
+      app.Map("/events", map =>
+      {
+        map.UseSignalR(route =>
+        {
+          route.MapHub<PartyHub>("/party");
+        });
+      });
+
       app.UseMvc();
     }
 

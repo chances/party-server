@@ -12,6 +12,7 @@ using Server.Models;
 using Server.Services;
 using Newtonsoft.Json;
 using Server.Services.Authentication;
+using Server.Services.Channels;
 using Server.Services.Filters;
 using Server.Services.Spotify;
 
@@ -24,6 +25,7 @@ namespace Server.Controllers
     private readonly UserProvider _userProvider;
     private readonly PartyProvider _partyProvider;
     private readonly SpotifyRepository _spotify;
+    private readonly IEventChannel<PublicParty> _partyChannel;
     private readonly Db.PartyModelContainer _db;
 
     public Party(
@@ -31,6 +33,7 @@ namespace Server.Controllers
       UserProvider userProvider,
       PartyProvider partyProvider,
       SpotifyRepository spotify,
+      IEventChannel<PublicParty> partyChannel,
       Db.PartyModelContainer db
     )
     {
@@ -38,6 +41,7 @@ namespace Server.Controllers
       _userProvider = userProvider;
       _partyProvider = partyProvider;
       _spotify = spotify;
+      _partyChannel = partyChannel;
       _db = db;
     }
 
@@ -147,9 +151,11 @@ namespace Server.Controllers
 
       await _db.SaveChangesAsync();
 
-      // TODO: Broadcast to clients that the party has ended (SignalR)
+      var publicParty = PublicParty.FromParty(currentParty);
 
-      return Ok(Document.Resource(currentParty.RoomCode, currentParty));
+      _partyChannel.Push(publicParty);
+
+      return Ok(Document.Resource(currentParty.RoomCode, publicParty));
     }
 
     [HttpPost]
@@ -213,12 +219,14 @@ namespace Server.Controllers
       party.UpdateGuestList(guests);
       await _db.SaveChangesAsync();
 
-      // TODO: Update connected guests and host with new party (SignalR)
+      var publicParty = PublicParty.FromParty(party, guests);
+
+      _partyChannel.Push(publicParty);
 
       var principal = CookiesAuthenticationScheme.CreateGuestPrincipal(guest);
       await HttpContext.SignInAsync(CookiesAuthenticationScheme.Name, principal);
 
-      return AugmentParty(party, guests);
+      return new OkObjectResult(Document.Resource(party.RoomCode, publicParty));
     }
 
     private static OkObjectResult AugmentParty(Db.Party party, IEnumerable<Guest> guests)

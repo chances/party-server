@@ -142,7 +142,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Join a party
     - [x] Via _authorized_ room code
     - [ ] Check-In via OAuth provider
-    - [ ] With SSE support (Update clients with Guest-list)
+    - [x] With SSE support (Update clients with Guest-list)
   - [ ] Connect to Facebook event (_Future?_)
 - [ ] Add search suggestions (autocomplete)?
   - _Maybe better with a WebSocket?_
