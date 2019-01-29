@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -37,22 +38,9 @@ namespace Server.Services
 
     public bool IsUserGuest => HttpContext.User.IsInRole(Roles.Guest);
 
-    public async Task<User> GetUserAsync()
+    public Task<User> GetUserAsync()
     {
-      if (!IsAuthenticated) return null;
-
-      // Get user, maybe from cache
-      var username = HttpContext.User.Username();
-      return await _cache.GetOrDeferAsync(
-        username,
-        async () => {
-          var user = await _db.User
-            .Where(u => u.Username == username)
-            .FirstOrDefaultAsync();
-          if (user != null) CacheUser(user);
-          return user;
-        }
-      );
+      return GetUserAsync(_db);
     }
 
     /// <summary>
@@ -76,6 +64,39 @@ namespace Server.Services
       return user;
     }
 
+    public static bool GetIsUserHost(ClaimsPrincipal user) =>
+      user?.IsInRole(Roles.Host) ?? false;
+
+    public static bool GetIsUserGuest(ClaimsPrincipal user) =>
+      user?.IsInRole(Roles.Guest) ?? false;
+
+    public static bool GetIsAuthenticated(ClaimsPrincipal user)
+    {
+      var isUserHost = GetIsUserHost(user);
+      var isUserGuest = GetIsUserGuest(user);
+
+      return (user?.Identity.IsAuthenticated ?? false) &&
+             (isUserHost || isUserGuest);
+    }
+
+    public static async Task<User> GetUserAsync(
+      ClaimsPrincipal principal,
+      PartyModelContainer db,
+      IBackgroundTaskQueue background = null,
+      IDistributedCache cache = null
+    )
+    {
+      // Get user from the DB
+      var username = principal.Username();
+      if (username == null) return null;
+      var user = await db.User
+        .Where(u => u.Username == username)
+        .FirstOrDefaultAsync();
+      if (user != null && background != null && cache != null)
+        CacheUser(background, cache, user);
+      return user;
+    }
+
     public Guest Guest
     {
       get
@@ -87,10 +108,18 @@ namespace Server.Services
       }
     }
 
-    public void CacheUser(User user)
+    public static Guest GetGuest(ClaimsPrincipal user) =>
+      CookiesAuthenticationScheme.GetGuest(user?.Claims);
+
+    private void CacheUser(User user)
     {
-      _background.QueueTask(
-        async token => await _cache.SetAsync(
+      CacheUser(_background, _cache, user);
+    }
+
+    private static void CacheUser(IBackgroundTaskQueue background, IDistributedCache cache, User user)
+    {
+      background.QueueTask(
+        async token => await cache.SetAsync(
           user.Username,
           user,
           new DistributedCacheEntryOptions
