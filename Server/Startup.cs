@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -41,24 +42,7 @@ namespace Server
       services.AddHostedService<PruneExpiredGuestsService>();
 
       // CORS
-      services.AddCors(options =>
-      {
-        options.AddDefaultPolicy(builder =>
-        {
-          var allowedHeaders = new[]
-          {
-            HeaderNames.CacheControl, HeaderNames.ContentLanguage, HeaderNames.Accept,
-            HeaderNames.Expires, HeaderNames.LastModified,
-            HeaderNames.ContentLength, HeaderNames.ContentType, "Last-Event-ID"
-          };
-          builder.WithOrigins(_appConfig.Cors.AllowedOrigins.ToArray());
-          builder.WithMethods("GET", "PUT", "POST", "PATCH", "DELETE");
-          builder.WithHeaders(allowedHeaders);
-          builder.WithExposedHeaders(allowedHeaders);
-          builder.AllowCredentials();
-          builder.SetPreflightMaxAge(TimeSpan.FromHours(12));
-        });
-      });
+      services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
 
       // Authentication
       services.AddDistributedRedisCache(options =>
@@ -121,6 +105,35 @@ namespace Server
       app.UseCors();
       app.UseAuthentication();
       app.UseMvc();
+    }
+
+    private static void ConfigureCorsPolicy(CorsPolicyBuilder builder)
+    {
+      var allowedHeaders = new[]
+      {
+        HeaderNames.CacheControl, HeaderNames.ContentLanguage, HeaderNames.Accept,
+        HeaderNames.Expires, HeaderNames.LastModified, "X-Requested-With",
+        HeaderNames.ContentLength, HeaderNames.ContentType, "Last-Event-ID"
+      };
+      var allowedOrigins = _appConfig.Cors.AllowedOrigins
+        .Select(allowedOrigin => new Uri(allowedOrigin))
+        .ToArray();
+      builder.SetIsOriginAllowed(origin =>
+      {
+        var originUri = new Uri(origin);
+        return allowedOrigins.Any(allowedOrigin =>
+        {
+          var allowed = string.Equals(allowedOrigin.Scheme, originUri.Scheme) &&
+                        string.Equals(allowedOrigin.Host, originUri.Host) &&
+                        allowedOrigin.Port == originUri.Port;
+          return allowed;
+        });
+      });
+      builder.WithMethods("GET", "PUT", "POST", "PATCH", "DELETE");
+      builder.WithHeaders(allowedHeaders);
+      builder.WithExposedHeaders(allowedHeaders);
+      builder.AllowCredentials();
+      builder.SetPreflightMaxAge(TimeSpan.FromHours(12));
     }
   }
 }
