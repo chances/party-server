@@ -1,7 +1,8 @@
+dist: xenial
 language: csharp
+mono: none
 solution: party-server.sln
-dotnet: 2.1.503
+dotnet: 2.2.103
 script:
  - dotnet restore
  - msbuild /p:Configuration=Release party-server.sln
-
