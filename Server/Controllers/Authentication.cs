@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +27,8 @@ namespace Server.Controllers
     [Route("mobile")]
     public ViewResult Mobile()
     {
-      return View("../MobileAuth", new MobileAuth());
+      var host = HttpContext.Request.GetUri().Authority;
+      return View("../MobileAuth", new MobileAuth(host));
     }
 
     /// <summary>
@@ -36,8 +39,9 @@ namespace Server.Controllers
     [Route("finished")]
     public ViewResult Finished()
     {
+      var host = HttpContext.Request.GetUri().Authority;
       var username = HttpContext.User?.Username();
-      return View("../MobileAuth", new MobileAuth(username));
+      return View("../MobileAuth", new MobileAuth(host, username));
     }
 
     [HttpGet]
