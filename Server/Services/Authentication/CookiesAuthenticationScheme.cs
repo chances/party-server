@@ -22,8 +22,9 @@ namespace Server.Services.Authentication
 
     private const string CookieName = "cpSESSION";
     private const string ProductionCookieDomain = ".chancesnow.me";
+    public static TimeSpan CookieMaxAge = TimeSpan.FromHours(12);
 
-    public const string GuestUserJsonClaim = "urn:party:guest:userJson";
+    private const string GuestUserJsonClaim = "urn:party:guest:userJson";
 
     public static void Configure(CookieAuthenticationOptions options, ITicketStore sessionStore, AppConfiguration config)
     {
@@ -33,11 +34,14 @@ namespace Server.Services.Authentication
       options.LoginPath = "/auth/login";
       options.LogoutPath = "/auth/logout";
       options.ReturnUrlParameter = "return_to";
-      options.ExpireTimeSpan = TimeSpan.FromHours(12);
+      options.ExpireTimeSpan = CookieMaxAge;
       options.SlidingExpiration = true;
       options.Cookie.Name = CookieName;
+      options.Cookie.MaxAge = options.ExpireTimeSpan;
       options.Cookie.SecurePolicy = isProduction ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
       options.Cookie.Domain = isProduction ? ProductionCookieDomain : "";
+      options.Cookie.Path = "/";
+      options.Cookie.IsEssential = true;
 
       options.Events = new CookieAuthenticationEvents
       {
