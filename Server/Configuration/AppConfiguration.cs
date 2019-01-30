@@ -28,7 +28,7 @@ namespace Server.Configuration
       LoadDotEnv();
       _environmentVariables = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>();
 
-      var modeString = GetVariable("MODE").ToLower();
+      var modeString = GetVariable("MODE")?.ToLower();
       if (modeString != null && modeString.Equals("development", StringComparison.InvariantCulture))
       {
         Mode = Mode.Development;
