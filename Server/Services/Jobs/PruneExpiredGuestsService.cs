@@ -41,8 +41,6 @@ namespace Server.Services.Jobs
 
     private void PruneExpiredGuests(object state)
     {
-      _logger.LogInformation("Pruning expired guests...");
-
       var prunedGuests = 0;
 
       using (var scope = Services.CreateScope())
