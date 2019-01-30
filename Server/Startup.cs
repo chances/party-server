@@ -98,9 +98,12 @@ namespace Server
       services.AddSingleton<IEventChannel<PublicParty>>(new PartyChannel());
 
       services.AddMvc()
-        .AddJsonOptions(
-          options => options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-        );
+        .AddJsonOptions(options =>
+        {
+          options.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+          options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+          options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+        });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
