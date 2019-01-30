@@ -46,6 +46,7 @@ namespace Server.Services.Authentication
       options.Cookie.Name = CookieName;
       options.Cookie.MaxAge = options.ExpireTimeSpan;
       options.Cookie.SecurePolicy = isProduction ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
+      options.Cookie.SameSite = SameSiteMode.None;
       options.Cookie.Domain = isProduction ? ProductionCookieDomain : (isStaging ? StagingCookieDomain : "");
       options.Cookie.Path = "/";
       options.Cookie.IsEssential = true;
