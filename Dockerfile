@@ -1,6 +1,6 @@
-FROM microsoft/dotnet:2.1-aspnetcore-runtime
+FROM microsoft/dotnet:2.2-aspnetcore-runtime
 
 WORKDIR /app
-COPY . .
+COPY Server/bin/Release/netcoreapp2.2/publish/ .
 
 CMD ["dotnet", "Server.dll"]
