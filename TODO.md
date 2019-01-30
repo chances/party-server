@@ -154,7 +154,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [x] Redirect back to new `/auth/finished` endpoint
     - Render: `Logged in as $name$ : <a href=/auth/logout>Logout</a>`
     - Mobile app handles redirection back here
-  - [ ] Spotify access token delivery
+  - [x] Spotify access token delivery
     - Only deliver access token, server manages refresh
   - [ ] Spotify token refresh endpoint `/auth/refresh`
     - Responds with refreshed token
