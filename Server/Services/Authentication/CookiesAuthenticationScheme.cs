@@ -20,15 +20,22 @@ namespace Server.Services.Authentication
   {
     public const string Name = CookieAuthenticationDefaults.AuthenticationScheme;
 
-    private const string CookieName = "cpSESSION";
-    private const string ProductionCookieDomain = ".chancesnow.me";
+    public const string CookieName = "cpSESSION";
+    private const string StagingCookieDomain = "chances-party-staging.herokuapp.com";
+    public const string ProductionCookieDomain = ".chancesnow.me";
     public static TimeSpan CookieMaxAge = TimeSpan.FromHours(12);
 
     private const string GuestUserJsonClaim = "urn:party:guest:userJson";
 
-    public static void Configure(CookieAuthenticationOptions options, ITicketStore sessionStore, AppConfiguration config)
+    public static void Configure(
+      CookieAuthenticationOptions options,
+      ITicketStore sessionStore,
+      Mode appMode,
+      Configuration.Spotify spotifyConfig
+    )
     {
-      var isProduction = config.Mode.IsProduction();
+      var isStaging = appMode == Mode.Staging;
+      var isProduction = appMode == Mode.Production;
 
       options.SessionStore = sessionStore;
       options.LoginPath = "/auth/login";
@@ -39,7 +46,7 @@ namespace Server.Services.Authentication
       options.Cookie.Name = CookieName;
       options.Cookie.MaxAge = options.ExpireTimeSpan;
       options.Cookie.SecurePolicy = isProduction ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
-      options.Cookie.Domain = isProduction ? ProductionCookieDomain : "";
+      options.Cookie.Domain = isProduction ? ProductionCookieDomain : (isStaging ? StagingCookieDomain : "");
       options.Cookie.Path = "/";
       options.Cookie.IsEssential = true;
 
@@ -80,7 +87,7 @@ namespace Server.Services.Authentication
           if (SpotifyAuthenticationScheme.IsAccessTokenExpired(claims))
           {
             var updatedPrincipal = await SpotifyAuthenticationScheme
-              .RefreshAccessToken(claims, config.Spotify);
+              .RefreshAccessToken(claims, spotifyConfig.Spotify);
 
             // Replace principal if Spotify access token was refreshed
             if (updatedPrincipal != null)

@@ -64,7 +64,8 @@ namespace Server
         (options) => CookiesAuthenticationScheme.Configure(
           options,
           new RedisCacheTicketStore(_redisCache),
-          _appConfig
+          _appConfig.Mode,
+          _appConfig.Spotify
         )
       )
       .AddOAuth(
