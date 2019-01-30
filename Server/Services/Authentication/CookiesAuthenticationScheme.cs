@@ -87,7 +87,7 @@ namespace Server.Services.Authentication
           if (SpotifyAuthenticationScheme.IsAccessTokenExpired(claims))
           {
             var updatedPrincipal = await SpotifyAuthenticationScheme
-              .RefreshAccessToken(claims, spotifyConfig.Spotify);
+              .RefreshAccessToken(claims, spotifyConfig);
 
             // Replace principal if Spotify access token was refreshed
             if (updatedPrincipal != null)
