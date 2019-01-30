@@ -66,7 +66,7 @@ namespace Server.Services.Authentication
           if (context.Principal.IsInRole(Roles.Guest)) return;
 
           var dbContext = context.HttpContext.RequestServices.GetRequiredService<PartyModelContainer>();
-          await SpotifyAuthenticationScheme.UpsertPartyUser(dbContext, context.Principal.Claims);
+          await SpotifyAuthenticationScheme.UpsertPartyUser(dbContext, context.Principal.Claims.ToList());
         },
 
         OnValidatePrincipal = async context =>

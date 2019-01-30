@@ -80,7 +80,7 @@ namespace Server.Services.Authentication
       };
     }
 
-    public static async Task UpsertPartyUser(PartyModelContainer dbContext, IEnumerable<Claim> principalClaims)
+    public static async Task UpsertPartyUser(PartyModelContainer dbContext, List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
@@ -118,7 +118,7 @@ namespace Server.Services.Authentication
       await dbContext.SaveChangesAsync();
     }
 
-    public static bool IsAccessTokenExpired(IEnumerable<Claim> principalClaims)
+    public static bool IsAccessTokenExpired(List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
@@ -134,7 +134,8 @@ namespace Server.Services.Authentication
     /// </summary>
     /// <returns>Returns a new <see cref="ClaimsPrincipal"/> if the access token was refreshed.</returns>
     /// <param name="principalClaims">Principal Claims.</param>
-    public static async Task<ClaimsPrincipal> RefreshAccessToken(IEnumerable<Claim> principalClaims, Configuration.Spotify config)
+    /// <param name="config">App configuration for Spotify authentication.</param>
+    public static async Task<ClaimsPrincipal> RefreshAccessToken(List<Claim> principalClaims, Configuration.Spotify config)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
@@ -203,12 +204,12 @@ namespace Server.Services.Authentication
       return Convert.ToBase64String(plainTextBytes);
     }
 
-    public static PrivateProfile GetProfile(IEnumerable<Claim> principalClaims)
+    public static PrivateProfile GetProfile(List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
       var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var userJson = claims[SpotifyUserJsonClaim]?.Value ?? null;
+      var userJson = claims[SpotifyUserJsonClaim]?.Value;
 
       if (userJson == null) return null;
 
@@ -216,12 +217,12 @@ namespace Server.Services.Authentication
       return spotifyUser;
     }
 
-    public static Token GetToken(IEnumerable<Claim> principalClaims)
+    public static Token GetToken(List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
       var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var accessTokenJson = claims[SpotifyAccessTokenClaim]?.Value ?? null;
+      var accessTokenJson = claims[SpotifyAccessTokenClaim]?.Value;
 
       if (accessTokenJson == null) return null;
 

@@ -38,7 +38,10 @@ namespace Server.Services.Spotify
 
       if (!HttpContext.User.IsInRole(Roles.Host)) return;
 
-      var token = SpotifyAuthenticationScheme.GetToken(HttpContext.User.Claims);
+      var userClaims = HttpContext?.User?.Claims;
+      if (userClaims == null) return;
+
+      var token = SpotifyAuthenticationScheme.GetToken(userClaims.ToList());
       if (token == null) return;
 
       _api = new SpotifyWebAPI()

@@ -61,7 +61,7 @@ namespace Server.Controllers
     {
       if (!_userProvider.IsUserHost) return Unauthorized();
 
-      var token = SpotifyAuthenticationScheme.GetToken(User.Claims);
+      var token = SpotifyAuthenticationScheme.GetToken(User.Claims.ToList());
       if (token == null) return Unauthorized();
 
       return new SpotifyToken(token.AccessToken, token.CreateDate.AddSeconds(token.ExpiresIn));

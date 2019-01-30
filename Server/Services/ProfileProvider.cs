@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Server.Services.Authentication;
 using Spotify.API.NetCore.Models;
@@ -12,10 +13,10 @@ namespace Server.Services
 
       if (!HttpContext?.User?.Identity.IsAuthenticated ?? true) return;
 
-      var claims = HttpContext?.User?.Claims ?? null;
+      var claims = HttpContext?.User?.Claims;
       if (claims != null)
       {
-        Profile = SpotifyAuthenticationScheme.GetProfile(claims);
+        Profile = SpotifyAuthenticationScheme.GetProfile(claims.ToList());
       }
     }
 
