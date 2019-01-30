@@ -28,10 +28,14 @@ namespace Server.Configuration
       LoadDotEnv();
       _environmentVariables = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>();
 
-      var modeString = GetVariable("MODE");
-      if (modeString != null && modeString.ToLower() == "development")
+      var modeString = GetVariable("MODE").ToLower();
+      if (modeString != null && modeString.Equals("development", StringComparison.InvariantCulture))
       {
         Mode = Mode.Development;
+      }
+      else if (modeString != null && modeString.Equals("staging", StringComparison.InvariantCulture))
+      {
+        Mode = Mode.Staging;
       }
 
       var portString = GetVariable("PORT");
@@ -71,7 +75,7 @@ namespace Server.Configuration
     public Cors Cors { get; }
 
     public string DatabaseUrl { get; }
-    public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString();
+    public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString(Mode.IsDevelopment());
 
     public string RedisUrl { get; }
     public string RedisConnectionString => RedisUrl.ToRedisConnectionString();

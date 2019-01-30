@@ -5,7 +5,7 @@ namespace Models
 {
   public static class ConnectionStringExtensions
   {
-    public static string ToPgsqlConnectionString(this string source)
+    public static string ToPgsqlConnectionString(this string source, bool isDevelopmentEnv)
     {
       var isUrl = Uri.TryCreate(source, UriKind.Absolute, out var url);
       if (!isUrl) throw new ArgumentException($"Invalid PgSQL connection string: {source}", nameof(source));
@@ -19,6 +19,11 @@ namespace Models
       if (requireSsl)
       {
         connectionString = connectionString.Replace("SSL Mode=Prefer", "SSL Mode=Require");
+      }
+
+      if (!isDevelopmentEnv)
+      {
+        connectionString += ";Trust Server Certificate=true";
       }
 
       return connectionString;

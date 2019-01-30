@@ -3,6 +3,7 @@
   public enum Mode
   {
     Development,
+    Staging,
     Production
   }
 
