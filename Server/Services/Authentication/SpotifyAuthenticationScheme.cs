@@ -95,14 +95,14 @@ namespace Server.Services.Authentication
 
       var user = await dbContext.User
         .Where(u => u.Username == spotifyUser.Id)
-        .DefaultIfEmpty(new User()
-        {
-          Username = spotifyUser.Id,
-        })
         .FirstOrDefaultAsync();
 
-      if (dbContext.Entry(user).State == EntityState.Detached)
+      if (user == null)
       {
+        user = new User()
+        {
+          Username = spotifyUser.Id
+        };
         dbContext.User.Add(user);
       }
       else
@@ -112,6 +112,8 @@ namespace Server.Services.Authentication
 
       user.AccessToken = accessToken.AccessToken;
       user.RefreshToken = accessToken.RefreshToken;
+      user.TokenExpiryDate = accessToken.CreateDate.AddSeconds(accessToken.ExpiresIn);
+      user.TokenScope = Scope.GetStringAttribute(",");
       user.SpotifyUser = userJson;
       user.TokenExpiryDate = tokenExpiry.ToUniversalTime();
 
@@ -130,7 +132,7 @@ namespace Server.Services.Authentication
     }
 
     /// <summary>
-    /// Refreshs the Spotify access token associated with the given principal claims.
+    /// Refreshes the Spotify access token associated with the given principal claims.
     /// </summary>
     /// <returns>Returns a new <see cref="ClaimsPrincipal"/> if the access token was refreshed.</returns>
     /// <param name="principalClaims">Principal Claims.</param>
