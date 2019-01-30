@@ -17,6 +17,9 @@ namespace Server.Models
     [JsonProperty("owner")]
     public string Owner { get; set; }
 
+    [JsonProperty("images")]
+    public List<Image> Images { get; set; }
+
     [JsonProperty("endpoint")]
     public string Endpoint { get; set; }
 
@@ -28,6 +31,7 @@ namespace Server.Models
       Id = playlist.Id,
       Name = playlist.Name,
       Owner = playlist.Owner.Id,
+      Images = playlist.Images,
       Endpoint = playlist.ExternalUrls["spotify"],
       TotalTracks = playlist.Tracks.Total
     };
@@ -37,6 +41,7 @@ namespace Server.Models
       Id = playlist.Id,
       Name = playlist.Name,
       Owner = playlist.Owner.Id,
+      Images = playlist.Images,
       Endpoint = playlist.ExternalUrls["spotify"],
       TotalTracks = playlist.Tracks.Total
     };
