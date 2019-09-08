@@ -1,7 +1,6 @@
 # [Chance's Party App](http://chancesnow.me/party)
 
 [![Build Status](https://travis-ci.org/chances/party-server.svg)](https://travis-ci.org/chances/party-server)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chances/party-server)](https://goreportcard.com/report/github.com/chances/party-server)
 
 A party web app to facilitate guest interaction at your parties.
 
@@ -17,7 +16,7 @@ This application tightly integrates with the [Spotify Web API](https://developer
 
 ## Contributing
 
-The project is still experimental, but feel free to contribute.
+Feel free to contribute.
 
 1. Inspect the [TODO.md](TODO.md) document for new work.
 
