@@ -23,6 +23,11 @@ namespace Server.Controllers
       _db = db;
     }
 
+    /// <summary>
+    /// Play the party's playlist or resume from paused state
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
     [HttpPost]
     [Route("/play")]
     public async Task<IActionResult> Play([FromBody] NewResourceDocument<PlayParameters> parameters = null)
@@ -57,7 +62,7 @@ namespace Server.Controllers
       }
       else
       {
-        return Ok();
+        return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
       }
 
       currentParty.UpdateCurrentTrack(currentTrack);
@@ -65,14 +70,44 @@ namespace Server.Controllers
 
       // TODO: Send party update event to Party hub
 
-      return Ok();
+      return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
     }
 
+    /// <summary>
+    /// Pause the party's playlist from playing
+    /// </summary>
+    /// <returns></returns>
     [HttpPost]
     [Route("/pause")]
-    public async Task<IActionResult> Pause()
+    public async Task<IActionResult> Pause([FromBody] NewResourceDocument<PauseParameters> parameters)
     {
-      return Ok();
+      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      if (currentParty == null) return Error.NotFound("Host has not started a party");
+
+      var currentTrack = currentParty.CurrentPlayingTrack();
+
+      // It's a bad request to pause when no track is playing
+      if (currentTrack == null)
+      {
+        return Error.BadRequest("Host is not playing music");
+      }
+
+      // Don't update elapsed if the current track is already paused
+      if (currentTrack.Paused)
+      {
+        return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
+      }
+
+      // Pause the current track
+      currentTrack.Paused = true;
+      currentTrack.Elapsed = parameters.Data.Attributes.Elapsed;
+
+      currentParty.UpdateCurrentTrack(currentTrack);
+      await _db.SaveChangesAsync();
+
+      // TODO: Send party update event to Party hub
+
+      return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
     }
 
     [HttpPost]
