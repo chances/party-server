@@ -160,10 +160,10 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
     - Responds with refreshed token
 
 - [ ] Playback
-  - [ ] Pick a playlist for a party
+  - [x] Pick a playlist for a party
     - [x] Pull all of the playlist's tracks
     - [ ] [Shuffle](https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/) the playlist
-  - [ ] Play the party's playlist
+  - [x] Play the party's playlist
   - [ ] Pause the party's playlist
   - [ ] Skip the current track
   - [ ] Search to add to queue
