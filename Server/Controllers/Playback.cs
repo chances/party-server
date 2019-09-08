@@ -65,10 +65,10 @@ namespace Server.Controllers
         return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
       }
 
-      currentParty.UpdateCurrentTrack(currentTrack);
       await _db.SaveChangesAsync();
 
       // TODO: Send party update event to Party hub
+      // TODO: Send queue update event to Party hub
 
       return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
     }
@@ -114,7 +114,32 @@ namespace Server.Controllers
     [Route("/skip")]
     public async Task<IActionResult> Skip()
     {
-      return Ok();
+      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      if (currentParty == null) return Error.NotFound("Host has not started a party");
+
+      var lastTrack = currentParty.CurrentPlayingTrack();
+
+      // It's a bad request to skip when no track is playing
+      if (lastTrack == null)
+      {
+        return Error.BadRequest("Host is not playing music");
+      }
+
+      // Pop next track from the party's queue
+      var queue = await currentParty.QueueTracks(_db);
+      var history = await currentParty.HistoryTracks(_db);
+      var newTrack = await PopTrackAndPlay(queue, currentParty.QueueId, currentParty);
+
+      // Push last track to party's history
+      history.Insert(0, lastTrack);
+      await currentParty.UpdateHistory(_db, history);
+
+      await _db.SaveChangesAsync();
+
+      // TODO: Send queue update event to Party hub
+      // TODO: Send history update event to Party hub
+
+      return Ok(ResourceDocument<PlayingTrack>.Resource(newTrack.Id, newTrack));
     }
 
     private async Task<PlayingTrack> PopTrackAndPlay(IList<Track> tracks, int queueId, Db.Party party)
@@ -124,15 +149,14 @@ namespace Server.Controllers
 
       await party.UpdateQueue(_db, updatedQueue);
 
-      // TODO: Update Party's queue TrackList
-      // TODO: Send queue update event to Party hub
-
       var playingTrack = (PlayingTrack) firstTrack;
       Debug.Assert(playingTrack != null, nameof(playingTrack) + " != null");
       // "Play" the track
       playingTrack.Paused = false;
       playingTrack.Elapsed = 0;
       playingTrack.BeganPlaying = DateTime.UtcNow;
+
+      party.UpdateCurrentTrack(playingTrack);
 
       return playingTrack;
     }
