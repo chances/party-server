@@ -8,6 +8,7 @@ using Db = Models;
 using Server.Data;
 using Server.Models;
 using Server.Services;
+using Server.Services.Channels;
 
 namespace Server.Controllers
 {
@@ -15,11 +16,13 @@ namespace Server.Controllers
   public class Playback : Controller
   {
     private readonly PartyProvider _partyProvider;
+    private readonly IEventChannel<PublicParty> _partyChannel;
     private readonly Db.PartyModelContainer _db;
 
-    public Playback(PartyProvider partyProvider, Db.PartyModelContainer db)
+    public Playback(PartyProvider partyProvider, IEventChannel<PublicParty> partyChannel, Db.PartyModelContainer db)
     {
       _partyProvider = partyProvider;
+      _partyChannel = partyChannel;
       _db = db;
     }
 
@@ -62,15 +65,15 @@ namespace Server.Controllers
       }
       else
       {
-        return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
+        return Ok(Document.Resource(currentTrack.Id, currentTrack));
       }
 
       await _db.SaveChangesAsync();
 
-      // TODO: Send party update event to Party hub
+      _partyChannel.Push(PublicParty.FromParty(currentParty));
       // TODO: Send queue update event to Party hub
 
-      return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
+      return Ok(Document.Resource(currentTrack.Id, currentTrack));
     }
 
     /// <summary>
@@ -95,7 +98,7 @@ namespace Server.Controllers
       // Don't update elapsed if the current track is already paused
       if (currentTrack.Paused)
       {
-        return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
+        return Ok(Document.Resource(currentTrack.Id, currentTrack));
       }
 
       // Pause the current track
@@ -105,9 +108,9 @@ namespace Server.Controllers
       currentParty.UpdateCurrentTrack(currentTrack);
       await _db.SaveChangesAsync();
 
-      // TODO: Send party update event to Party hub
+      _partyChannel.Push(PublicParty.FromParty(currentParty));
 
-      return Ok(ResourceDocument<PlayingTrack>.Resource(currentTrack.Id, currentTrack));
+      return Ok(Document.Resource(currentTrack.Id, currentTrack));
     }
 
     [HttpPost]
@@ -139,7 +142,7 @@ namespace Server.Controllers
       // TODO: Send queue update event to Party hub
       // TODO: Send history update event to Party hub
 
-      return Ok(ResourceDocument<PlayingTrack>.Resource(newTrack.Id, newTrack));
+      return Ok(Document.Resource(newTrack.Id, newTrack));
     }
 
     private async Task<PlayingTrack> PopTrackAndPlay(IList<Track> tracks, int queueId, Db.Party party)
