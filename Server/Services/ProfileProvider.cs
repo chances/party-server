@@ -1,7 +1,6 @@
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Server.Services.Authentication;
-using Spotify.API.NetCore.Models;
 
 namespace Server.Services
 {
@@ -20,6 +19,6 @@ namespace Server.Services
       }
     }
 
-    public PrivateProfile Profile { get; }
+    public Models.Spotify.PrivateProfile Profile { get; }
   }
 }

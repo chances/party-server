@@ -66,7 +66,7 @@ namespace Server.Services.Authentication
           response.EnsureSuccessStatusCode();
 
           var userJson = await response.Content.ReadAsStringAsync();
-          var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
+          var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
 
           var claims = new List<Claim>
               {
@@ -91,7 +91,7 @@ namespace Server.Services.Authentication
       var tokenExpiry = accessToken.CreateDate.AddSeconds(accessToken.ExpiresIn);
 
       // TODO: Switch to SpotifyApi.NetCore? It's more often maintained, but has less API coverage
-      var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
+      var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
 
       var user = await dbContext.User
         .Where(u => u.Username == spotifyUser.Id)
@@ -206,7 +206,7 @@ namespace Server.Services.Authentication
       return Convert.ToBase64String(plainTextBytes);
     }
 
-    public static PrivateProfile GetProfile(List<Claim> principalClaims)
+    public static Models.Spotify.PrivateProfile GetProfile(List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
@@ -215,7 +215,7 @@ namespace Server.Services.Authentication
 
       if (userJson == null) return null;
 
-      var spotifyUser = JsonConvert.DeserializeObject<PrivateProfile>(userJson);
+      var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
       return spotifyUser;
     }
 

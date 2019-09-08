@@ -8,7 +8,7 @@ namespace Server.ViewModels
 {
   public class Administrator
   {
-    public PrivateProfile User { get; }
+    public Models.Spotify.PrivateProfile User { get; }
     public string UserUrl => User?.ExternalUrls["spotify"] ?? null;
     public bool LoggedIn => User != null;
 
@@ -24,13 +24,18 @@ namespace Server.ViewModels
     public string Error { get; }
     public bool HasError => Error?.Any() ?? false;
 
-    public Image LargestUserImage
+    public Models.Spotify.Image LargestUserImage
     {
       get
       {
         if (User.Images == null || User.Images.Count == 0)
         {
           return null;
+        }
+
+        if (!User.Images[0].Width.HasValue)
+        {
+          return User.Images[0];
         }
 
         var largestImage = User.Images[0];
@@ -54,7 +59,7 @@ namespace Server.ViewModels
     }
 
     public Administrator(
-      PrivateProfile user,
+      Models.Spotify.PrivateProfile user,
       IEnumerable<Playlist> playlists,
       Playlist playlist,
       Party party
@@ -63,7 +68,7 @@ namespace Server.ViewModels
     }
 
     public Administrator(
-      PrivateProfile user,
+      Models.Spotify.PrivateProfile user,
       IEnumerable<Playlist> playlists,
       Playlist playlist,
       Party party,
