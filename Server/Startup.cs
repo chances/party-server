@@ -95,7 +95,7 @@ namespace Server
       // SignalR real-time hubs and channels
       services.AddSignalR();
 
-      services.AddSingleton<IEventChannel<PublicParty>>(new PartyChannel());
+      services.AddSingleton<IEventChannel<PublicParty>>(new EventChannel<PublicParty>());
 
       services.AddMvc()
         .AddJsonOptions(options =>

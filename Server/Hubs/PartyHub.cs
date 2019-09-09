@@ -18,13 +18,13 @@ namespace Server.Hubs
     private readonly PartyModelContainer _db;
     private readonly IBackgroundTaskQueue _background;
     private readonly IDistributedCache _cache;
-    private readonly PartyChannel _partyChannel;
+    private readonly EventChannel<PublicParty> _partyChannel;
 
     public PartyHub(
       PartyModelContainer db,
       IBackgroundTaskQueue background,
       IDistributedCache cache,
-      PartyChannel partyChannel
+      EventChannel<PublicParty> partyChannel
     )
     {
       _db = db;
