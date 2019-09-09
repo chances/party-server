@@ -224,10 +224,6 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 - [spotify-web-api-js](https://github.com/JMPerez/spotify-web-api-js)
 
-### WebSockets
-
-_TODO: Get resources for Go/TypeScript WebSockets_
-
 ### Authentication
 
 _TODO: Get resources for Go OAuth providers (Facebook, Google, Twitter, GitHub, etc.) and super pretty frontend login buttons_
