@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Redis;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
@@ -39,6 +40,15 @@ namespace Server
       services.AddSingleton(_appConfig);
       services.AddSingleton(_redisCache);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 15);
+
+      services.AddLogging(
+        builder =>
+        {
+          builder.SetMinimumLevel(_appConfig.Mode == Mode.Development ? LogLevel.Debug : LogLevel.Warning)
+            .AddFilter("Microsoft", LogLevel.Warning)
+            .AddFilter("System", LogLevel.Warning)
+            .AddConsole();
+        });
 
       // Background tasks
       services.AddHostedService<QueuedHostedService>();
