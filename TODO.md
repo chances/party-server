@@ -68,7 +68,7 @@ _Note: The Android client app authenticates with Spotify directly._
       - Host name
       - Location/address string
       - Scheduled time?
-      - _Facebook inegration?_
+      - _Facebook integration?_
     - Room code (NULL when party has ended)
       - Random four letter combination
     - Ended flag
