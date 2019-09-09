@@ -10,6 +10,10 @@ build: $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
 	dotnet build
 .PHONY: build
 
+run: build
+	dotnet run --project Server
+.PHONY: run
+
 $(SERVER_TARGET): $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
 	dotnet publish -c Release
 
