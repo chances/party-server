@@ -1,12 +1,11 @@
-language: go
-
-go:
-  - 1.8
-
-cache:
-  directories:
-    - $GOPATH/src
-    - $GOPATH/pkg
-
-install: go get -t -v ./...
-script: go test $(go list ./... | grep -v /models)
+dist: xenial
+language: csharp
+mono: none
+solution: party-server.sln
+dotnet: 2.2.103
+script:
+ - dotnet restore
+ - dotnet build --configuration Release
+global:
+ - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
+ - DOTNET_CLI_TELEMETRY_OPTOUT=1

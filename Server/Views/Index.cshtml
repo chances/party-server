@@ -1,0 +1,145 @@
+@model Server.ViewModels.Administrator
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chance's Party - Admin</title>
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+  @if (!Model.LoggedIn)
+  {
+  <p>
+    <a href="/auth/login">Login with Spotify</a>
+  </p>
+  } else {
+  <p>
+    <a href="/auth/logout">Log Out</a>
+  </p>
+  <h1>Logged in as @Model.User.DisplayName</h1>
+  if (Model.HasUserImage)
+  {
+  <img id="avatar" width="200" height="200" src="@Model.LargestUserImage.Url" />
+  }
+  <div id="user" class="details">
+    <p>ID: @Model.User.Id</p>
+    <p>Display Name: @Model.User.DisplayName</p>
+    <p>Profile: <a href="@Model.UserUrl">@Model.UserUrl</a></p>
+    <p>Followers: @Model.User.Followers.Total</p>
+    <p>Country: @Model.User.Country</p>
+    <p>Product: @Model.User.Product</p>
+  </div>
+  <p>
+    Current playlist: <span id="currentPlaylist">
+  @if (Model.HasCurrentPlaylist)
+  {
+    @Model.CurrentPlaylist.Name
+  } else {
+    @Html.Raw("N/A")
+  }
+  </span>
+  </p>
+  if (Model.HasCurrentParty)
+  {
+  <div class="details">
+    <p>Current party: <span id="currentParty">@Model.CurrentParty.RoomCode</span></p>
+  </div>
+  } else {
+  <p>
+    <a id="startParty" data-id="@Model.CurrentPlaylist.Id" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
+  </p>
+  }
+  <div style="clear: both;"></div>
+  if (Model.HasPlaylists)
+  {
+  <h2>Pick a playlist for the party</h2>
+  <ul>
+    @foreach (var playlist in Model.Playlists)
+    {
+    <li>
+      <a class="playlist" data-id="@Uri.EscapeDataString(playlist.Id)" href="#playlist/@Uri.EscapeDataString(playlist.Id)">
+        @playlist.Name
+      </a>
+      <a href="@playlist.Endpoint" class="link-back">On Spotify</a>
+    </li>
+    }
+  </ul>
+  }
+  }
+  @if (Model.HasError)
+  {
+  <p>Error:</p>
+  <p>@Model.Error</p>
+  }
+  <script type="text/javascript" async src="https://unpkg.com/whatwg-fetch@2.0.3"></script>
+  <script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function domContentLoaded() {
+      let startPartyLink = document.querySelector('#startParty');
+      if (startPartyLink) {
+        startPartyLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let hostName = e.target.getAttribute('data-host');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let startParty = window.fetch(new Request('/party/start', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              data: {
+                type: 'new_party',
+                attributes: {
+                  location: {
+                    host_name: decodeURIComponent(hostName)
+                  },
+                  playlist_id: decodeURIComponent(playlistId)
+                }
+              }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (newPartyOrErrors) {
+            if (newPartyOrErrors.errors !== undefined) {
+              console.log(newPartyOrErrors);
+              throw new Error(newPartyOrErrors.errors);
+            }
+            return newPartyOrErrors.data;
+          });
+          startParty.then(function (party) {
+            console.log('Started party:', party)
+          });
+        })
+      }
+      let playlistLinks = [].slice.call(document.querySelectorAll('a.playlist'));
+      playlistLinks.forEach(function (playlistLink) {
+        playlistLink.addEventListener('click', function (e) {
+          let playlistId = e.target.getAttribute('data-id');
+          let headers = new Headers();
+          headers.append('Content-Type', 'application/json; charset=utf-8');
+          let patchPlaylist = window.fetch(new Request('/playlist', {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({
+              data: { id: decodeURIComponent(playlistId), type: 'playlist' }
+            }),
+            credentials: 'include',
+            cache: 'no-store'
+          })).then(function (response) {
+            return response.json();
+          }).then(function (patchedPlaylistOrErrors) {
+            if (patchedPlaylistOrErrors.errors !== undefined) {
+              console.log(patchedPlaylistOrErrors);
+              throw new Error(patchedPlaylistOrErrors.errors);
+            }
+            return patchedPlaylistOrErrors.data;
+          });
+          patchPlaylist.then(function (playlist) {
+            document.querySelector('#currentPlaylist').innerText =
+              playlist.attributes.name;
+          });
+        })
+      })
+    })</script>
+</body>
+</html>
