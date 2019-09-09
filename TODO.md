@@ -120,7 +120,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 20 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `history` event)
     - Updates when current track changes
   - Most recent track first
   - Clients may use a track's `began_playing` timestamp to show timeago info
@@ -129,7 +129,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 10 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
     - Updates when current track changes
     - Updates when guests contribute tracks
   - Server keeps track of whole Queue
@@ -162,12 +162,12 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 - [ ] Playback
   - [x] Pick a playlist for a party
     - [x] Pull all of the playlist's tracks
-    - [ ] [Shuffle](https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/) the playlist
+    - [x] [Shuffle](https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/) the playlist
   - [x] Play the party's playlist
   - [x] Pause the party's playlist
   - [x] Skip the current track
   - [ ] Search to add to queue
-  - [ ] State change notifications (WebSockets?)
+  - [x] State change notifications (SignalR)
 
 ### Party Guest Features
 
