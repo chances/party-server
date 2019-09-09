@@ -52,8 +52,7 @@ namespace Server.Services.Spotify
       };
     }
 
-    // TODO: Rename these with async suffixes
-    public async Task<IEnumerable<Playlist>> GetMyOwnPlaylists()
+    public async Task<IEnumerable<Playlist>> GetMyOwnPlaylistsAsync()
     {
       var user = HttpContext.User;
       if (!user.IsInRole(Roles.Host))
@@ -63,10 +62,10 @@ namespace Server.Services.Spotify
 
       var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
-      return await GetMyPlaylists(true);
+      return await GetMyPlaylistsAsync(true);
     }
 
-    public async Task<IEnumerable<Playlist>> GetMyPlaylists(bool owned = false)
+    public async Task<IEnumerable<Playlist>> GetMyPlaylistsAsync(bool owned = false)
     {
       var user = HttpContext.User;
       if (!user.IsInRole(Roles.Host))

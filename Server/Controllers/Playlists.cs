@@ -38,7 +38,7 @@ namespace Server.Controllers
         return NotFound();
       }
 
-      var playlists = await _spotify.GetMyOwnPlaylists();
+      var playlists = await _spotify.GetMyOwnPlaylistsAsync();
       var playlist = playlists.FirstOrDefault(p => p.Id == currentUser.SpotifyPlaylistId);
 
       if (playlist == null) return NotFound();
@@ -53,7 +53,7 @@ namespace Server.Controllers
       [FromBody] ResourceIdentifierDocument<Playlist> patchPlaylist
     )
     {
-      var playlists = await _spotify.GetMyOwnPlaylists();
+      var playlists = await _spotify.GetMyOwnPlaylistsAsync();
       var playlist = playlists.FirstOrDefault(p => p.Id == patchPlaylist.Data.Id);
 
       if (playlist == null) return Error.BadRequest("Invalid playlist id");

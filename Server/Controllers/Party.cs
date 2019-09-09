@@ -77,7 +77,7 @@ namespace Server.Controllers
         // TODO: Call end party action?
       }
 
-      var playlists = await _spotify.GetMyPlaylists();
+      var playlists = await _spotify.GetMyPlaylistsAsync();
       var currentPlaylist = playlists.FirstOrDefault(p => p.Id == playlistId);
 
       // If the Playlist doesn't belong to user, bad request
