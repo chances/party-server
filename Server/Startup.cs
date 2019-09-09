@@ -13,6 +13,7 @@ using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
+using Server.Data;
 using Server.Hubs;
 using Server.Middleware;
 using Server.Models;
@@ -106,6 +107,8 @@ namespace Server
       services.AddSignalR();
 
       services.AddSingleton<IEventChannel<PublicParty>>(new EventChannel<PublicParty>());
+      services.AddSingleton<IEventChannel<Resource<Queue>>>(new EventChannel<Resource<Queue>>());
+      services.AddSingleton<IEventChannel<Resource<History>>>(new EventChannel<Resource<History>>());
 
       services.AddMvc()
         .AddJsonOptions(options =>

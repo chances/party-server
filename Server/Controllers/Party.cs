@@ -259,7 +259,7 @@ namespace Server.Controllers
 
       var queue = await currentParty.QueueTracks(_db);
 
-      return Ok(Document.Collection(queue, t => t.Id));
+      return Ok(Document.Collection(queue.Tracks, t => t.Id));
     }
 
     [HttpGet]
@@ -274,7 +274,7 @@ namespace Server.Controllers
 
       var history = await currentParty.HistoryTracks(_db);
 
-      return Ok(Document.Collection(history, t => t.Id));
+      return Ok(Document.Collection(history.Tracks, t => t.Id));
     }
   }
 }
