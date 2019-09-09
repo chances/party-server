@@ -8,21 +8,25 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Models;
 using Server.Models;
+using Server.Services.Channels;
 
 namespace Server.Services.Jobs
 {
   [UsedImplicitly]
   public class PruneExpiredGuestsService : IHostedService, IDisposable
   {
+    private readonly IEventChannel<PublicParty> _partyChannel;
     private readonly ILogger _logger;
     private Timer _timer;
 
     public PruneExpiredGuestsService(
       IServiceProvider services,
+      IEventChannel<PublicParty> partyChannel,
       ILogger<PruneExpiredGuestsService> logger
     )
     {
       Services = services;
+      _partyChannel = partyChannel;
       _logger = logger;
     }
 
@@ -65,7 +69,7 @@ namespace Server.Services.Jobs
           party.UpdateGuestList(guests);
           db.SaveChanges();
 
-          // TODO: Broadcast updated party to clients (SignalR)
+          _partyChannel.Push(PublicParty.FromParty(party, guests));
         }
       }
 
