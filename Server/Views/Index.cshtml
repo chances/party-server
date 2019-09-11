@@ -44,7 +44,7 @@
   <div class="details">
     <p>Current party: <span id="currentParty">@Model.CurrentParty.RoomCode</span></p>
   </div>
-  } else {
+  } else if (Model.HasCurrentPlaylist) {
   <p>
     <a id="startParty" data-id="@Model.CurrentPlaylist.Id" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
   </p>
