@@ -6,7 +6,7 @@ namespace Models
 {
   public static class ConnectionStringExtensions
   {
-    public static string ToPgsqlConnectionString(this string source, bool isDevelopmentEnv)
+    public static string ToPgsqlConnectionString(this string source, bool isDevelopmentEnv, int maxConnections)
     {
       var isUrl = Uri.TryCreate(source, UriKind.Absolute, out var url);
       if (!isUrl) throw new ArgumentException($"Invalid PgSQL connection string: {source}", nameof(source));
@@ -15,7 +15,8 @@ namespace Models
       var requireSsl = queryParams["ssl"] != null && queryParams["ssl"] == "true";
       var disableSsl = queryParams["ssl"] != null && queryParams["ssl"] == "false";
       var connectionString =
-        $"Host={url.Host};Port={port};Database={url.LocalPath.Substring(1)};Username={url.UserInfo.Split(':')[0]};Password={url.UserInfo.Split(':')[1]};SSL Mode=Prefer;Pooling=true;";
+        $"Host={url.Host};Port={port};Database={url.LocalPath.Substring(1)};Username={url.UserInfo.Split(':')[0]};Password={url.UserInfo.Split(':')[1]};SSL Mode=Prefer;Pooling=true";
+      connectionString += $";Maximum Pool Size={maxConnections}";
       if (requireSsl)
       {
         connectionString = connectionString.Replace("SSL Mode=Prefer", "SSL Mode=Require");
