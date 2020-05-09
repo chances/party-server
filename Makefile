@@ -1,7 +1,6 @@
 C_SHARP_SRC=Server
 C_SHARP_SOURCES=$(shell find $(C_SHARP_SRC) -type f -name "*.cs")
 CS_HTML_SOURCES=$(shell find $(C_SHARP_SRC) -type f -name "*.cshtml")
-SERVER_TARGET=Server/bin/Release/netcoreapp2.2/publish/Server.dll
 
 all: build
 .DEFAULT_GOAL := build
@@ -14,15 +13,12 @@ run: build
 	dotnet run --project Server
 .PHONY: run
 
-$(SERVER_TARGET): $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
-	dotnet publish -c Release
-
-docker: $(SERVER_TARGET)
+docker:
 	docker build -t party-server .
 .PHONY: docker
 
-docker-test: $(SERVER_TARGET) docker
-	docker run --name party-server -p 3005:3005 --rm -d --env-file ./.env.docker party-server
+docker-test:
+	docker-compose up -d --renew-anon-volumes
 .PHONY: docker-test
 
 publish: docker

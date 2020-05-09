@@ -23,9 +23,9 @@ namespace Server.Configuration
       else
       {
         Mode = Mode.Development;
+        LoadDotEnv();
       }
 
-      LoadDotEnv();
       _environmentVariables = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>();
 
       var modeString = GetVariable("MODE")?.ToLower();

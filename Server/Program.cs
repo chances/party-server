@@ -22,7 +22,7 @@ namespace Server
     private static IWebHost BuildWebHost(string[] args, string port) =>
       WebHost.CreateDefaultBuilder(args)
         .UseUrls($"http://*:{port}")
-        .UseWebRoot("./Server/public")
+        .UseWebRoot("./public")
         .UseKestrel()
         .UseStartup<Startup>()
         .UseSentry()
