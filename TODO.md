@@ -103,8 +103,8 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 - [x] Server-Sent Events data integration for party state updates sent to clients
   - Push TrackList and Party model updates to guests
-  - Gin comes [ready built for SSE](https://github.com/gin-gonic/gin/tree/2dae550eb5392006a4582ce9c90016a9b5a74e8b/examples/realtime-chat)
-  - [go-broadcast](https://github.com/dustin/go-broadcast)
+  - Using [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr)
+    - [Flutter client library](https://pub.dev/packages/signalr_core)
 
 - [ ] Scalable Server-Sent Events data integration via Redis PubSub
   - Current implementation keeps connection info in memory
