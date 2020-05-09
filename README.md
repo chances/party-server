@@ -28,4 +28,4 @@ Feel free to contribute.
 
 [MIT License](http://opensource.org/licenses/MIT)
 
-Copyright &copy; 2016 Chance Snow. All rights reserved.
+Copyright &copy; 2016-2020 Chance Snow. All rights reserved.
