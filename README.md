@@ -10,9 +10,9 @@ This application tightly integrates with the [Spotify Web API](https://developer
 
 1. Make a copy of `.env.example` as `.env` and replace necessary values.
 2. Run `make` in the root directory
-4. Ensure Postgres is running 
-2. Ensure Redis is running: `make redis-start`
-3. Run `./party-server`
+4. Ensure Postgres is running, bootstrapped with [party.sql](party.sql)
+2. Ensure Redis is running
+3. Run `make run`
 
 ## Contributing
 
