@@ -22,8 +22,7 @@ namespace Server.Services.Authentication
     public const string Name = CookieAuthenticationDefaults.AuthenticationScheme;
 
     public const string CookieName = "cpSESSION";
-    private const string StagingCookieDomain = "chances-party-staging.herokuapp.com";
-    public const string ProductionCookieDomain = ".chancesnow.me";
+    public const string CookieDomain = ".tunage.app";
     public static TimeSpan CookieMaxAge = TimeSpan.FromHours(12);
 
     private const string GuestUserJsonClaim = "urn:party:guest:userJson";
@@ -48,7 +47,7 @@ namespace Server.Services.Authentication
       options.Cookie.MaxAge = options.ExpireTimeSpan;
       options.Cookie.SecurePolicy = isProduction ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
       options.Cookie.SameSite = SameSiteMode.None;
-      options.Cookie.Domain = isProduction ? ProductionCookieDomain : (isStaging ? StagingCookieDomain : "");
+      options.Cookie.Domain = isProduction || isStaging ? CookieDomain : "";
       options.Cookie.Path = "/";
       options.Cookie.IsEssential = true;
 
