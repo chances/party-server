@@ -28,5 +28,6 @@ publish: docker
 .PHONY: publish
 
 clean:
-	rm -rf Server/bin/Release
+	dotnet clean
+	rm -rf Server/bin Server/obj
 .PHONY: clean
