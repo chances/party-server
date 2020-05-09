@@ -1,5 +1,4 @@
-
-- [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
+# Things TODO
 
 ## Be sure to pay attention to inline TODOs in source files!
 
@@ -197,6 +196,10 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - Users can submit songs, albums, and artists for inclusion to the communal quiz game beforehand.
   - Display a call to action on the TV UI and to guests that they may participate.
   - Prevent users from selecting songs from singles or hide the album art (Singles are too easy to guess given their album art).
+
+# Spotify
+
+- [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
 
 ## Compliance with Spotify Developer Terms of Use
 
