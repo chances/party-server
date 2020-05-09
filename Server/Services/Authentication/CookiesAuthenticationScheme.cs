@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Server.Configuration;
 using Server.Models;
 using Server.Services.Background;
+using Server.Services.Channels;
 
 namespace Server.Services.Authentication
 {
@@ -177,6 +178,10 @@ namespace Server.Services.Authentication
         party.UpdateGuestList(guests);
 
         await db.SaveChangesAsync(token);
+
+        var partyChannel = context.HttpContext.RequestServices
+          .GetRequiredService<IEventChannel<PublicParty>>();
+        partyChannel.Push(PublicParty.FromParty(party, guests));
       });
 
       context.ReplacePrincipal(CreateGuestPrincipal(guest));

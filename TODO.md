@@ -1,5 +1,4 @@
-
-- [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
+# Things TODO
 
 ## Be sure to pay attention to inline TODOs in source files!
 
@@ -103,8 +102,8 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 
 - [x] Server-Sent Events data integration for party state updates sent to clients
   - Push TrackList and Party model updates to guests
-  - Gin comes [ready built for SSE](https://github.com/gin-gonic/gin/tree/2dae550eb5392006a4582ce9c90016a9b5a74e8b/examples/realtime-chat)
-  - [go-broadcast](https://github.com/dustin/go-broadcast)
+  - Using [SignalR](https://dotnet.microsoft.com/apps/aspnet/signalr)
+    - [Flutter client library](https://pub.dev/packages/signalr_core)
 
 - [ ] Scalable Server-Sent Events data integration via Redis PubSub
   - Current implementation keeps connection info in memory
@@ -120,7 +119,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 20 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `history` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `history` event)
     - Updates when current track changes
   - Most recent track first
   - Clients may use a track's `began_playing` timestamp to show timeago info
@@ -129,7 +128,7 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - [ ] Pagination
     - 10 tracks, by default, per page
     - `limit` and `offset` query params
-  - [ ] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
+  - [x] With SSE support (Sent via party, `/events/party`, stream as `queue` event)
     - Updates when current track changes
     - Updates when guests contribute tracks
   - Server keeps track of whole Queue
@@ -162,12 +161,12 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 - [ ] Playback
   - [x] Pick a playlist for a party
     - [x] Pull all of the playlist's tracks
-    - [ ] [Shuffle](https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/) the playlist
+    - [x] [Shuffle](https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/) the playlist
   - [x] Play the party's playlist
   - [x] Pause the party's playlist
   - [x] Skip the current track
   - [ ] Search to add to queue
-  - [ ] State change notifications (WebSockets?)
+  - [x] State change notifications (SignalR)
 
 ### Party Guest Features
 
@@ -198,6 +197,10 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
   - Display a call to action on the TV UI and to guests that they may participate.
   - Prevent users from selecting songs from singles or hide the album art (Singles are too easy to guess given their album art).
 
+# Spotify
+
+- [ ] [Conditional requests](https://developer.spotify.com/web-api/user-guide/#conditional-requests) (Caching)
+
 ## Compliance with Spotify Developer Terms of Use
 
 - [Spotify Developer Terms of Use](https://developer.spotify.com/developer-terms-of-use/)
@@ -223,10 +226,6 @@ _Party Access Tokens_ authenticate API access for party guests. (Party hosts aut
 ## Resource Links
 
 - [spotify-web-api-js](https://github.com/JMPerez/spotify-web-api-js)
-
-### WebSockets
-
-_TODO: Get resources for Go/TypeScript WebSockets_
 
 ### Authentication
 

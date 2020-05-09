@@ -10,16 +10,9 @@ dump.rdb
 
 .idea
 
+# Environment secrets
 .env
-.env.docker
-
-vendor/
-
-# Built binaries
-party-server
-debug
-
-sqlboiler.toml
+docker.env
 
 deploy_key
 

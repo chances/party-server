@@ -17,12 +17,21 @@ namespace Server.Controllers
   {
     private readonly PartyProvider _partyProvider;
     private readonly IEventChannel<PublicParty> _partyChannel;
+    private readonly IEventChannel<Resource<Queue>> _queueChannel;
+    private readonly IEventChannel<Resource<History>> _historyChannel;
     private readonly Db.PartyModelContainer _db;
 
-    public Playback(PartyProvider partyProvider, IEventChannel<PublicParty> partyChannel, Db.PartyModelContainer db)
+    public Playback(
+      PartyProvider partyProvider,
+      IEventChannel<PublicParty> partyChannel,
+      IEventChannel<Resource<Queue>> queueChannel,
+      IEventChannel<Resource<History>> historyChannel,
+      Db.PartyModelContainer db)
     {
       _partyProvider = partyProvider;
       _partyChannel = partyChannel;
+      _queueChannel = queueChannel;
+      _historyChannel = historyChannel;
       _db = db;
     }
 
@@ -41,19 +50,18 @@ namespace Server.Controllers
       if (currentParty == null) return Error.NotFound("Host has not started a party");
 
       var currentTrack = currentParty.CurrentPlayingTrack();
+      var queue = await currentParty.QueueTracks(_db);
 
       if (currentTrack == null)
       {
-        // Begin playing the party's queue
-        var queue = await currentParty.QueueTracks(_db);
-
         // Shuffle the queue if requested
         if (playParameters.Shuffle)
         {
-          Playlist.Shuffle(queue);
+          queue.Tracks = Playlist.Shuffle(queue.Tracks);
         }
 
-        currentTrack = await PopTrackAndPlay(queue, currentParty.QueueId, currentParty);
+        // Begin playing the party's queue
+        currentTrack = await PopTrackAndPlay(queue.Tracks, currentParty.QueueId, currentParty);
       }
       else if (currentTrack.Paused)
       {
@@ -71,7 +79,7 @@ namespace Server.Controllers
       await _db.SaveChangesAsync();
 
       _partyChannel.Push(PublicParty.FromParty(currentParty));
-      // TODO: Send queue update event to Party hub
+      _queueChannel.Push(new Resource<Queue>(currentParty.RoomCode, queue));
 
       return Ok(Document.Resource(currentTrack.Id, currentTrack));
     }
@@ -131,16 +139,16 @@ namespace Server.Controllers
       // Pop next track from the party's queue
       var queue = await currentParty.QueueTracks(_db);
       var history = await currentParty.HistoryTracks(_db);
-      var newTrack = await PopTrackAndPlay(queue, currentParty.QueueId, currentParty);
+      var newTrack = await PopTrackAndPlay(queue.Tracks, currentParty.QueueId, currentParty);
 
       // Push last track to party's history
-      history.Insert(0, lastTrack);
-      await currentParty.UpdateHistory(_db, history);
+      history.Tracks.Insert(0, lastTrack);
+      await currentParty.UpdateHistory(_db, history.Tracks);
 
       await _db.SaveChangesAsync();
 
-      // TODO: Send queue update event to Party hub
-      // TODO: Send history update event to Party hub
+      _queueChannel.Push(new Resource<Queue>(currentParty.RoomCode, queue));
+      _historyChannel.Push(new Resource<History>(currentParty.RoomCode, history));
 
       return Ok(Document.Resource(newTrack.Id, newTrack));
     }

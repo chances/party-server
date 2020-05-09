@@ -23,9 +23,9 @@ namespace Server.Configuration
       else
       {
         Mode = Mode.Development;
+        LoadDotEnv();
       }
 
-      LoadDotEnv();
       _environmentVariables = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>();
 
       var modeString = GetVariable("MODE")?.ToLower();
@@ -52,6 +52,8 @@ namespace Server.Configuration
 
       var databaseUrl = GetVariable("DATABASE_URL");
       DatabaseUrl = databaseUrl ?? throw new NullReferenceException("Database URL configuration is missing");
+      var dbMaxConnections = GetVariable("DATABASE_MAX_CONNECTIONS", "5");
+      DatabaseMaxConnections = int.Parse(dbMaxConnections);
 
       var redisUrl = GetVariable("REDIS_URL");
       RedisUrl = redisUrl ?? throw new NullReferenceException("Redis URL configuration is missing");
@@ -75,7 +77,10 @@ namespace Server.Configuration
     public Cors Cors { get; }
 
     public string DatabaseUrl { get; }
-    public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString(Mode == Mode.Development);
+    public string ConnectionString => DatabaseUrl.ToPgsqlConnectionString(
+      Mode == Mode.Development, DatabaseMaxConnections
+    );
+    public int DatabaseMaxConnections { get;  }
 
     public string RedisUrl { get; }
     public string RedisConnectionString => RedisUrl.ToRedisConnectionString();

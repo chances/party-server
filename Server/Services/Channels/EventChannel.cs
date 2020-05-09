@@ -3,7 +3,6 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Server.Models;
 
 namespace Server.Services.Channels
 {

@@ -22,17 +22,17 @@ namespace Server.Models
       party.CurrentTrack = JsonConvert.SerializeObject(track);
     }
 
-    public static async Task<List<Track>> QueueTracks(this Party party, PartyModelContainer db)
+    public static async Task<Queue> QueueTracks(this Party party, PartyModelContainer db)
     {
       await db.Entry(party).Reference(p => p.Queue).LoadAsync();
       var queue = party.Queue;
 
       if (queue == null || string.IsNullOrWhiteSpace(queue.Data))
       {
-        return EmptyTrackList;
+        return new Queue { Tracks = EmptyTrackList };
       }
 
-      return JsonConvert.DeserializeObject<List<Track>>(queue.Data);
+      return new Queue { Tracks = JsonConvert.DeserializeObject<List<Track>>(queue.Data) };
     }
 
     public static async Task UpdateQueue(this Party party, PartyModelContainer db, IList<Track> queueTracks)
@@ -49,17 +49,17 @@ namespace Server.Models
       queue.UpdatedAt = DateTime.UtcNow;
     }
 
-    public static async Task<List<Track>> HistoryTracks(this Party party, PartyModelContainer db)
+    public static async Task<History> HistoryTracks(this Party party, PartyModelContainer db)
     {
       await db.Entry(party).Reference(p => p.History).LoadAsync();
       var history = party.History;
 
       if (history == null || string.IsNullOrWhiteSpace(history.Data))
       {
-        return EmptyTrackList;
+        return new History { Tracks = EmptyTrackList };
       }
 
-      return JsonConvert.DeserializeObject<List<Track>>(history.Data);
+      return new History { Tracks = JsonConvert.DeserializeObject<List<Track>>(history.Data) };
     }
 
     public static async Task UpdateHistory(this Party party, PartyModelContainer db, IList<Track> historyTracks)

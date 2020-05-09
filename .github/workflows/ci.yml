@@ -1,0 +1,29 @@
+name: Tunage CI
+
+on: push
+#   schedule:
+#   - cron: '0 0 * * SUN'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    - name: Install dependencies
+      run: dotnet restore
+      env:
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    # TODO: Add unit and/or integration tests; in tandem with the project's docker-compose.yml?
+    # - name: Test
+    #   run: dotnet test --no-restore --verbosity normal

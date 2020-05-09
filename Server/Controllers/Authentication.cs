@@ -1,8 +1,9 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Server.Configuration;
 using Server.Data;
@@ -27,9 +28,9 @@ namespace Server.Controllers
 
     [HttpGet]
     [Route("login")]
-    public IActionResult Login(string returnUrl = "/")
+    public IActionResult Login(string redirectUri = "/")
     {
-      return Challenge(new AuthenticationProperties() { RedirectUri = returnUrl });
+      return Challenge(new AuthenticationProperties() { RedirectUri = redirectUri });
     }
 
     /// <summary>
@@ -39,7 +40,7 @@ namespace Server.Controllers
     [Route("mobile")]
     public ViewResult Mobile()
     {
-      var host = HttpContext.Request.GetUri().Authority;
+      var host = new Uri(HttpContext.Request.GetEncodedUrl()).Host;
       return View("../MobileAuth", new MobileAuth(host));
     }
 
@@ -51,7 +52,7 @@ namespace Server.Controllers
     [Route("finished")]
     public ViewResult Finished()
     {
-      var host = HttpContext.Request.GetUri().Authority;
+      var host = new Uri(HttpContext.Request.GetEncodedUrl()).Host;
       var username = HttpContext.User?.Username();
 
       return View("../MobileAuth", new MobileAuth(host, username));

@@ -6,13 +6,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Redis;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
+using Server.Data;
 using Server.Hubs;
 using Server.Middleware;
 using Server.Models;
@@ -59,9 +60,10 @@ namespace Server
       services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
 
       // Authentication
-      services.AddDistributedRedisCache(options =>
+      services.AddStackExchangeRedisCache(options =>
       {
         options.Configuration = _appConfig.RedisConnectionString;
+        options.InstanceName = "redis";
       });
       services.AddAuthentication(options =>
       {
@@ -103,12 +105,20 @@ namespace Server
       services.AddSingleton(new RoomCodeGenerator());
 
       // SignalR real-time hubs and channels
-      services.AddSignalR();
+      services.AddSignalR().AddJsonProtocol(options =>
+      {
+        options.PayloadSerializerOptions.WriteIndented = false;
+      });
 
       services.AddSingleton<IEventChannel<PublicParty>>(new EventChannel<PublicParty>());
+      services.AddSingleton<IEventChannel<Resource<Queue>>>(new EventChannel<Resource<Queue>>());
+      services.AddSingleton<IEventChannel<Resource<History>>>(new EventChannel<Resource<History>>());
 
-      services.AddMvc()
-        .AddJsonOptions(options =>
+      services
+        .AddMvc(options => {
+          options.EnableEndpointRouting = false;
+        })
+        .AddNewtonsoftJson(options =>
         {
           options.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
           options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
@@ -117,7 +127,7 @@ namespace Server
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
       if (_appConfig.Mode == Mode.Development)
       {

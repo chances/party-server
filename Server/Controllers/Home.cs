@@ -36,7 +36,7 @@ namespace Server.Controllers
 
       var user = await _userProvider.GetUserAsync();
       var spotifyProfile = _profileProvider.Profile;
-      var playlists = (await _spotify.GetMyOwnPlaylists()).ToList();
+      var playlists = (await _spotify.GetMyOwnPlaylistsAsync()).ToList();
       var playlist = playlists
         .FirstOrDefault(p => p.Id == user.SpotifyPlaylistId);
       var party = _db.Party
