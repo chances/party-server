@@ -138,6 +138,10 @@ namespace Server
       app.UseCors();
       app.UseAuthentication();
 
+      if (_appConfig.Mode != Mode.Development) {
+        app.UseHsts();
+      }
+
       app.UseWebSocketOriginPolicy(_appConfig.Cors.AllowedOrigins);
       app.Map("/events", map =>
       {
