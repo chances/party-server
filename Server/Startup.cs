@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
@@ -47,13 +48,26 @@ namespace Server
         options.InstanceName = "redis";
       });
 
-      if (_appConfig.Mode == Mode.Production)
+      services.AddLogging(builder =>
       {
-        services.AddLogging(builder =>
+        builder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Information)
+          .AddConsole();
+
+        if (_appConfig.Mode == Mode.Development)
         {
-          builder.SetMinimumLevel(_appConfig.Mode == Mode.Development ? LogLevel.Debug : LogLevel.Warning)
+          IdentityModelEventSource.ShowPII = true;
+          // TODO: Add an environment flag to trace DB stuff
+          // if (_appConfig.Trace)
+          // {
+          //   builder.SetMinimumLevel(LogLevel.Trace);
+          // }
+        }
+
+        if (_appConfig.Mode != Mode.Development)
+        {
+          builder.SetMinimumLevel(LogLevel.Warning)
             .AddFilter("Microsoft", LogLevel.Warning)
-            .AddFilter("System", LogLevel.Warning)
+            .AddFilter("System", LogLevel.Warning);
 
           if (_appConfig.Sentry.Dsn == null) return;
           builder.AddSentry(options =>
