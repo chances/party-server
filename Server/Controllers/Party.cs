@@ -12,6 +12,7 @@ using Server.Models;
 using Server.Services;
 using Newtonsoft.Json;
 using Server.Services.Authentication;
+using Server.Services.Authorization;
 using Server.Services.Channels;
 using Server.Services.Filters;
 using Server.Services.Spotify;
@@ -50,7 +51,7 @@ namespace Server.Controllers
     [Route("")]
     public async Task<IActionResult> Index()
     {
-      var party = await _partyProvider.GetCurrentPartyAsync(_db);
+      var party = await _partyProvider.GetCurrentPartyAsync();
       if (party == null) return NotFound();
 
       var guests = await party.GuestList(_db);
@@ -66,7 +67,7 @@ namespace Server.Controllers
     {
       var playlistId = newParty.Data.Attributes.PlaylistId;
 
-      var user = await _userProvider.GetUserAsync(_db);
+      var user = await _userProvider.GetUserAsync(bypassCache: true);
       if (user == null) return Unauthorized();
 
       // Bad request if the user hasn't ended an ongoing party
@@ -137,7 +138,7 @@ namespace Server.Controllers
     [Route("end")]
     public async Task<IActionResult> End()
     {
-      var user = await _userProvider.GetUserAsync(_db);
+      var user = await _userProvider.GetUserAsync(bypassCache: true);
       if (user == null) return Unauthorized();
 
       var currentParty = user.Party;
@@ -175,9 +176,8 @@ namespace Server.Controllers
 
       var guests = await party.GuestList(_db);
 
-      // If the user is fully authenticated skip guest initialization and
-      //  respond with augmented party
-      if (_userProvider.IsAuthenticated)
+      // If the user is already authenticated, bail and respond with their existing party
+      if (HttpContext.User?.Identity.IsAuthenticated ?? false)
       {
         return AugmentParty(party, guests);
       }
@@ -251,7 +251,7 @@ namespace Server.Controllers
     [Route("queue")]
     public async Task<IActionResult> GetQueue()
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
       if (currentParty == null) return NotFound();
 
       // TODO: Add pagination
@@ -267,7 +267,7 @@ namespace Server.Controllers
     [Route("history")]
     public async Task<IActionResult> GetHistory()
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
       if (currentParty == null) return NotFound();
 
       // TODO: Add pagination

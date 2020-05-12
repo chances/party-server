@@ -71,7 +71,7 @@ html, body {
     <script type="application/javascript">
 window.addEventListener('load', function loaded(e) {
   setTimeout(function redirect() {
-    window.location.replace('//@Model.Host@Url.Action(nameof(Authentication.Login), nameof(Authentication), new { returnUrl = "/auth/finished" })');
+    window.location.replace('//@Model.Host@Url.Action(nameof(Authentication.Login), nameof(Authentication), new { redirectUri = "/auth/finished" })');
   }, 500);
 });
   </script>

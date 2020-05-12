@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -41,15 +42,22 @@ namespace Server
       services.AddSingleton(_appConfig);
       services.AddSingleton(_redisCache);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 15);
+      services.AddStackExchangeRedisCache(options =>
+      {
+        options.Configuration = _appConfig.RedisConnectionString;
+        options.InstanceName = "redis";
+      });
 
-      services.AddLogging(
-        builder =>
+      if (_appConfig.Mode == Mode.Production)
+      {
+        services.AddLogging(builder =>
         {
           builder.SetMinimumLevel(_appConfig.Mode == Mode.Development ? LogLevel.Debug : LogLevel.Warning)
             .AddFilter("Microsoft", LogLevel.Warning)
             .AddFilter("System", LogLevel.Warning)
             .AddConsole();
         });
+      }
 
       // Background tasks
       services.AddHostedService<QueuedHostedService>();
@@ -60,31 +68,25 @@ namespace Server
       services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
 
       // Authentication
-      services.AddStackExchangeRedisCache(options =>
-      {
-        options.Configuration = _appConfig.RedisConnectionString;
-        options.InstanceName = "redis";
-      });
       services.AddAuthentication(options =>
       {
         options.DefaultAuthenticateScheme = CookiesAuthenticationScheme.Name;
         options.DefaultSignInScheme = CookiesAuthenticationScheme.Name;
-        options.DefaultChallengeScheme = SpotifyAuthenticationScheme.Name;
+        options.DefaultChallengeScheme = Auth0AuthenticationScheme.Name;
       })
       .AddCookie(
         CookiesAuthenticationScheme.Name,
-        (options) => CookiesAuthenticationScheme.Configure(
+        options => CookiesAuthenticationScheme.Configure(
           options,
           new RedisCacheTicketStore(_redisCache),
           _appConfig.Mode,
           _appConfig.Spotify
         )
       )
-      .AddOAuth(
-        SpotifyAuthenticationScheme.Name,
-        (options) => SpotifyAuthenticationScheme.Configure(
-          options,
-          _appConfig.Spotify)
+      .AddJwtBearer(options => Auth0AuthenticationScheme.ConfigureJwtBearer(options, _appConfig.Auth0))
+      .AddOpenIdConnect(
+        Auth0AuthenticationScheme.Name,
+        options => Auth0AuthenticationScheme.ConfigureOidc(options, _appConfig.Auth0)
       );
 
       // Controller services
@@ -95,7 +97,6 @@ namespace Server
         var factory = sp.GetRequiredService<IUrlHelperFactory>();
         return factory.GetUrlHelper(actionContext);
       });
-      services.AddScoped<ProfileProvider>();
       services.AddScoped<UserProvider>();
       services.AddScoped<PartyProvider>();
       services.AddScoped<SpotifyRepository>();

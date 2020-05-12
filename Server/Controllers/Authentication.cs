@@ -1,15 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Server.Configuration;
 using Server.Data;
 using Server.Models;
 using Server.Services;
 using Server.Services.Authentication;
+using Server.Services.Authorization;
 using Server.ViewModels;
 
 namespace Server.Controllers
@@ -19,18 +22,30 @@ namespace Server.Controllers
   {
     private readonly AppConfiguration _appConfig;
     private readonly UserProvider _userProvider;
+    private readonly ILogger _logger;
 
-    public Authentication(AppConfiguration appConfig, UserProvider userProvider)
+    public Authentication(AppConfiguration appConfig, UserProvider userProvider, ILogger<Authentication> logger)
     {
       _appConfig = appConfig;
       _userProvider = userProvider;
+      _logger = logger;
     }
 
     [HttpGet]
     [Route("login")]
-    public IActionResult Login(string redirectUri = "/")
+    public IActionResult Login(string redirectUri = "/", params string[] schemes)
     {
-      return Challenge(new AuthenticationProperties() { RedirectUri = redirectUri });
+      // Use a specific Auth0 social connection based on given schemes
+      var authProperties = new Dictionary<string, string>();
+      if (schemes?.Contains(SpotifyAuthenticationScheme.Name) ?? false)
+      {
+        authProperties.Add("connection", Auth0AuthenticationScheme.SpotifyConnection);
+      }
+
+      return Challenge(new AuthenticationProperties(authProperties)
+      {
+        RedirectUri = redirectUri
+      }, schemes);
     }
 
     /// <summary>
@@ -53,7 +68,7 @@ namespace Server.Controllers
     public ViewResult Finished()
     {
       var host = new Uri(HttpContext.Request.GetEncodedUrl()).Host;
-      var username = HttpContext.User?.Username();
+      var username = HttpContext.User.Identity.Name;
 
       return View("../MobileAuth", new MobileAuth(host, username));
     }
@@ -72,7 +87,7 @@ namespace Server.Controllers
         token.CreateDate.AddSeconds(token.ExpiresIn)
       );
 
-      return Document.Resource(User.Username(), tokenResponse);
+      return Document.Resource(User.Identity.Name, tokenResponse);
     }
 
     [HttpGet]

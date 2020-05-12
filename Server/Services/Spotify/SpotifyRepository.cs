@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,7 @@ using Models;
 using Newtonsoft.Json;
 using Server.Models;
 using Server.Services.Authentication;
+using Server.Services.Authorization;
 using Server.Services.Background;
 using Spotify.API.NetCore;
 using Spotify.API.NetCore.Models;
@@ -55,12 +55,10 @@ namespace Server.Services.Spotify
     public async Task<IEnumerable<Playlist>> GetMyOwnPlaylistsAsync()
     {
       var user = HttpContext.User;
-      if (!user.IsInRole(Roles.Host))
+      if (!user?.IsInRole(Roles.Host) ?? false)
       {
         return EmptyList;
       }
-
-      var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
       return await GetMyPlaylistsAsync(true);
     }
@@ -68,15 +66,12 @@ namespace Server.Services.Spotify
     public async Task<IEnumerable<Playlist>> GetMyPlaylistsAsync(bool owned = false)
     {
       var user = HttpContext.User;
-      if (!user.IsInRole(Roles.Host))
+      if (!user.IsInRole(Roles.Host) || _api == null)
       {
         return EmptyList;
       }
 
-      var userId = user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value;
-
-      if (_api == null) return EmptyList;
-
+      var userId = user.Identity.Name;
       var playlists = await _cache.GetOrDeferAsync(
         $"playlists:{userId}",
         JsonConvert.DeserializeObject<List<Playlist>>,

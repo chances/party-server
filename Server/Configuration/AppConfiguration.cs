@@ -58,6 +58,18 @@ namespace Server.Configuration
       var redisUrl = GetVariable("REDIS_URL");
       RedisUrl = redisUrl ?? throw new NullReferenceException("Redis URL configuration is missing");
 
+      var auth0Domain = GetVariable("AUTH_ZERO_DOMAIN");
+      var auth0ClientId = GetVariable("AUTH_ZERO_CLIENT_ID");
+      var auth0ClientSecret = GetVariable("AUTH_ZERO_CLIENT_SECRET");
+      var auth0Audience = GetVariable("AUTH_ZERO_AUDIENCE");
+
+      if (auth0Domain == null || auth0ClientId == null || auth0ClientSecret == null || auth0Audience == null)
+      {
+        throw new NullReferenceException("One or more Auth0 configuration options is missing");
+      }
+
+      Auth0 = new Auth0(auth0Domain, auth0ClientId, auth0ClientSecret, auth0Audience);
+
       var spotifyAppKey = GetVariable("SPOTIFY_APP_KEY");
       var spotifyAppSecret = GetVariable("SPOTIFY_APP_SECRET");
       var spotifyCallback = GetVariable("SPOTIFY_CALLBACK");
@@ -71,9 +83,7 @@ namespace Server.Configuration
     }
 
     public Mode Mode { get; }
-
     public int Port { get; }
-
     public Cors Cors { get; }
 
     public string DatabaseUrl { get; }
@@ -85,6 +95,7 @@ namespace Server.Configuration
     public string RedisUrl { get; }
     public string RedisConnectionString => RedisUrl.ToRedisConnectionString();
 
+    public Auth0 Auth0 { get; }
     public Spotify Spotify { get; }
 
     private string GetVariable(string name, string defaultValue = null) =>
@@ -137,6 +148,22 @@ namespace Server.Configuration
       _origins?.Split(",", StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
   }
 
+  public struct Auth0
+  {
+    public Auth0(string domain, string clientId, string clientSecret, string audience)
+    {
+      Domain = domain;
+      ClientId = clientId;
+      ClientSecret = clientSecret;
+      Audience = audience;
+    }
+
+    public string Domain { get; }
+    public string ClientId { get; }
+    public string ClientSecret { get; }
+    public string Audience { get; }
+  }
+
   public struct Spotify
   {
     public Spotify(string appKey, string appSecret, string callback)
@@ -147,9 +174,7 @@ namespace Server.Configuration
     }
 
     public string AppKey { get; }
-
     public string AppSecret { get; }
-
     public string Callback { get; }
   }
 }

@@ -6,10 +6,10 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using LiteGuard;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 using Models;
 using Newtonsoft.Json;
+using Server.Services.Authorization;
 using Spotify.API.NetCore;
 using Spotify.API.NetCore.Enums;
 using Spotify.API.NetCore.Models;
@@ -18,90 +18,48 @@ namespace Server.Services.Authentication
 {
   public static class SpotifyAuthenticationScheme
   {
-    public static readonly string Name = "Spotify";
+    public const string Name = "Spotify";
 
-    private static readonly string SpotifyAccessTokenClaim = "urn:party:spotify:accessToken";
-    private static readonly string SpotifyUserJsonClaim = "urn:party:spotify:userJson";
+    public const string SpotifyAccessTokenClaim = "https://apps.chancesnow.me/auth/spotify/access_token";
+    public const string SpotifyRefreshTokenClaim = "https://apps.chancesnow.me/auth/spotify/refresh_token";
+    public const string SpotifyTokenExpiryClaim = "https://apps.chancesnow.me/auth/spotify/expires_in";
+    public const string SpotifyTokenScopeClaim = "https://apps.chancesnow.me/auth/spotify/scope";
 
-    private static readonly Scope Scope =
+    private static readonly Scope RequiredScopes =
       Scope.UserReadPrivate |
       Scope.UserLibraryRead |
       Scope.UserLibraryModify |
       Scope.PlaylistReadPrivate |
       Scope.PlaylistReadCollaborative;
 
-    public static void Configure(OAuthOptions options, Configuration.Spotify spotifyConfig)
+    public static bool HasRequiredScopes(string spotifyTokenScope)
     {
-      options.ClientId = spotifyConfig.AppKey;
-      options.ClientSecret = spotifyConfig.AppSecret;
-      options.CallbackPath = spotifyConfig.Callback;
-      options.AuthorizationEndpoint = "https://accounts.spotify.com/authorize";
-      options.TokenEndpoint = "https://accounts.spotify.com/api/token";
-      options.UserInformationEndpoint = "https://api.spotify.com/v1/me";
-      options.SaveTokens = true;
-
-      foreach (var scope in Scope.GetStringAttribute(",").Split(","))
-      {
-        options.Scope.Add(scope);
-      }
-
-      options.Events = new OAuthEvents
-      {
-        OnCreatingTicket = async context =>
-        {
-          var token = new Token()
-          {
-            AccessToken = context.AccessToken,
-            TokenType = context.TokenType,
-            RefreshToken = context.RefreshToken,
-            CreateDate = DateTime.UtcNow,
-            ExpiresIn = (int) context.ExpiresIn.GetValueOrDefault(TimeSpan.FromSeconds(0)).TotalSeconds
-          };
-
-          var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-          request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-          request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-          var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-          response.EnsureSuccessStatusCode();
-
-          var userJson = await response.Content.ReadAsStringAsync();
-          var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
-
-          var claims = new List<Claim>
-              {
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, Roles.Host),
-                new Claim(ClaimTypes.NameIdentifier, spotifyUser.Id),
-                new Claim(SpotifyAccessTokenClaim, JsonConvert.SerializeObject(token)),
-                new Claim(SpotifyUserJsonClaim, userJson)
-              };
-          context.Principal.AddIdentity(new ClaimsIdentity(claims, Name));
-        }
-      };
+      var requiredScopes = RequiredScopes.GetStringAttribute(" ").Split(' ');
+      return spotifyTokenScope.Split(' ').All(scope => requiredScopes.Contains(scope));
     }
 
-    public static async Task UpsertPartyUser(PartyModelContainer dbContext, List<Claim> principalClaims)
+    public static async Task UpsertPartyUser(
+      PartyModelContainer dbContext,
+      Token spotifyToken,
+      string spotifyTokenScope,
+      PrivateProfile spotifyProfile)
     {
-      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
+      Guard.AgainstNullArgument(nameof(spotifyToken), spotifyToken);
+      Guard.AgainstNullArgument(nameof(spotifyTokenScope), spotifyTokenScope);
+      Guard.AgainstNullArgument(nameof(spotifyProfile), spotifyProfile);
 
-      var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var userJson = claims[SpotifyUserJsonClaim].Value;
-      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
-      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
-      var tokenExpiry = accessToken.CreateDate.AddSeconds(accessToken.ExpiresIn);
+      var tokenExpiry = spotifyToken.CreateDate.AddSeconds(spotifyToken.ExpiresIn - 5);
 
-      // TODO: Switch to SpotifyApi.NetCore? It's more often maintained, but has less API coverage
-      var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
-
+      var userJson = JsonConvert.SerializeObject(spotifyProfile);
       var user = await dbContext.User
-        .Where(u => u.Username == spotifyUser.Id)
+        .Where(u => u.Username == spotifyProfile.Id)
         .FirstOrDefaultAsync();
 
       if (user == null)
       {
         user = new User()
         {
-          Username = spotifyUser.Id
+          Username = spotifyProfile.Id
         };
         dbContext.User.Add(user);
       }
@@ -110,25 +68,13 @@ namespace Server.Services.Authentication
         user.UpdatedAt = DateTime.UtcNow;
       }
 
-      user.AccessToken = accessToken.AccessToken;
-      user.RefreshToken = accessToken.RefreshToken;
-      user.TokenExpiryDate = accessToken.CreateDate.AddSeconds(accessToken.ExpiresIn);
-      user.TokenScope = Scope.GetStringAttribute(",");
+      user.AccessToken = spotifyToken.AccessToken;
+      user.RefreshToken = spotifyToken.RefreshToken;
+      user.TokenExpiryDate = tokenExpiry;
+      user.TokenScope = spotifyTokenScope;
       user.SpotifyUser = userJson;
-      user.TokenExpiryDate = tokenExpiry.ToUniversalTime();
 
       await dbContext.SaveChangesAsync();
-    }
-
-    public static bool IsAccessTokenExpired(List<Claim> principalClaims)
-    {
-      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
-
-      var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
-      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
-
-      return accessToken.IsExpired();
     }
 
     /// <summary>
@@ -137,14 +83,9 @@ namespace Server.Services.Authentication
     /// <returns>Returns a new <see cref="ClaimsPrincipal"/> if the access token was refreshed.</returns>
     /// <param name="principalClaims">Principal Claims.</param>
     /// <param name="config">App configuration for Spotify authentication.</param>
-    public static async Task<ClaimsPrincipal> RefreshAccessToken(List<Claim> principalClaims, Configuration.Spotify config)
+    public static async Task<ClaimsPrincipal> RefreshAccessToken(Token accessToken, string spotifyUserId, Configuration.Spotify config)
     {
-      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
-
-      var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var userJson = claims[SpotifyUserJsonClaim].Value;
-      var accessTokenJson = claims[SpotifyAccessTokenClaim].Value;
-      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
+      Guard.AgainstNullArgument(nameof(accessToken), accessToken);
 
       // Try to refresh the access token if expired, only once
       if (accessToken.IsExpired())
@@ -152,14 +93,13 @@ namespace Server.Services.Authentication
         var refreshedToken = await TryRefreshToken(config.AppKey, config.AppSecret, accessToken.RefreshToken);
         if (refreshedToken != null)
         {
-          var userId = claims[ClaimTypes.NameIdentifier].Value;
-
           var newClaims = new List<Claim>
           {
             new Claim(ClaimsIdentity.DefaultRoleClaimType, Roles.Host),
-            new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(SpotifyAccessTokenClaim, JsonConvert.SerializeObject(refreshedToken)),
-            new Claim(SpotifyUserJsonClaim, userJson)
+            new Claim(ClaimTypes.NameIdentifier, spotifyUserId),
+            new Claim(SpotifyAccessTokenClaim, refreshedToken.AccessToken),
+            new Claim(SpotifyRefreshTokenClaim, refreshedToken.RefreshToken),
+            new Claim(SpotifyTokenExpiryClaim, refreshedToken.ExpiresIn.ToString())
           };
           return new ClaimsPrincipal(new ClaimsIdentity(newClaims, Name));
         }
@@ -195,6 +135,7 @@ namespace Server.Services.Authentication
         }
         catch (HttpRequestException)
         {
+          // TODO: Report this to Sentry
           return null;
         }
       }
@@ -206,31 +147,12 @@ namespace Server.Services.Authentication
       return Convert.ToBase64String(plainTextBytes);
     }
 
-    public static Models.Spotify.PrivateProfile GetProfile(List<Claim> principalClaims)
-    {
-      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
-
-      var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var userJson = claims[SpotifyUserJsonClaim]?.Value;
-
-      if (userJson == null) return null;
-
-      var spotifyUser = JsonConvert.DeserializeObject<Models.Spotify.PrivateProfile>(userJson);
-      return spotifyUser;
-    }
-
     public static Token GetToken(List<Claim> principalClaims)
     {
       Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
 
-      var claims = principalClaims.ToDictionary(claim => claim.Type);
-      var accessTokenJson = claims[SpotifyAccessTokenClaim]?.Value;
-
-      if (accessTokenJson == null) return null;
-
-      var accessToken = JsonConvert.DeserializeObject<Token>(accessTokenJson);
-
-      return accessToken;
+      var claims = principalClaims.ToLookup(claim => claim.Type);
+      return claims.ToSpotifyToken();
     }
   }
 }

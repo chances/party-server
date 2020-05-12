@@ -7,7 +7,7 @@ using Models;
 using Server.Data;
 using Server.Models;
 using Server.Services;
-using Server.Services.Authentication;
+using Server.Services.Authorization;
 using Server.Services.Filters;
 using Server.Services.Spotify;
 
@@ -58,7 +58,7 @@ namespace Server.Controllers
 
       if (playlist == null) return Error.BadRequest("Invalid playlist id");
 
-      var user = await _userProvider.GetUserAsync(_db);
+      var user = await _userProvider.GetUserAsync();
       user.SpotifyPlaylistId = patchPlaylist.Data.Id;
       user.UpdatedAt = DateTime.UtcNow;
 

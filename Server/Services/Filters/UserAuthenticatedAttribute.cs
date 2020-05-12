@@ -2,7 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Net.Http.Headers;
-using Server.Services.Authentication;
+using Server.Services.Authorization;
 
 namespace Server.Services.Filters
 {
