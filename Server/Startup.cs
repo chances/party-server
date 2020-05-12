@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -70,9 +69,10 @@ namespace Server
       // Authentication
       services.AddAuthentication(options =>
       {
-        options.DefaultAuthenticateScheme = CookiesAuthenticationScheme.Name;
+        options.DefaultAuthenticateScheme = Auth0AuthenticationScheme.NameAuth0;
+        options.DefaultChallengeScheme = Auth0AuthenticationScheme.NameAuth0;
         options.DefaultSignInScheme = CookiesAuthenticationScheme.Name;
-        options.DefaultChallengeScheme = Auth0AuthenticationScheme.Name;
+        options.DefaultChallengeScheme = Auth0AuthenticationScheme.NameAuth0;
       })
       .AddCookie(
         CookiesAuthenticationScheme.Name,
@@ -83,9 +83,12 @@ namespace Server
           _appConfig.Spotify
         )
       )
-      .AddJwtBearer(options => Auth0AuthenticationScheme.ConfigureJwtBearer(options, _appConfig.Auth0))
+      .AddJwtBearer(
+        Auth0AuthenticationScheme.NameJwt,
+        options => Auth0AuthenticationScheme.ConfigureJwtBearer(options, _appConfig.Auth0)
+      )
       .AddOpenIdConnect(
-        Auth0AuthenticationScheme.Name,
+        Auth0AuthenticationScheme.NameAuth0,
         options => Auth0AuthenticationScheme.ConfigureOidc(options, _appConfig.Auth0)
       );
 

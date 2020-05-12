@@ -11,12 +11,15 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Http = Microsoft.AspNetCore.Http;
 using Server.Services.Authorization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Server.Services.Authentication
 {
   class Auth0AuthenticationScheme
   {
-    public const string Name = "Auth0";
+    public const string NameJwt = "Jwt";
+    public const string NameAuth0 = "Auth0";
     public const string SpotifyConnection = "Spotify-Tunage";
     public const string Auth0NameClaim = "name";
     public const string Auth0NicknameClaim = "nickname";
@@ -26,11 +29,50 @@ namespace Server.Services.Authentication
     public static void ConfigureJwtBearer(JwtBearerOptions options, Configuration.Auth0 auth0Config)
     {
       options.Authority = auth0Config.Domain;
-      options.Audience = auth0Config.Audience;
+      options.Audience = auth0Config.ClientId;
       options.TokenValidationParameters = new TokenValidationParameters
       {
         RequireSignedTokens = true,
         NameClaimType = ClaimTypes.NameIdentifier
+      };
+
+      options.Events = new JwtBearerEvents
+      {
+        OnAuthenticationFailed = context =>
+        {
+          var logMessage = "JWT Bearer token authentication failed";
+          Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+            level: Sentry.Protocol.BreadcrumbLevel.Warning);
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
+          logger.LogWarning(logMessage);
+
+          return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+          var logMessage = "JWT Bearer token validated";
+          Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+            level: Sentry.Protocol.BreadcrumbLevel.Info);
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
+          logger.LogInformation(logMessage);
+
+          var identity = context.Principal.Identity as ClaimsIdentity;
+          ReplaceNameAndRoleClaims(identity, options.Authority);
+
+          if (logger.IsEnabled(LogLevel.Debug))
+          {
+            logger.LogDebug("JWT Bearer principal claims have been augmented with {0}",
+              identity.Claims.Where(claim => claim.Type == ClaimTypes.Role)
+              .Select(claim => claim.Value)
+            );
+          }
+
+          // TODO: Add Guest identity validation when clients support JWT tokens
+
+          return Task.CompletedTask;
+        }
       };
     }
 
@@ -57,6 +99,27 @@ namespace Server.Services.Authentication
       {
         OnRedirectToIdentityProvider = context =>
         {
+          var logMessage = "Auth0 authentication scheme challenged";
+          Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+            level: Sentry.Protocol.BreadcrumbLevel.Debug);
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
+          logger.LogDebug(logMessage);
+
+          // If this is an API request, don't redirect to Auth0
+          // https://github.com/auth0-samples/aspnet-core-mvc-plus-webapi/tree/73d2015e82f80f898d012fa14cb8ba7022432f16#1-add-the-cookie-and-oidc-middleware
+          if (IsAjaxRequest(context.Request) || IsApiRequest(context.Request))
+          {
+            logMessage = "Challenging Auth0 JWT authentication scheme instead";
+            Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+              level: Sentry.Protocol.BreadcrumbLevel.Debug);
+            logger.LogDebug(logMessage);
+
+            context.HandleResponse();
+            return context.HttpContext.ChallengeAsync(NameJwt);
+          }
+
+          // Otherwise, challenge Auth0
           context.ProtocolMessage.SetParameter("audience", auth0Config.Audience);
           var connection = context.Properties.GetString("connection") ?? SpotifyConnection;
           context.ProtocolMessage.SetParameter("connection", connection);
@@ -64,37 +127,17 @@ namespace Server.Services.Authentication
         },
         OnTicketReceived = context =>
         {
-          // https://auth0.com/docs/architecture-scenarios/web-app-sso/implementation-aspnetcore#implement-admin-permissions
-          var options = context.Options as OpenIdConnectOptions;
-
           var identity = context.Principal.Identity as ClaimsIdentity;
-          if (identity != null)
+          ReplaceNameAndRoleClaims(identity, options.Authority);
+
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
+          if (logger.IsEnabled(LogLevel.Debug))
           {
-            // Replace the Auth0's default Name claim with the nickname claim
-            // I have an Auth0 rule setup to set the Spotify username
-            var nameClaim =
-              identity.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
-            if (nameClaim != null && identity.HasClaim(claim => claim == nameClaim))
-            {
-              identity.RemoveClaim(nameClaim);
-            }
-            var nickname =
-              identity.Claims.FirstOrDefault(claim => claim.Type == Auth0NicknameClaim).Value;
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, nickname));
-            // Convert the idToken's claimed roles to claims understood by ASP.NET
-            var claimedRoles = context.Principal
-              .FindAll(c => c.Type == "https://api.tunage.app/roles")
+            logger.LogDebug("Auth0 cookie's principal claims have been augmented with {0}",
+              identity.Claims.Where(claim => claim.Type == ClaimTypes.Role)
               .Select(claim => claim.Value)
-              .Where(role => Roles.All.Contains(role))
-              .ToList();
-            foreach (var role in claimedRoles)
-            {
-              identity.AddClaim(new Claim(
-                ClaimTypes.Role, role,
-                ClaimValueTypes.String,
-                options.Authority
-              ));
-            }
+            );
           }
 
           return Task.CompletedTask;
@@ -139,6 +182,50 @@ namespace Server.Services.Authentication
         DateTimeStyles.RoundtripKind
       );
       return accessTokenExpiresAt <= DateTime.UtcNow;
+    }
+
+    private static bool IsAjaxRequest(HttpRequest request)
+    {
+      // Adapted from https://github.com/dotnet/aspnetcore/blob/62351067ff4c1401556725b401478e648b66acdc/src/Security/Authentication/Cookies/src/CookieAuthenticationEvents.cs#L103
+      return string.Equals(request.Query["X-Requested-With"].ToString().Trim(), "XMLHttpRequest", StringComparison.Ordinal) ||
+        string.Equals(request.Headers["X-Requested-With"].ToString().Trim(), "XMLHttpRequest", StringComparison.Ordinal);
+    }
+
+    private static bool IsApiRequest(HttpRequest request)
+    {
+      // Adapted from https://github.com/auth0-samples/aspnet-core-mvc-plus-webapi/blob/73d2015e82f80f898d012fa14cb8ba7022432f16/SampleMvcApp/Startup.cs#L143
+      var path = request.Path.HasValue ? request.Path : new PathString("/");
+      var isHomePage = string.Equals(request.Path.Value.Trim(), "/", StringComparison.Ordinal);
+      return !isHomePage;
+    }
+
+    private static void ReplaceNameAndRoleClaims(ClaimsIdentity identity, string authority)
+    {
+      // Adapted from https://auth0.com/docs/architecture-scenarios/web-app-sso/implementation-aspnetcore#implement-admin-permissions
+      if (identity != null)
+      {
+        // Replace the Auth0's default Name claim with the nickname claim
+        // I have an Auth0 rule setup to set the Spotify username
+        var nameClaim =
+          identity.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
+        if (nameClaim != null && identity.HasClaim(claim => claim == nameClaim))
+        {
+          identity.RemoveClaim(nameClaim);
+        }
+        var nickname =
+          identity.Claims.FirstOrDefault(claim => claim.Type == Auth0NicknameClaim).Value;
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, nickname));
+        // Convert the idToken's claimed roles to claims understood by ASP.NET
+        var claimedRoles = identity.Claims
+          .Where(c => c.Type == "https://api.tunage.app/roles")
+          .Select(claim => claim.Value)
+          .Where(role => Roles.All.Contains(role))
+          .ToList();
+        foreach (var role in claimedRoles)
+        {
+          identity.AddClaim(new Claim(ClaimTypes.Role, role, ClaimValueTypes.String, authority));
+        }
+      }
     }
   }
 }

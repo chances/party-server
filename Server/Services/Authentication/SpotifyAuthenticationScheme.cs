@@ -133,9 +133,14 @@ namespace Server.Services.Authentication
           string json = await response.Content.ReadAsStringAsync();
           return JsonConvert.DeserializeObject<Token>(json);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-          // TODO: Report this to Sentry
+          if (Sentry.SentrySdk.IsEnabled)
+          {
+            var wrappedException = new Exception("Access token could not be refreshed", ex);
+            Sentry.SentrySdk.CaptureException(wrappedException);
+          }
+
           return null;
         }
       }
@@ -145,14 +150,6 @@ namespace Server.Services.Authentication
     {
       var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
       return Convert.ToBase64String(plainTextBytes);
-    }
-
-    public static Token GetToken(List<Claim> principalClaims)
-    {
-      Guard.AgainstNullArgument(nameof(principalClaims), principalClaims);
-
-      var claims = principalClaims.ToLookup(claim => claim.Type);
-      return claims.ToSpotifyToken();
     }
   }
 }

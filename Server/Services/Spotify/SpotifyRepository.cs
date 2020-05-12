@@ -41,7 +41,7 @@ namespace Server.Services.Spotify
       var userClaims = HttpContext?.User?.Claims;
       if (userClaims == null) return;
 
-      var token = SpotifyAuthenticationScheme.GetToken(userClaims.ToList());
+      var token = userClaims.ToLookup(claim => claim.Type).ToSpotifyToken();
       if (token == null) return;
 
       _api = new SpotifyWebAPI()

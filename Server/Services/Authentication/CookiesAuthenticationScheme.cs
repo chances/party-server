@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
@@ -19,7 +20,7 @@ using Spotify.API.NetCore.Models;
 
 namespace Server.Services.Authentication
 {
-  public static class CookiesAuthenticationScheme
+  public class CookiesAuthenticationScheme
   {
     public const string Name = CookieAuthenticationDefaults.AuthenticationScheme;
 
@@ -57,10 +58,17 @@ namespace Server.Services.Authentication
       {
         OnRedirectToLogin = context =>
         {
+          // Disable direct challenges to this Cookies scheme
           // https://github.com/aspnet/Security/issues/1394
           // https://github.com/aspnet/AspNetCore/blob/62351067ff4c1401556725b401478e648b66acdc/src/Security/Authentication/Cookies/src/CookieAuthenticationEvents.cs#L42
           context.Response.Headers["Location"] = context.RedirectUri;
           context.Response.StatusCode = 401;
+
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<CookiesAuthenticationScheme>>();
+          logger.LogDebug("Cookies authentication scheme was challenged with redirect URI \"{0}\"",
+            context.RedirectUri);
+
           return Task.CompletedTask;
         },
 
@@ -92,6 +100,12 @@ namespace Server.Services.Authentication
             Id = spotifyUserId,
             Images = spotifyUserImages
           };
+
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<CookiesAuthenticationScheme>>();
+          logger.LogDebug("Cookies authentication authorized with Spotify user {0}",
+            JsonConvert.SerializeObject(spotifyUser));
+
           await SpotifyAuthenticationScheme.UpsertPartyUser(
             dbContext, token, tokenScope, spotifyUser);
         },
@@ -196,6 +210,9 @@ namespace Server.Services.Authentication
     {
       var guest = GetGuest(context.Principal.Claims);
 
+      var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Guest>>();
+      logger.LogDebug("Validating guest session {0}", guest.Token);
+
       // Reject guest principal if it:
       //  - Couldn't be loaded
       //  - Is expired, or
@@ -204,6 +221,7 @@ namespace Server.Services.Authentication
       {
         context.RejectPrincipal();
         context.ShouldRenew = false;
+        logger.LogTrace("Guest session {0} is invalid", guest.Token);
 
         // TODO: If the guest could be loaded, but is *still* invalid, remove them from their party's guest list with SSE
 
@@ -218,11 +236,13 @@ namespace Server.Services.Authentication
 
       guest.UpdatedAt = DateTime.UtcNow;
       guest.Expiry = guest.UpdatedAt.AddMinutes(30);
+      logger.LogTrace("Extending guest session {0} by 30 minutes", guest.Token);
 
       // Update their party's guest list
       var bg = context.HttpContext.RequestServices.GetRequiredService<IBackgroundTaskQueue>();
       bg.QueueTask(async token =>
       {
+        logger.LogTrace("Pushing party updates for guest {0}", guest.Token);
         var db = context.HttpContext.RequestServices.GetRequiredService<PartyModelContainer>();
         var party = await db.Party
           .Include(p => p.Guests)
@@ -246,6 +266,7 @@ namespace Server.Services.Authentication
 
       context.ReplacePrincipal(CreateGuestPrincipal(guest));
       context.ShouldRenew = true;
+      logger.LogTrace("Renewing guest session {0}", guest.Token);
 
       return true;
     }

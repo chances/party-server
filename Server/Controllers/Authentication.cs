@@ -74,12 +74,11 @@ namespace Server.Controllers
     }
 
     [HttpGet]
+    [Authorize(Roles = Roles.Host)]
     [Route("token")]
     public ActionResult<Document<SpotifyToken>> Token()
     {
-      if (!_userProvider.IsUserHost) return Unauthorized();
-
-      var token = SpotifyAuthenticationScheme.GetToken(User.Claims.ToList());
+      var token = HttpContext.User.Claims.ToLookup(claim => claim.Type).ToSpotifyToken();
       if (token == null) return Unauthorized();
 
       var tokenResponse = new SpotifyToken(
