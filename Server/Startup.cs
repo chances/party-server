@@ -169,6 +169,18 @@ namespace Server
         .ToArray();
       builder.SetIsOriginAllowed(origin =>
       {
+        // From the IETF Origin spec (http://tools.ietf.org/html/rfc6454)
+        //
+        // > Whenever a user agent issues an HTTP request from a "privacy-sensitive" context, the
+        // > user agent MUST send the value "null" in the Origin header field.
+        //
+        // localhost is considered a "privacy-sensitive" context
+        //
+        // https://stackoverflow.com/q/22397072/1363247
+        if (origin == "null" && _appConfig.Mode == Mode.Development) {
+          return true;
+        }
+
         var originUri = new Uri(origin);
         return allowedOrigins.Any(allowedOrigin =>
         {
