@@ -84,9 +84,7 @@ namespace Server
         SpotifyAuthenticationScheme.Name,
         (options) => SpotifyAuthenticationScheme.Configure(
           options,
-          _appConfig.Spotify.AppKey,
-          _appConfig.Spotify.AppSecret,
-          _appConfig.Spotify.Callback)
+          _appConfig.Spotify)
       );
 
       // Controller services

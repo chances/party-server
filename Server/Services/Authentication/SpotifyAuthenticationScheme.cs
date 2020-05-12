@@ -30,11 +30,11 @@ namespace Server.Services.Authentication
       Scope.PlaylistReadPrivate |
       Scope.PlaylistReadCollaborative;
 
-    public static void Configure(OAuthOptions options, string appKey, string appSecret, string callback)
+    public static void Configure(OAuthOptions options, Configuration.Spotify spotifyConfig)
     {
-      options.ClientId = appKey;
-      options.ClientSecret = appSecret;
-      options.CallbackPath = callback;
+      options.ClientId = spotifyConfig.AppKey;
+      options.ClientSecret = spotifyConfig.AppSecret;
+      options.CallbackPath = spotifyConfig.Callback;
       options.AuthorizationEndpoint = "https://accounts.spotify.com/authorize";
       options.TokenEndpoint = "https://accounts.spotify.com/api/token";
       options.UserInformationEndpoint = "https://api.spotify.com/v1/me";
