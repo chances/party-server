@@ -54,9 +54,18 @@ namespace Server
           builder.SetMinimumLevel(_appConfig.Mode == Mode.Development ? LogLevel.Debug : LogLevel.Warning)
             .AddFilter("Microsoft", LogLevel.Warning)
             .AddFilter("System", LogLevel.Warning)
-            .AddConsole();
-        });
-      }
+
+          if (_appConfig.Sentry.Dsn == null) return;
+          builder.AddSentry(options =>
+          {
+            options.Dsn = _appConfig.Sentry.Dsn;
+            options.Debug = _appConfig.Mode != Mode.Production;
+            options.MinimumBreadcrumbLevel = _appConfig.Sentry.MinimumBreadcrumbLevel;
+            options.MinimumEventLevel = _appConfig.Sentry.MinimumEventLevel;
+            options.MaxBreadcrumbs = _appConfig.Sentry.MaxBreadcrumbs;
+          });
+        }
+      });
 
       // Background tasks
       services.AddHostedService<QueuedHostedService>();

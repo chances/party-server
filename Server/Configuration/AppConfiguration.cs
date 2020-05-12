@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Models;
+using Microsoft.Extensions.Logging;
 
 namespace Server.Configuration
 {
@@ -58,6 +59,9 @@ namespace Server.Configuration
       var redisUrl = GetVariable("REDIS_URL");
       RedisUrl = redisUrl ?? throw new NullReferenceException("Redis URL configuration is missing");
 
+      var sentryDsn = GetVariable("SENTRY_DSN");
+      Sentry = new Sentry(sentryDsn ?? null);
+
       var auth0Domain = GetVariable("AUTH_ZERO_DOMAIN");
       var auth0ClientId = GetVariable("AUTH_ZERO_CLIENT_ID");
       var auth0ClientSecret = GetVariable("AUTH_ZERO_CLIENT_SECRET");
@@ -94,6 +98,8 @@ namespace Server.Configuration
 
     public string RedisUrl { get; }
     public string RedisConnectionString => RedisUrl.ToRedisConnectionString();
+
+    public Sentry Sentry { get; }
 
     public Auth0 Auth0 { get; }
     public Spotify Spotify { get; }
@@ -146,6 +152,26 @@ namespace Server.Configuration
 
     public IEnumerable<string> AllowedOrigins =>
       _origins?.Split(",", StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
+  }
+
+  public struct Sentry
+  {
+    public Sentry(
+      string dsn,
+      string minimumBreadcrumbLevel = "Warning",
+      string minimumEventLevel = "Critical",
+      int maxBreadcrumbs = 40)
+    {
+      Dsn = dsn;
+      MinimumBreadcrumbLevel = (LogLevel) Enum.Parse(typeof(LogLevel), minimumBreadcrumbLevel);
+      MinimumEventLevel = (LogLevel) Enum.Parse(typeof(LogLevel), minimumEventLevel);
+      MaxBreadcrumbs = maxBreadcrumbs;
+    }
+
+    public string Dsn { get; }
+    public LogLevel MinimumBreadcrumbLevel { get; }
+    public LogLevel MinimumEventLevel { get; }
+    public int MaxBreadcrumbs { get; }
   }
 
   public struct Auth0
