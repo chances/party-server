@@ -156,6 +156,21 @@ namespace Server.Services.Authentication
         },
         OnRedirectToIdentityProviderForSignOut = context =>
         {
+          // If this is an API request, don't redirect to Auth0
+          // https://github.com/auth0-samples/aspnet-core-mvc-plus-webapi/tree/73d2015e82f80f898d012fa14cb8ba7022432f16#1-add-the-cookie-and-oidc-middleware
+          if (IsAjaxRequest(context.Request) || IsApiRequest(context.Request))
+          {
+            var logMessage = "Signing out with Auth0 JWT authentication scheme instead";
+            Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+              level: Sentry.Protocol.BreadcrumbLevel.Debug);
+            var logger = context.HttpContext.RequestServices
+              .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
+            logger.LogDebug(logMessage);
+
+            context.HandleResponse();
+            return context.HttpContext.SignOutAsync(NameJwt);
+          }
+
           var logoutUri = $"{auth0Config.Domain}/v2/logout?client_id={auth0Config.ClientId}";
 
           // Handle logout RedirectUri

@@ -93,7 +93,9 @@ namespace Server.Controllers
     [Route("logout")]
     public async Task<IActionResult> Logout()
     {
-      await HttpContext.SignOutAsync("Cookies");
+      if (!HttpContext.User.Identity.IsAuthenticated) return BadRequest();
+
+      await HttpContext.SignOutAsync(Auth0AuthenticationScheme.NameAuth0);
       return RedirectToAction(nameof(Home.Index), nameof(Home));
     }
   }
