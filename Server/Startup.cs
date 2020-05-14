@@ -85,7 +85,10 @@ namespace Server
       // Background tasks
       services.AddHostedService<QueuedHostedService>();
       services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
-      services.AddHostedService<PruneExpiredGuestsService>();
+      if (_appConfig.Mode != Mode.Development)
+      {
+        services.AddHostedService<PruneExpiredGuestsService>();
+      }
 
       // CORS
       services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
