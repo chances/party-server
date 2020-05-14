@@ -1,7 +1,6 @@
 # [Chance's Party App](http://chancesnow.me/party)
 
-[![Build Status](https://travis-ci.org/chances/party-server.svg)](https://travis-ci.org/chances/party-server)
-[![Go Report Card](https://goreportcard.com/badge/github.com/chances/party-server)](https://goreportcard.com/report/github.com/chances/party-server)
+[![Build Status](https://img.shields.io/github/workflow/status/chances/party-server/Tunage%20CI)](https://github.com/chances/party-server/actions)
 
 A party web app to facilitate guest interaction at your parties.
 
@@ -11,13 +10,13 @@ This application tightly integrates with the [Spotify Web API](https://developer
 
 1. Make a copy of `.env.example` as `.env` and replace necessary values.
 2. Run `make` in the root directory
-4. Ensure Postgres is running 
-2. Ensure Redis is running: `make redis-start`
-3. Run `./party-server`
+4. Ensure Postgres is running, bootstrapped with [party.sql](party.sql)
+2. Ensure Redis is running
+3. Run `make run`
 
 ## Contributing
 
-The project is still experimental, but feel free to contribute.
+Feel free to contribute.
 
 1. Inspect the [TODO.md](TODO.md) document for new work.
 
@@ -29,4 +28,4 @@ The project is still experimental, but feel free to contribute.
 
 [MIT License](http://opensource.org/licenses/MIT)
 
-Copyright &copy; 2016 Chance Snow. All rights reserved.
+Copyright &copy; 2016-2020 Chance Snow. All rights reserved.

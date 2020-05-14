@@ -1,35 +1,85 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Makefile - build",
-      "type": "shell",
-      "command": "make all",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-          "reveal": "always",
-          "panel": "shared"
-      },
-      "problemMatcher": {
-        "owner": "go",
-        "fileLocation": [
-          "relative",
-          "${workspaceRoot}"
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build models",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/ModelsScaffold/ModelsScaffold.csproj"
         ],
-        "pattern": {
-          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
+        "problemMatcher": "$msCompile"
+      },
+      {
+        "label": "build",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/Server/Server.csproj"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "type": "docker-build",
+        "label": "docker-build: debug",
+        "dependsOn": [
+          "build"
+        ],
+        "dockerBuild": {
+          "tag": "partyserver:dev",
+          "target": "base",
+          "dockerfile": "${workspaceFolder}/Dockerfile",
+          "context": "${workspaceFolder}",
+          "pull": true
+        },
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
+        }
+      },
+      {
+        "type": "docker-build",
+        "label": "docker-build: release",
+        "dependsOn": [
+          "build"
+        ],
+        "dockerBuild": {
+          "tag": "partyserver:latest",
+          "dockerfile": "${workspaceFolder}/Dockerfile",
+          "context": "${workspaceFolder}",
+          "pull": true
+        },
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
+        }
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: debug",
+        "dependsOn": [
+          "docker-build: debug"
+        ],
+        "dockerRun": {},
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj",
+          "enableDebugging": true
+        }
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: release",
+        "dependsOn": [
+          "docker-build: release"
+        ],
+        "dockerRun": {},
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
         }
       }
-    }
-  ]
+    ]
 }
