@@ -47,7 +47,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [UserAuthenticated]
+    [AuthorizeForApiAudiences]
     [Route("")]
     public async Task<IActionResult> Index()
     {
@@ -60,6 +60,7 @@ namespace Server.Controllers
     }
 
     [HttpPost]
+    [AuthorizeForApiAudiences]
     [Authorize(Roles = Roles.Host)]
     [ValidateModel]
     [Route("start")]
@@ -134,6 +135,7 @@ namespace Server.Controllers
     }
 
     [HttpPost]
+    [AuthorizeForApiAudiences]
     [Authorize(Roles = Roles.Host)]
     [Route("end")]
     public async Task<IActionResult> End()
@@ -236,7 +238,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [UserAuthenticated]
+    [AuthorizeForApiAudiences]
     [Route("ping")]
     public OkObjectResult Ping()
     {
@@ -247,7 +249,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [UserAuthenticated]
+    [AuthorizeForApiAudiences]
     [Route("queue")]
     public async Task<IActionResult> GetQueue()
     {
@@ -263,7 +265,7 @@ namespace Server.Controllers
     }
 
     [HttpGet]
-    [UserAuthenticated]
+    [AuthorizeForApiAudiences]
     [Route("history")]
     public async Task<IActionResult> GetHistory()
     {

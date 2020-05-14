@@ -33,6 +33,11 @@ namespace Server.Services.Authentication
       options.TokenValidationParameters = new TokenValidationParameters
       {
         RequireSignedTokens = true,
+        ValidAudiences = new string[]
+        {
+          auth0Config.ClientId,
+          auth0Config.Audience
+        },
         NameClaimType = ClaimTypes.NameIdentifier
       };
 
@@ -51,19 +56,19 @@ namespace Server.Services.Authentication
         },
         OnTokenValidated = context =>
         {
-          var logMessage = "JWT Bearer token validated";
-          Sentry.SentrySdk.AddBreadcrumb(logMessage, "auth",
+          Sentry.SentrySdk.AddBreadcrumb(
+            "JWT Bearer token validated", "auth",
             level: Sentry.Protocol.BreadcrumbLevel.Info);
-          var logger = context.HttpContext.RequestServices
-            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
-          logger.LogInformation(logMessage);
 
           var identity = context.Principal.Identity as ClaimsIdentity;
           ReplaceNameAndRoleClaims(identity, options.Authority);
 
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
           if (logger.IsEnabled(LogLevel.Debug))
           {
-            logger.LogDebug("JWT Bearer principal claims have been augmented with {0}",
+            logger.LogDebug("JWT Bearer principal claims have been augmented with name '{0}' and roles {1}",
+              identity.Name,
               identity.Claims.Where(claim => claim.Type == ClaimTypes.Role)
               .Select(claim => claim.Value)
             );
@@ -134,7 +139,8 @@ namespace Server.Services.Authentication
             .GetRequiredService<ILogger<Auth0AuthenticationScheme>>();
           if (logger.IsEnabled(LogLevel.Debug))
           {
-            logger.LogDebug("Auth0 cookie's principal claims have been augmented with {0}",
+            logger.LogDebug("Auth0 cookie's principal claims have been augmented with name '{0}' and roles {1}",
+              identity.Name,
               identity.Claims.Where(claim => claim.Type == ClaimTypes.Role)
               .Select(claim => claim.Value)
             );
@@ -202,29 +208,29 @@ namespace Server.Services.Authentication
     private static void ReplaceNameAndRoleClaims(ClaimsIdentity identity, string authority)
     {
       // Adapted from https://auth0.com/docs/architecture-scenarios/web-app-sso/implementation-aspnetcore#implement-admin-permissions
-      if (identity != null)
+      // Replace the Auth0's default Name claim with the nickname claim
+      // I have an Auth0 rule setup to set the Spotify username
+      var claimsByType = identity.Claims.ToLookup(claim => claim.Type);
+      string nickname = null;
+      var nameClaim = claimsByType[ClaimTypes.NameIdentifier]?.FirstOrDefault() ?? null;
+      if (nameClaim?.Value.StartsWith("oauth2|Spotify-Tunage|") ?? false)
       {
-        // Replace the Auth0's default Name claim with the nickname claim
-        // I have an Auth0 rule setup to set the Spotify username
-        var nameClaim =
-          identity.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
-        if (nameClaim != null && identity.HasClaim(claim => claim == nameClaim))
-        {
-          identity.RemoveClaim(nameClaim);
-        }
-        var nickname =
-          identity.Claims.FirstOrDefault(claim => claim.Type == Auth0NicknameClaim).Value;
-        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, nickname));
-        // Convert the idToken's claimed roles to claims understood by ASP.NET
-        var claimedRoles = identity.Claims
-          .Where(c => c.Type == "https://api.tunage.app/roles")
-          .Select(claim => claim.Value)
-          .Where(role => Roles.All.Contains(role))
-          .ToList();
-        foreach (var role in claimedRoles)
-        {
-          identity.AddClaim(new Claim(ClaimTypes.Role, role, ClaimValueTypes.String, authority));
-        }
+        var maybeSpotifyUsername = nameClaim.Value.Split("oauth2|Spotify-Tunage|");
+        nickname = maybeSpotifyUsername.Length > 1 ? maybeSpotifyUsername[1] ?? null : null;
+      }
+      var nicknameClaimValue = claimsByType[Auth0NicknameClaim]?.FirstOrDefault()?.Value ?? null;
+      identity.TryRemoveClaim(nameClaim);
+      nickname = nicknameClaimValue ?? nickname;
+      if (nickname != null) identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, nickname));
+      // Convert the Auth0 claimed roles to claims understood by ASP.NET
+      var claimedRoles = identity.Claims
+        .Where(c => c.Type == "https://api.tunage.app/roles")
+        .Select(claim => claim.Value)
+        .Where(role => Roles.All.Contains(role))
+        .ToList();
+      foreach (var role in claimedRoles)
+      {
+        identity.AddClaim(new Claim(ClaimTypes.Role, role, ClaimValueTypes.String, authority));
       }
     }
   }

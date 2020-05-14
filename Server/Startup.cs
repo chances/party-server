@@ -93,7 +93,6 @@ namespace Server
       services.AddAuthentication(options =>
       {
         options.DefaultAuthenticateScheme = Auth0AuthenticationScheme.NameAuth0;
-        options.DefaultChallengeScheme = Auth0AuthenticationScheme.NameAuth0;
         options.DefaultSignInScheme = CookiesAuthenticationScheme.Name;
         options.DefaultChallengeScheme = Auth0AuthenticationScheme.NameAuth0;
       })
