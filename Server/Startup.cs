@@ -55,6 +55,7 @@ namespace Server
 
         if (_appConfig.Mode == Mode.Development)
         {
+          builder.SetMinimumLevel(LogLevel.Debug);
           IdentityModelEventSource.ShowPII = true;
           // TODO: Add an environment flag to trace DB stuff
           // if (_appConfig.Trace)
