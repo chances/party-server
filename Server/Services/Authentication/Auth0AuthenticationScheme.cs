@@ -29,7 +29,7 @@ namespace Server.Services.Authentication
     public static void ConfigureJwtBearer(JwtBearerOptions options, Configuration.Auth0 auth0Config)
     {
       options.Authority = auth0Config.Domain;
-      options.Audience = auth0Config.ClientId;
+      options.Challenge = "Bearer realm=\"tunage\", error=\"unauthorized\", error_description=\"Unauthorized request made to Tunage API\"";
       options.TokenValidationParameters = new TokenValidationParameters
       {
         RequireSignedTokens = true,
