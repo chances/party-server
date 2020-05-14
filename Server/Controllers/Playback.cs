@@ -46,7 +46,7 @@ namespace Server.Controllers
     {
       var playParameters = parameters?.Data.Attributes ?? PlayParameters.Default;
 
-      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
       if (currentParty == null) return Error.NotFound("Host has not started a party");
 
       var currentTrack = currentParty.CurrentPlayingTrack();
@@ -92,7 +92,7 @@ namespace Server.Controllers
     [Route("/pause")]
     public async Task<IActionResult> Pause([FromBody] NewResourceDocument<PauseParameters> parameters)
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
       if (currentParty == null) return Error.NotFound("Host has not started a party");
 
       var currentTrack = currentParty.CurrentPlayingTrack();
@@ -125,7 +125,7 @@ namespace Server.Controllers
     [Route("/skip")]
     public async Task<IActionResult> Skip()
     {
-      var currentParty = await _partyProvider.GetCurrentPartyAsync(_db);
+      var currentParty = await _partyProvider.GetCurrentPartyAsync();
       if (currentParty == null) return Error.NotFound("Host has not started a party");
 
       var lastTrack = currentParty.CurrentPlayingTrack();

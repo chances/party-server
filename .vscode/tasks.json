@@ -1,25 +1,85 @@
 {
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "build models",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/ModelsScaffold/ModelsScaffold.csproj"
-            ],
-            "problemMatcher": "$msCompile"
+      {
+        "label": "build models",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/ModelsScaffold/ModelsScaffold.csproj"
+        ],
+        "problemMatcher": "$msCompile"
+      },
+      {
+        "label": "build",
+        "command": "dotnet",
+        "type": "process",
+        "args": [
+          "build",
+          "${workspaceFolder}/Server/Server.csproj"
+        ],
+        "problemMatcher": "$msCompile",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "type": "docker-build",
+        "label": "docker-build: debug",
+        "dependsOn": [
+          "build"
+        ],
+        "dockerBuild": {
+          "tag": "partyserver:dev",
+          "target": "base",
+          "dockerfile": "${workspaceFolder}/Dockerfile",
+          "context": "${workspaceFolder}",
+          "pull": true
         },
-        {
-          "label": "build",
-          "command": "dotnet",
-          "type": "process",
-          "args": [
-              "build",
-              "${workspaceFolder}/Server/Server.csproj"
-          ],
-          "problemMatcher": "$msCompile"
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
+        }
+      },
+      {
+        "type": "docker-build",
+        "label": "docker-build: release",
+        "dependsOn": [
+          "build"
+        ],
+        "dockerBuild": {
+          "tag": "partyserver:latest",
+          "dockerfile": "${workspaceFolder}/Dockerfile",
+          "context": "${workspaceFolder}",
+          "pull": true
+        },
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
+        }
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: debug",
+        "dependsOn": [
+          "docker-build: debug"
+        ],
+        "dockerRun": {},
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj",
+          "enableDebugging": true
+        }
+      },
+      {
+        "type": "docker-run",
+        "label": "docker-run: release",
+        "dependsOn": [
+          "docker-build: release"
+        ],
+        "dockerRun": {},
+        "netCore": {
+          "appProject": "${workspaceFolder}/Server/Server.csproj"
+        }
       }
     ]
 }

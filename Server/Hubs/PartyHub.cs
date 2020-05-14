@@ -50,7 +50,7 @@ namespace Server.Hubs
       }
 
       var currentParty = await PartyProvider.GetCurrentPartyAsync(
-        httpContext.User, _db, _background, _cache);
+        httpContext.User, _db, _cache, _background);
       if (currentParty == null)
       {
         await Clients.Caller.BadRequest("You haven't joined a party yet.");
@@ -64,7 +64,7 @@ namespace Server.Hubs
     public async Task<ChannelReader<PublicParty>> Party(CancellationToken token)
     {
       var currentParty = await PartyProvider.GetCurrentPartyAsync(
-        Context.User, _db, _background, _cache);
+        Context.User, _db, _cache, _background);
       if (currentParty == null)
       {
         _ = Clients.Caller.BadRequest("You haven't joined a party yet.");
@@ -82,7 +82,7 @@ namespace Server.Hubs
     public async Task<ChannelReader<Resource<Queue>>> Queue(CancellationToken token)
     {
       var currentParty = await PartyProvider.GetCurrentPartyAsync(
-        Context.User, _db, _background, _cache);
+        Context.User, _db, _cache, _background);
       if (currentParty == null)
       {
         _ = Clients.Caller.BadRequest("You haven't joined a party yet.");
@@ -100,7 +100,7 @@ namespace Server.Hubs
     public async Task<ChannelReader<Resource<History>>> History(CancellationToken token)
     {
       var currentParty = await PartyProvider.GetCurrentPartyAsync(
-        Context.User, _db, _background, _cache);
+        Context.User, _db, _cache, _background);
       if (currentParty == null)
       {
         _ = Clients.Caller.BadRequest("You haven't joined a party yet.");

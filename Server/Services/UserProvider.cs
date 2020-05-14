@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Models;
 using Server.Models;
 using Server.Services.Authentication;
+using Server.Services.Authorization;
 using Server.Services.Background;
 
 namespace Server.Services
@@ -31,70 +32,63 @@ namespace Server.Services
     }
 
     public bool IsAuthenticated =>
-      HttpContext.User.Identity.IsAuthenticated &&
-      (IsUserHost || IsUserGuest);
-
-    public bool IsUserHost => HttpContext.User.IsInRole(Roles.Host);
-
-    public bool IsUserGuest => HttpContext.User.IsInRole(Roles.Guest);
-
-    public Task<User> GetUserAsync()
-    {
-      return GetUserAsync(_db);
-    }
+      (HttpContext.User?.Identity.IsAuthenticated ?? false) && (IsUserHost || IsUserGuest);
+    public bool IsUserHost => HttpContext.User?.IsInRole(Roles.Host) ?? false;
+    public bool IsUserGuest => HttpContext.User?.IsInRole(Roles.Guest) ?? false;
 
     /// <summary>
-    /// Gets the user asynchronously, bypassing the cache.
+    /// Gets the user asynchronously, optionally bypassing the cache.
     /// </summary>
     /// <remarks>
     /// A user retrieved when bypassing the cache will update the cached user.
     /// </remarks>
-    /// <returns>The user retrieved from the database.</returns>
-    /// <param name="db">Party database container instance.</param>
-    public async Task<User> GetUserAsync(PartyModelContainer db)
+    /// <returns>The retrieved user.</returns>
+    /// <param name="bypassCache">Whether or not to bypass the cache.</param>
+    public Task<User> GetUserAsync(bool bypassCache = false)
+    {
+      return GetUserAsync(_db, bypassCache);
+    }
+
+    private Task<User> GetUserAsync(PartyModelContainer db, bool bypassCache = false)
     {
       if (!IsAuthenticated) return null;
 
-      // Get user from the DB and update the cached user
-      var username = HttpContext.User.Username();
-      var user = await db.User
-            .Where(u => u.Username == username)
-            .FirstOrDefaultAsync();
-      if (user != null) CacheUser(user);
-      return user;
+      var username = HttpContext.User.Identity.Name;
+      return GetUserAsync(username, db, _cache, _background);
     }
 
-    public static bool GetIsUserHost(ClaimsPrincipal user) =>
-      user?.IsInRole(Roles.Host) ?? false;
-
-    public static bool GetIsUserGuest(ClaimsPrincipal user) =>
-      user?.IsInRole(Roles.Guest) ?? false;
-
-    public static bool GetIsAuthenticated(ClaimsPrincipal user)
-    {
-      var isUserHost = GetIsUserHost(user);
-      var isUserGuest = GetIsUserGuest(user);
-
-      return (user?.Identity.IsAuthenticated ?? false) &&
-             (isUserHost || isUserGuest);
-    }
-
-    public static async Task<User> GetUserAsync(
-      ClaimsPrincipal principal,
+    /// <summary>
+    /// Gets the user asynchronously, optionally bypassing the cache.
+    /// </summary>
+    /// <remarks>
+    /// A user retrieved given a <paramref name="cache"/> and <paramref name="bg"/> will update the cached user.
+    /// </remarks>
+    /// <returns>The retrieved user.</returns>
+    /// <param name="username"></param>
+    /// <param name="db"></param>
+    /// <param name="cache">If provided with <paramref name="bg"/>, try the cache first.</param>
+    /// <param name="bg">If provided with <paramref name="cache"/>, try the cache first.</param>
+    public static Task<User> GetUserAsync(
+      string username,
       PartyModelContainer db,
-      IBackgroundTaskQueue background = null,
-      IDistributedCache cache = null
+      IDistributedCache cache = null,
+      IBackgroundTaskQueue background = null
     )
     {
-      // Get user from the DB
-      var username = principal.Username();
       if (username == null) return null;
-      var user = await db.User
-        .Where(u => u.Username == username)
-        .FirstOrDefaultAsync();
-      if (user != null && background != null && cache != null)
-        CacheUser(background, cache, user);
-      return user;
+      // Get user from the DB and update the cached user
+      Func<Task<User>> getUser = async () =>
+      {
+          var user = await db.User
+              .Where(u => u.Username == username)
+              .FirstOrDefaultAsync();
+        if (user != null && background != null && cache != null)
+        {
+          CacheUser(background, cache, user);
+        }
+        return user;
+      };
+      return cache == null ? getUser() : cache.GetOrDeferAsync(username, getUser);
     }
 
     public Guest Guest

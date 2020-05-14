@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.Net.Http.Headers;
 using Models;
 using Newtonsoft.Json;
@@ -41,52 +42,80 @@ namespace Server
       services.AddSingleton(_appConfig);
       services.AddSingleton(_redisCache);
       services.AddDbContextPool<PartyModelContainer>(options => options.UseNpgsql(_appConfig.ConnectionString), 15);
-
-      services.AddLogging(
-        builder =>
-        {
-          builder.SetMinimumLevel(_appConfig.Mode == Mode.Development ? LogLevel.Debug : LogLevel.Warning)
-            .AddFilter("Microsoft", LogLevel.Warning)
-            .AddFilter("System", LogLevel.Warning)
-            .AddConsole();
-        });
-
-      // Background tasks
-      services.AddHostedService<QueuedHostedService>();
-      services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
-      services.AddHostedService<PruneExpiredGuestsService>();
-
-      // CORS
-      services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
-
-      // Authentication
       services.AddStackExchangeRedisCache(options =>
       {
         options.Configuration = _appConfig.RedisConnectionString;
         options.InstanceName = "redis";
       });
+
+      services.AddLogging(builder =>
+      {
+        builder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Information)
+          .AddConsole();
+
+        if (_appConfig.Mode == Mode.Development)
+        {
+          builder.SetMinimumLevel(LogLevel.Debug);
+          IdentityModelEventSource.ShowPII = true;
+          // TODO: Add an environment flag to trace DB stuff
+          // if (_appConfig.Trace)
+          // {
+          //   builder.SetMinimumLevel(LogLevel.Trace);
+          // }
+        }
+
+        if (_appConfig.Mode != Mode.Development)
+        {
+          builder.SetMinimumLevel(LogLevel.Warning)
+            .AddFilter("Microsoft", LogLevel.Warning)
+            .AddFilter("System", LogLevel.Warning);
+
+          if (_appConfig.Sentry.Dsn == null) return;
+          builder.AddSentry(options =>
+          {
+            options.Dsn = _appConfig.Sentry.Dsn;
+            options.Debug = _appConfig.Mode != Mode.Production;
+            options.MinimumBreadcrumbLevel = _appConfig.Sentry.MinimumBreadcrumbLevel;
+            options.MinimumEventLevel = _appConfig.Sentry.MinimumEventLevel;
+            options.MaxBreadcrumbs = _appConfig.Sentry.MaxBreadcrumbs;
+          });
+        }
+      });
+
+      // Background tasks
+      services.AddHostedService<QueuedHostedService>();
+      services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+      if (_appConfig.Mode != Mode.Development)
+      {
+        services.AddHostedService<PruneExpiredGuestsService>();
+      }
+
+      // CORS
+      services.AddCors(options => options.AddDefaultPolicy(ConfigureCorsPolicy));
+
+      // Authentication
       services.AddAuthentication(options =>
       {
-        options.DefaultAuthenticateScheme = CookiesAuthenticationScheme.Name;
+        options.DefaultAuthenticateScheme = Auth0AuthenticationScheme.NameAuth0;
         options.DefaultSignInScheme = CookiesAuthenticationScheme.Name;
-        options.DefaultChallengeScheme = SpotifyAuthenticationScheme.Name;
+        options.DefaultChallengeScheme = Auth0AuthenticationScheme.NameAuth0;
       })
       .AddCookie(
         CookiesAuthenticationScheme.Name,
-        (options) => CookiesAuthenticationScheme.Configure(
+        options => CookiesAuthenticationScheme.Configure(
           options,
           new RedisCacheTicketStore(_redisCache),
           _appConfig.Mode,
           _appConfig.Spotify
         )
       )
-      .AddOAuth(
-        SpotifyAuthenticationScheme.Name,
-        (options) => SpotifyAuthenticationScheme.Configure(
-          options,
-          _appConfig.Spotify.AppKey,
-          _appConfig.Spotify.AppSecret,
-          _appConfig.Spotify.Callback)
+      .AddJwtBearer(
+        Auth0AuthenticationScheme.NameJwt,
+        options => Auth0AuthenticationScheme.ConfigureJwtBearer(options, _appConfig.Auth0)
+      )
+      .AddOpenIdConnect(
+        Auth0AuthenticationScheme.NameAuth0,
+        options => Auth0AuthenticationScheme.ConfigureOidc(options, _appConfig.Auth0)
       );
 
       // Controller services
@@ -97,7 +126,6 @@ namespace Server
         var factory = sp.GetRequiredService<IUrlHelperFactory>();
         return factory.GetUrlHelper(actionContext);
       });
-      services.AddScoped<ProfileProvider>();
       services.AddScoped<UserProvider>();
       services.AddScoped<PartyProvider>();
       services.AddScoped<SpotifyRepository>();
@@ -167,6 +195,18 @@ namespace Server
         .ToArray();
       builder.SetIsOriginAllowed(origin =>
       {
+        // From the IETF Origin spec (http://tools.ietf.org/html/rfc6454)
+        //
+        // > Whenever a user agent issues an HTTP request from a "privacy-sensitive" context, the
+        // > user agent MUST send the value "null" in the Origin header field.
+        //
+        // localhost is considered a "privacy-sensitive" context
+        //
+        // https://stackoverflow.com/q/22397072/1363247
+        if (origin == "null" && _appConfig.Mode == Mode.Development) {
+          return true;
+        }
+
         var originUri = new Uri(origin);
         return allowedOrigins.Any(allowedOrigin =>
         {

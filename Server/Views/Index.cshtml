@@ -16,18 +16,18 @@
   <p>
     <a href="/auth/logout">Log Out</a>
   </p>
-  <h1>Logged in as @Model.User.DisplayName</h1>
+  <h1>Logged in as @Model.DisplayName</h1>
   if (Model.HasUserImage)
   {
   <img id="avatar" width="200" height="200" src="@Model.LargestUserImage.Url" />
   }
   <div id="user" class="details">
     <p>ID: @Model.User.Id</p>
-    <p>Display Name: @Model.User.DisplayName</p>
+    <p>Display Name: @Model.DisplayName</p>
     <p>Profile: <a href="@Model.UserUrl">@Model.UserUrl</a></p>
-    <p>Followers: @Model.User.Followers.Total</p>
-    <p>Country: @Model.User.Country</p>
-    <p>Product: @Model.User.Product</p>
+    <p>Followers: @Model.FollowersCount</p>
+    <p>Country: @Model.Country</p>
+    <p>Product: @Model.Product</p>
   </div>
   <p>
     Current playlist: <span id="currentPlaylist">
@@ -46,7 +46,7 @@
   </div>
   } else if (Model.HasCurrentPlaylist) {
   <p>
-    <a id="startParty" data-id="@Model.CurrentPlaylist.Id" data-host="@Model.User.DisplayName" href="#party/start">Start Party</a>
+    <a id="startParty" data-id="@Model.CurrentPlaylist.Id" data-host="@Model.User.Id" href="#party/start">Start Party</a>
   </p>
   }
   <div style="clear: both;"></div>

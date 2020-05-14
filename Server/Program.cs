@@ -25,7 +25,6 @@ namespace Server
         .UseWebRoot("./public")
         .UseKestrel()
         .UseStartup<Startup>()
-        .UseSentry()
         .Build();
   }
 }

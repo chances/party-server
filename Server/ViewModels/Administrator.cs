@@ -2,14 +2,18 @@ using System.Collections.Generic;
 using System.Linq;
 using Models;
 using Server.Models;
-using Spotify.API.NetCore.Models;
+using Server.Models.Spotify;
 
 namespace Server.ViewModels
 {
   public class Administrator
   {
     public Models.Spotify.PrivateProfile User { get; }
-    public string UserUrl => User?.ExternalUrls["spotify"] ?? null;
+    public string DisplayName => User.DisplayName ?? User.Id;
+    public string FollowersCount => User.Followers?.Total.ToString() ?? "?";
+    public string Country => User.Country ?? "";
+    public string Product => User.Product ?? "";
+    public string UserUrl => User?.ExternalUrls?["spotify"] ?? null;
     public bool LoggedIn => User != null;
 
     public Playlist CurrentPlaylist { get; }
@@ -59,19 +63,19 @@ namespace Server.ViewModels
     }
 
     public Administrator(
-      Models.Spotify.PrivateProfile user,
+      PrivateProfile user,
       IEnumerable<Playlist> playlists,
-      Playlist playlist,
-      Party party
-    ) : this(user, playlists, playlist, party, null)
+      Party party = null,
+      Playlist playlist = null
+    ) : this(user, playlists, party, playlist, null)
     {
     }
 
     public Administrator(
-      Models.Spotify.PrivateProfile user,
+      PrivateProfile user,
       IEnumerable<Playlist> playlists,
-      Playlist playlist,
       Party party,
+      Playlist playlist,
       string error
     )
     {

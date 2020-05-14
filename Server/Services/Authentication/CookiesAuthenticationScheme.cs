@@ -8,16 +8,19 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Models;
 using Newtonsoft.Json;
 using Server.Configuration;
 using Server.Models;
+using Server.Services.Authorization;
 using Server.Services.Background;
 using Server.Services.Channels;
+using Spotify.API.NetCore.Models;
 
 namespace Server.Services.Authentication
 {
-  public static class CookiesAuthenticationScheme
+  public class CookiesAuthenticationScheme
   {
     public const string Name = CookieAuthenticationDefaults.AuthenticationScheme;
 
@@ -55,26 +58,65 @@ namespace Server.Services.Authentication
       {
         OnRedirectToLogin = context =>
         {
+          // Disable direct challenges to this Cookies scheme
           // https://github.com/aspnet/Security/issues/1394
           // https://github.com/aspnet/AspNetCore/blob/62351067ff4c1401556725b401478e648b66acdc/src/Security/Authentication/Cookies/src/CookieAuthenticationEvents.cs#L42
           context.Response.Headers["Location"] = context.RedirectUri;
           context.Response.StatusCode = 401;
+
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<CookiesAuthenticationScheme>>();
+          logger.LogDebug("Cookies authentication scheme was challenged with redirect URI \"{0}\"",
+            context.RedirectUri);
+
           return Task.CompletedTask;
         },
 
         OnSignedIn = async context =>
         {
-          if (context.Principal.IsInRole(Roles.Guest)) return;
+          bool isUserHost = context.Principal.IsInRole(Roles.Host);
+          bool isUserGuest = context.Principal.IsInRole(Roles.Guest);
+          if (isUserGuest && !isUserHost) return;
 
           var dbContext = context.HttpContext.RequestServices.GetRequiredService<PartyModelContainer>();
-          await SpotifyAuthenticationScheme.UpsertPartyUser(dbContext, context.Principal.Claims.ToList());
+          var claims = context.Principal.Claims.ToList();
+          var claimsByType = claims.ToLookup(claim => claim.Type);
+          var token = claimsByType.ToSpotifyToken();
+          var tokenScope = claimsByType[SpotifyAuthenticationScheme.SpotifyTokenScopeClaim].First().Value;
+          var spotifyUserId = context.Principal.Identity.Name;
+          var spotifyPicture = claimsByType[Auth0AuthenticationScheme.Auth0PictureClaim].FirstOrDefault()?.Value;
+          var spotifyUserImages = new List<Image>();
+          if (spotifyPicture != null)
+          {
+            spotifyUserImages.Add(new Image
+            {
+              Url = spotifyPicture
+            });
+          }
+          // TODO: Get at the detailed Auth0 user info
+          // The rest of the profile was already fetched beforehand
+          var spotifyUser = new PrivateProfile
+          {
+            Id = spotifyUserId,
+            Images = spotifyUserImages
+          };
+
+          var logger = context.HttpContext.RequestServices
+            .GetRequiredService<ILogger<CookiesAuthenticationScheme>>();
+          logger.LogDebug("Cookies authentication authorized with Spotify user {0}",
+            JsonConvert.SerializeObject(spotifyUser));
+
+          await SpotifyAuthenticationScheme.UpsertPartyUser(
+            dbContext, token, tokenScope, spotifyUser);
         },
 
         OnValidatePrincipal = async context =>
         {
-          var claims = context.Principal.Claims.ToList();
+          bool isUserHost = context.Principal.IsInRole(Roles.Host);
+          bool isUserGuest = context.Principal.IsInRole(Roles.Guest);
 
-          if (context.Principal.IsInRole(Roles.Guest))
+          // If the user is _just_ a Guest, validate their principal claims
+          if (isUserGuest && !isUserHost)
           {
             var guestIsValid = ValidateGuestPrincipal(context);
             if (guestIsValid == false)
@@ -84,21 +126,39 @@ namespace Server.Services.Authentication
             return;
           }
 
-          // Try to replace Spotify access token if it's expired
-          if (SpotifyAuthenticationScheme.IsAccessTokenExpired(claims))
-          {
-            var updatedPrincipal = await SpotifyAuthenticationScheme
-              .RefreshAccessToken(claims, spotifyConfig);
+          // Otherwise, validate a Host's Spotify access token
+          var claims = context.Principal.Claims.ToList();
+          var claimsByType = claims.ToLookup(claim => claim.Type);
 
-            // Replace principal if Spotify access token was refreshed
+          var spotifyAccessToken = claimsByType.ToSpotifyToken();
+          var tokenScope = claimsByType[SpotifyAuthenticationScheme.SpotifyTokenScopeClaim].First().Value;
+          var hasRequiredScopes = SpotifyAuthenticationScheme.HasRequiredScopes(tokenScope);
+          var rejectHostPrincipal = !hasRequiredScopes;
+
+          // Try to refresh the Host's Spotify access token if it's expired
+          if (spotifyAccessToken.IsExpired())
+          {
+            var spotifyUserId = context.Principal.Identity.Name;
+            var updatedPrincipal = await SpotifyAuthenticationScheme
+              .RefreshAccessToken(spotifyAccessToken, spotifyUserId, spotifyConfig);
+
+            // If Spotify access token was refreshed replace the Host's principal
             if (updatedPrincipal != null)
             {
               context.ReplacePrincipal(updatedPrincipal);
               context.ShouldRenew = true;
               return;
             }
+            // If not, reject the host's principal
+            else
+            {
+              rejectHostPrincipal = true;
+            }
+          }
 
-            // Reject principal otherwise
+          if (rejectHostPrincipal)
+          {
+            // Reject principal, otherwise
             context.RejectPrincipal();
             context.ShouldRenew = false;
 
@@ -133,35 +193,56 @@ namespace Server.Services.Authentication
     }
 
     /// <summary>
-    /// Validate a guest user's principal user data
+    /// Validate a guest user's principal claims
     /// </summary>
-    /// <param name="context">The principal user data</param>
-    /// <returns>True if the principal is valid, false otherwise</returns>
+    /// <remarks>
+    /// Guest sessions are valid for 30 minutes. If their session has less than 15 minutes left
+    /// at the time of validation, add 30 minutes to their session.
+    ///
+    /// Guest sessions are invalid if:
+    /// - Their metadata isn't claimed (See <see cref="GetGuest"/>)
+    /// - Their session is expired, or
+    /// - The current request's Origin doesn't match their own (See <see cref="Guest.OriginMatches"/>)
+    /// </remarks>
+    /// <param name="context">The principal claims</param>
+    /// <returns>True if the guest's session is valid, false otherwise</returns>
     private static bool ValidateGuestPrincipal(CookieValidatePrincipalContext context)
     {
       var guest = GetGuest(context.Principal.Claims);
 
+      var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Guest>>();
+      logger.LogDebug("Validating guest session {0}", guest.Token);
+
       // Reject guest principal if it:
-      //  - Couldn't be loaded,
-      //  - Is expired,
-      //  - Or Origin header is mismatched
+      //  - Couldn't be loaded
+      //  - Is expired, or
+      //  - Origin header is mismatched
       if (guest == null || guest.IsExpired || !guest.OriginMatches(context.Request.Headers))
       {
         context.RejectPrincipal();
         context.ShouldRenew = false;
+        logger.LogTrace("Guest session {0} is invalid", guest.Token);
+
+        // TODO: If the guest could be loaded, but is *still* invalid, remove them from their party's guest list with SSE
+
         return false;
       }
 
-      // Sliding expiration rule, update expiry if time left on expiry is more than half through
+      // Sliding session expiration rules:
+      //  - Guest sessions are valid for 30 minutes
+      //  - If there's less than 15 minutes left, add 30 minutes to their session
+      // TODO: Refactor this to use the `ClaimTypes.Expiration` claim
       if (guest.Expiry.Subtract(DateTime.UtcNow).TotalMinutes >= 15) return true;
 
       guest.UpdatedAt = DateTime.UtcNow;
       guest.Expiry = guest.UpdatedAt.AddMinutes(30);
+      logger.LogTrace("Extending guest session {0} by 30 minutes", guest.Token);
 
-      // Update the guest in its related party's guest list
+      // Update their party's guest list
       var bg = context.HttpContext.RequestServices.GetRequiredService<IBackgroundTaskQueue>();
       bg.QueueTask(async token =>
       {
+        logger.LogTrace("Pushing party updates for guest {0}", guest.Token);
         var db = context.HttpContext.RequestServices.GetRequiredService<PartyModelContainer>();
         var party = await db.Party
           .Include(p => p.Guests)
@@ -185,6 +266,7 @@ namespace Server.Services.Authentication
 
       context.ReplacePrincipal(CreateGuestPrincipal(guest));
       context.ShouldRenew = true;
+      logger.LogTrace("Renewing guest session {0}", guest.Token);
 
       return true;
     }
