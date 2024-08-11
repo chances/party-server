@@ -2,7 +2,10 @@
 # Build stage
 #############
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
+# Learn about building .NET container images:
+# https://github.com/dotnet/dotnet-docker/blob/main/samples/README.md
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGET_ARCH
 WORKDIR /src
 
 COPY . "/src"
@@ -17,7 +20,7 @@ COPY Server/public /app/public
 # Application stage
 ###################
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
+FROM mcr.microsoft.com/dotnet/runtime:8.0-alpine
 WORKDIR /app
 COPY --from=build /app .
 
