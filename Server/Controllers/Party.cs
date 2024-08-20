@@ -228,7 +228,11 @@ namespace Server.Controllers
       var principal = CookiesAuthenticationScheme.CreateGuestPrincipal(guest);
       await HttpContext.SignInAsync(CookiesAuthenticationScheme.Name, principal);
 
-      return new OkObjectResult(Document.Resource(party.RoomCode, publicParty));
+      return new OkObjectResult(Document.Resource(party.RoomCode, new JoinedParty
+      {
+        GuestIndex = guests.IndexOf(guest),
+        Party = publicParty
+      }));
     }
 
     private static OkObjectResult AugmentParty(Db.Party party, IEnumerable<Guest> guests)

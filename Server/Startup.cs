@@ -139,8 +139,8 @@ namespace Server
       });
 
       services.AddSingleton<IEventChannel<PublicParty>>(new EventChannel<PublicParty>());
-      services.AddSingleton<IEventChannel<Resource<Queue>>>(new EventChannel<Resource<Queue>>());
-      services.AddSingleton<IEventChannel<Resource<History>>>(new EventChannel<Resource<History>>());
+      services.AddSingleton(new EventChannel<Resource<Queue>>());
+      services.AddSingleton(new EventChannel<Resource<History>>());
 
       services
         .AddMvc(options => {
