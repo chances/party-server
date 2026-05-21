@@ -1,0 +1,17 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "3005:3005"
+    env_file: docker.env
+  db:
+    build:
+      context: .
+      dockerfile: database.Dockerfile
+    environment:
+      - POSTGRES_DB=tunage
+      - POSTGRES_USER=tunage
+      - POSTGRES_PASSWORD=tunage
+  redis:
+    image: "redis:alpine"

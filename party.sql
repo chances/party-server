@@ -7,14 +7,14 @@ create table "user"
 		constraint unique_username
 			unique,
 	spotify_user json not null,
-	spotify_playlist_id varchar,
+	spotify_playlist_id varchar default null,
 	access_token varchar not null,
 	refresh_token varchar not null,
 	token_expiry_date timestamp with time zone not null,
 	token_scope varchar not null,
-	created_at timestamp with time zone not null,
-	updated_at timestamp with time zone not null,
-	party_id integer
+	created_at timestamp with time zone not null default (now() at time zone 'utc'),
+	updated_at timestamp with time zone not null default (now() at time zone 'utc'),
+	party_id integer default null
 )
 ;
 

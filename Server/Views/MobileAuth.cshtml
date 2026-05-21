@@ -1,0 +1,82 @@
+@using Server.Controllers
+@model Server.ViewModels.MobileAuth
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Party Login</title>
+  <style>
+html, body {
+  color: #FCFCFC;
+  font-family: Arial, Helvetica, sans-serif;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #242424;
+}
+  </style>
+</head>
+<body>
+  @if (!Model.IsAuthenticated) {
+    <span class="spinner">
+      <style>
+        .spinner > svg {
+          -webkit-transform: translateZ(0);
+          -ms-transform: translateZ(0);
+          transform: translateZ(0);
+          -webkit-transform-origin: center;
+          -moz-transform-origin: center;
+          transform-origin: center;
+          -moz-animation: spin 950ms linear infinite;
+          -webkit-animation: spin 950ms linear infinite;
+          animation: spin 950ms linear infinite;
+        }
+        @@-moz-keyframes spin {
+        0% { -moz-transform: rotate(0deg); }
+        100% { -moz-transform: rotate(360deg); }
+        }
+        @@-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+        }
+        @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+        </style>
+      <svg x="0px" y="0px" width="60px" height="60px" viewBox="0 0 50 50">
+        ${svg
+        // tslint:disable-next-line:max-line-length
+        `<path class="spinner" fill="#FCFCFC" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z">
+          <animateTransform
+            attributeName="transform"
+            attributeType="xml"
+            type="rotate"
+            from="0 25 25"
+            to="360 25 25"
+            dur="${dur}"
+            repeatCount="indefinite"
+          />
+        </path>`
+        }
+      </svg>
+    </span>
+    <script type="application/javascript">
+window.addEventListener('load', function loaded(e) {
+  setTimeout(function redirect() {
+    window.location.replace('//@Model.Host@Url.Action(nameof(Authentication.Login), nameof(Authentication), new { redirectUri = "/auth/finished" })');
+  }, 500);
+});
+  </script>
+  } else {
+  <p>Logged in as @Model.Username</p>
+  }
+</body>
+</html>

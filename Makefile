@@ -1,17 +1,33 @@
-SOURCES := $(shell find . -name '*.go')
+C_SHARP_SRC=Server
+C_SHARP_SOURCES=$(shell find $(C_SHARP_SRC) -type f -name "*.cs")
+CS_HTML_SOURCES=$(shell find $(C_SHARP_SRC) -type f -name "*.cshtml")
 
-all: party-server
+all: build
+.DEFAULT_GOAL := build
 
-party-server: $(SOURCES)
-	go get -v ./...
-	go build
+build: $(C_SHARP_SOURCES) $(CS_HTML_SOURCES)
+	dotnet build
+.PHONY: build
 
-models:
-	sqlboiler --wipe --no-hooks postgres
+.PHONY: run
+run: build
+	dotnet run --project Server
 
-.PHONY: models
+.PHONY: docker
+docker:
+	docker build -t party-server .
 
-redis-start:
-	@redis-server &> /dev/null &
+.PHONY: docker-test
+docker-test:
+	docker-compose up -d --renew-anon-volumes
 
-.PHONY: redis-start
+.PHONY: publish
+publish: docker
+	docker tag party-server registry.heroku.com/chances-party-staging/web
+	heroku container:push web -a chances-party-staging
+	heroku container:release web -a chances-party-staging
+
+.PHONY: clean
+clean:
+	dotnet clean
+	rm -rf Server/bin Server/obj
